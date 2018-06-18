@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Authors>HeboTech</Authors>
+    <Product>HeboTech ATLib</Product>
+    <PackageTags>atcommand at command gsm sms</PackageTags>
   </PropertyGroup>
 
 </Project>
