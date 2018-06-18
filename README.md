@@ -1,2 +1,2 @@
 # ATLib
-AT command library
+A C# AT command library.
