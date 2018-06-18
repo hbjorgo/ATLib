@@ -10,16 +10,18 @@ namespace HeboTech.ATLib
         private Encoding encoding = Encoding.ASCII;
         private readonly Stream stream;
 
+        public enum Mode { Text = 1 } // PDU = 0
+
         public Gsm(Stream stream)
         {
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
         }
 
-        public Task InitializeAsync()
+        public Task InitializeAsync(Mode mode)
         {
             return WriteAsync("AT\r\n")
                 .ContinueWith(completed => Task.Delay(250))
-                .ContinueWith(completed => WriteAsync("AT+CMGF=1\r\n"))
+                .ContinueWith(completed => WriteAsync($"AT+CMGF={mode}\r\n"))
                 .ContinueWith(completed => Task.Delay(250));
         }
 
