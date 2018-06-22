@@ -9,9 +9,7 @@ namespace HeboTech.ATLib
     {
         private Encoding encoding = Encoding.ASCII;
         private readonly Stream stream;
-        private readonly byte[] buffer = new byte[1024];
-        private const string OK_RESPONSE = "\r\nOK\r\n";
-        private const string ERROR_RESPONSE = "\r\nERROR\r\n";
+        private readonly byte[] replybuffer = new byte[255];
 
         public GsmStream(Stream stream)
         {
@@ -36,7 +34,6 @@ namespace HeboTech.ATLib
 
         private string Readline(int timeout, bool multiline = false)
         {
-            byte[] replybuffer = new byte[255];
             int replyidx = 0;
 
             while (timeout-- > 0)
@@ -47,7 +44,7 @@ namespace HeboTech.ATLib
                 }
 
                 int b = 0;
-                while ((b = stream.ReadByte()) > -1 && b <= 256)
+                while ((b = stream.ReadByte()) > -1 && b <= 255)
                 {
                     byte c = (byte)b;
                     if (c == '\r') continue;
