@@ -7,17 +7,18 @@ namespace HeboTech.ATLib
 {
     public class GsmStream : IGsmStream, IDisposable
     {
-        private Encoding encoding = Encoding.ASCII;
+        private Encoding encoding;
         private readonly Stream stream;
         private readonly byte[] replybuffer = new byte[255];
 
-        public GsmStream(Stream stream)
+        public GsmStream(Stream stream, Encoding encoding)
         {
             if (!stream.CanRead)
                 throw new ArgumentException("Stream must support reading");
             if (!stream.CanWrite)
                 throw new ArgumentException("Stream must support writing");
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
+            this.encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
         }
 
         private void Write(string text)

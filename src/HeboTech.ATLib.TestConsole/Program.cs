@@ -9,7 +9,7 @@ namespace HeboTech.ATLib.TestConsole
         static void Main(string[] args)
         {
             using (MemoryStream stream = new MemoryStream())
-            using (GsmStream gsmStream = new GsmStream(stream))
+            using (GsmStream gsmStream = new GsmStream(stream, Encoding.ASCII))
             {
                 Gsm g = new Gsm(gsmStream);
                 if (!g.InitializeAsync(Gsm.Mode.Text).Result)
