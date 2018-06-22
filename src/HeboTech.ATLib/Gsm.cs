@@ -1,45 +1,64 @@
 ﻿using System;
-using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib
 {
     public class Gsm
     {
-        private Encoding encoding = Encoding.ASCII;
-        private readonly Stream stream;
+        private readonly IGsmStream stream;
+        private const int DELAY_MS = 25;
+
+        private const string ERROR_READING_RESPONSE = "Error reading response";
+        private const string INVALID_RESPONSE = "Invalid response";
 
         public enum Mode { Text = 1 } // PDU = 0
 
-        public Gsm(Stream stream)
+        public Gsm(IGsmStream stream)
         {
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
         }
 
         public Task InitializeAsync(Mode mode)
         {
-            return WriteAsync("AT\r\n")
-                .ContinueWith(completed => Task.Delay(250))
-                .ContinueWith(completed => WriteAsync($"AT+CMGF={mode}\r\n"))
-                .ContinueWith(completed => Task.Delay(250));
+            return stream.WriteAsync("AT\r\n")
+                .ContinueWith(async completed =>
+                {
+                    (Status status, string payload) = await stream.GetStandardReplyAsync(100);
+                    ThrowIfNotOk(status);
+                })
+                .ContinueWith(completed => Task.Delay(DELAY_MS))
+                .ContinueWith(completed => stream.WriteAsync($"AT+CMGF={(int)mode}\r\n"))
+                .ContinueWith(async completed =>
+                {
+                    (Status status, string payload) = await stream.GetStandardReplyAsync(5_000);
+                    ThrowIfNotOk(status);
+                });
         }
 
         public Task SendSmsAsync(string phoneNumber, string message)
         {
-            return WriteAsync("AT+CMGS=\"")
-                .ContinueWith(completed => WriteAsync(phoneNumber))
-                .ContinueWith(completed => WriteAsync("\"\r"))
-                .ContinueWith(completed => Task.Delay(500))
-                .ContinueWith(completed => WriteAsync(message))
-                .ContinueWith(completed => WriteAsync("\x1A\r\n"))
-                .ContinueWith(completed => Task.Delay(2000));
+            return stream.WriteAsync($"AT+CMGS=\"{phoneNumber}\"\r")
+                .ContinueWith(async completed =>
+                {
+                    (Status status, string payload) = await stream.GetStandardReplyAsync(5_000);
+                    ThrowIfNotOk(status);
+                    if (status == Status.OK && payload != "> ")
+                        throw new GsmException(INVALID_RESPONSE);
+                })
+                .ContinueWith(completed => Task.Delay(DELAY_MS))
+                .ContinueWith(completed => stream.WriteAsync($"{message}\x1A\r\n"))
+                .ContinueWith(async completed =>
+                {
+                    (Status status, string payload) = await stream.GetStandardReplyAsync(180_000);
+                    ThrowIfNotOk(status);
+                })
+                .ContinueWith(completed => Task.Delay(DELAY_MS));
         }
 
-        private Task WriteAsync(string text)
+        private static void ThrowIfNotOk(Status status)
         {
-            byte[] bytesToWrite = encoding.GetBytes(text);
-            return stream.WriteAsync(bytesToWrite, 0, bytesToWrite.Length);
+            if (status == Status.ERROR)
+                throw new GsmException(ERROR_READING_RESPONSE);
         }
     }
 }
