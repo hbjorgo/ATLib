@@ -41,7 +41,7 @@ namespace HeboTech.ATLib.Tests
                 };
 
                 Gsm g = new Gsm(gsmStream);
-                bool result = g.UnlockSim(pin).Result;
+                bool result = g.UnlockSimAsync(pin).Result;
 
                 Assert.True(result);
             }
@@ -63,7 +63,7 @@ namespace HeboTech.ATLib.Tests
                 };
 
                 Gsm g = new Gsm(gsmStream);
-                bool result = g.SetMode(mode).Result;
+                bool result = g.SetModeAsync(mode).Result;
 
                 Assert.True(result);
             }

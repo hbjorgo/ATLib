@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.TestConsole
                 Gsm g = new Gsm(gsmStream);
                 if (!g.InitializeAsync().Result)
                     Console.WriteLine("Initialization failed");
-                if (!g.SetMode(Mode.Text).Result)
+                if (!g.SetModeAsync(Mode.Text).Result)
                     Console.WriteLine("Set mode failed");
                 if (!g.SendSmsAsync("12345678", "Msg").Result)
                     Console.WriteLine("Sending SMS failed");

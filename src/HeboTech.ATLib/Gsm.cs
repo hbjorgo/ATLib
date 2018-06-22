@@ -26,7 +26,7 @@ namespace HeboTech.ATLib
             });
         }
 
-        public Task<bool> SetMode(Mode mode)
+        public Task<bool> SetModeAsync(Mode mode)
         {
             return Task.Factory.StartNew(() =>
             {
@@ -49,7 +49,7 @@ namespace HeboTech.ATLib
             });
         }
 
-        public Task<bool> UnlockSim(Pin pin)
+        public Task<bool> UnlockSimAsync(Pin pin)
         {
             return Task.Factory.StartNew(() =>
             {
