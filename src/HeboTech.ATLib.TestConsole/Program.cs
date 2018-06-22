@@ -12,8 +12,10 @@ namespace HeboTech.ATLib.TestConsole
             using (GsmStream gsmStream = new GsmStream(stream))
             {
                 Gsm g = new Gsm(gsmStream);
-                g.InitializeAsync(Gsm.Mode.Text).Wait();
-                g.SendSmsAsync("12345678", "Msg").Wait();
+                if (!g.InitializeAsync(Gsm.Mode.Text).Result)
+                    Console.WriteLine("Initialization failed");
+                if (!g.SendSmsAsync("12345678", "Msg").Result)
+                    Console.WriteLine("Sending SMS failed");
 
                 Console.WriteLine(Encoding.Default.GetString(stream.ToArray()));
             }

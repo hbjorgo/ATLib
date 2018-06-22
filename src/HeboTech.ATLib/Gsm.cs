@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib
@@ -7,9 +8,7 @@ namespace HeboTech.ATLib
     {
         private readonly IGsmStream stream;
         private const int DELAY_MS = 25;
-
-        private const string ERROR_READING_RESPONSE = "Error reading response";
-        private const string INVALID_RESPONSE = "Invalid response";
+        private const string OK_RESPONSE = "OK";
 
         public enum Mode { Text = 1 } // PDU = 0
 
@@ -18,47 +17,34 @@ namespace HeboTech.ATLib
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
         }
 
-        public Task InitializeAsync(Mode mode)
+        public Task<bool> InitializeAsync(Mode mode)
         {
-            return stream.WriteAsync("AT\r\n")
-                .ContinueWith(async completed =>
+            return Task.Factory.StartNew(() =>
+            {
+                bool status = false;
+                status = stream.SendCheckReply("AT\r\n", OK_RESPONSE, 100);
+                if (status)
                 {
-                    (Status status, string payload) = await stream.GetStandardReplyAsync(100);
-                    ThrowIfNotOk(status);
-                })
-                .ContinueWith(completed => Task.Delay(DELAY_MS))
-                .ContinueWith(completed => stream.WriteAsync($"AT+CMGF={(int)mode}\r\n"))
-                .ContinueWith(async completed =>
-                {
-                    (Status status, string payload) = await stream.GetStandardReplyAsync(5_000);
-                    ThrowIfNotOk(status);
-                });
+                    Thread.Sleep(DELAY_MS);
+                    status = stream.SendCheckReply($"AT+CMGF={(int)mode}\r\n", OK_RESPONSE, 5_000);
+                }
+                return status;
+            });
         }
 
-        public Task SendSmsAsync(string phoneNumber, string message)
+        public Task<bool> SendSmsAsync(string phoneNumber, string message)
         {
-            return stream.WriteAsync($"AT+CMGS=\"{phoneNumber}\"\r")
-                .ContinueWith(async completed =>
+            return Task.Factory.StartNew(() =>
+            {
+                bool status = false;
+                status = stream.SendCheckReply($"AT+CMGS=\"{phoneNumber}\"\r", "> ", 5_000);
+                if (status)
                 {
-                    (Status status, string payload) = await stream.GetStandardReplyAsync(5_000);
-                    ThrowIfNotOk(status);
-                    if (status == Status.OK && payload != "> ")
-                        throw new GsmException(INVALID_RESPONSE);
-                })
-                .ContinueWith(completed => Task.Delay(DELAY_MS))
-                .ContinueWith(completed => stream.WriteAsync($"{message}\x1A\r\n"))
-                .ContinueWith(async completed =>
-                {
-                    (Status status, string payload) = await stream.GetStandardReplyAsync(180_000);
-                    ThrowIfNotOk(status);
-                })
-                .ContinueWith(completed => Task.Delay(DELAY_MS));
-        }
-
-        private static void ThrowIfNotOk(Status status)
-        {
-            if (status == Status.ERROR)
-                throw new GsmException(ERROR_READING_RESPONSE);
+                    Thread.Sleep(DELAY_MS);
+                    status = stream.SendCheckReply($"{message}\x1A\r\n", OK_RESPONSE, 180_000);
+                }
+                return status;
+            });
         }
     }
 }

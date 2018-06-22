@@ -1,7 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace HeboTech.ATLib
 {
@@ -17,57 +17,77 @@ namespace HeboTech.ATLib
         {
             if (!stream.CanRead)
                 throw new ArgumentException("Stream must support reading");
-            if (!stream.CanTimeout)
-                throw new ArgumentException("Stream must support timeout");
             if (!stream.CanWrite)
                 throw new ArgumentException("Stream must support writing");
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
         }
 
-        public Task WriteAsync(string text)
+        private void Write(string text)
         {
             byte[] bytesToWrite = encoding.GetBytes(text);
-            return stream.WriteAsync(bytesToWrite, 0, bytesToWrite.Length);
+            stream.Write(bytesToWrite, 0, bytesToWrite.Length);
         }
 
-        public async Task<(Status status, string payload)> GetStandardReplyAsync(int timeoutMs)
+        private void FlushInput()
         {
-            stream.ReadTimeout = timeoutMs;
-            int readBytes = await stream.ReadAsync(buffer, 0, buffer.Length);
-            string reply = encoding.GetString(buffer, 0, readBytes);
-
-            if (string.IsNullOrWhiteSpace(reply))
-                return (Status.ERROR, string.Empty);
-
-            int statusPosition = reply.IndexOf(OK_RESPONSE);
-            if (statusPosition < 0)
-            {
-                statusPosition = reply.IndexOf(ERROR_RESPONSE);
-                if (statusPosition < 0)
-                    return (Status.ERROR, string.Empty);
-                else
-                    return (Status.ERROR, reply.Substring(0, statusPosition));
-            }
-            else
-                return (Status.OK, reply.Substring(0, statusPosition));
+            while (stream.ReadByte() != -1)
+                stream.ReadByte();
         }
 
-        public async Task<Status> GetCustomReplyAsync(string expectedReply, int timeoutMs)
+        private string Readline(int timeout, bool multiline = false)
         {
-            stream.ReadTimeout = timeoutMs;
-            int readBytes = await stream.ReadAsync(buffer, 0, buffer.Length);
-            string reply = encoding.GetString(buffer, 0, readBytes);
+            byte[] replybuffer = new byte[255];
+            int replyidx = 0;
 
-            if (string.IsNullOrWhiteSpace(reply))
-                return Status.ERROR;
-
-            int statusPosition = reply.IndexOf(expectedReply);
-            if (statusPosition < 0)
+            while (timeout-- > 0)
             {
-                return Status.ERROR;
+                if (replyidx >= 254)
+                {
+                    break;
+                }
+
+                int b = 0;
+                while ((b = stream.ReadByte()) > -1 && b <= 256)
+                {
+                    byte c = (byte)b;
+                    if (c == '\r') continue;
+                    if (c == '\n')
+                    {
+                        if (replyidx == 0)   // the first \n is ignored
+                            continue;
+
+                        if (!multiline)
+                        {
+                            timeout = 0;         // the second \n is the end of the line
+                            break;
+                        }
+                    }
+                    replybuffer[replyidx] = c;
+                    replyidx++;
+                }
+
+                if (timeout == 0)
+                {
+                    break;
+                }
+                Thread.Sleep(1);
             }
-            else
-                return Status.OK;
+            return encoding.GetString(replybuffer, 0, replyidx);
+        }
+
+        private (bool success, string reply) GetReply(string send, int timeout)
+        {
+            FlushInput();
+            Write(send);
+            string line = Readline(timeout);
+            return (true, line);
+        }
+
+        public bool SendCheckReply(string send, string expectedReply, int timeout)
+        {
+            (bool success, string reply) = GetReply(send, timeout);
+            if (!success) return false;
+            return reply == expectedReply;
         }
 
         #region IDisposable
