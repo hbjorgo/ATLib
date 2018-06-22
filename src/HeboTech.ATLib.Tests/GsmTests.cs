@@ -72,7 +72,7 @@ namespace HeboTech.ATLib.Tests
         [Fact]
         public void SendSmsTest()
         {
-            string phoneNumber = "12345678";
+            PhoneNumber phoneNumber = new PhoneNumber("12345678");
             string message = "Msg";
 
             Encoding enc = Encoding.ASCII;
@@ -81,7 +81,7 @@ namespace HeboTech.ATLib.Tests
             {
                 stream.DataWritten += (s, e) =>
                 {
-                    if (e.Data == $"AT+CMGS=\"{phoneNumber}\"\r")
+                    if (e.Data == $"AT+CMGS=\"{phoneNumber.ToString()}\"\r")
                         stream.SetReply("> ");
                     if (e.Data == $"{message}\x1A\r\n")
                         stream.SetReply("\r\nOK\r\n");

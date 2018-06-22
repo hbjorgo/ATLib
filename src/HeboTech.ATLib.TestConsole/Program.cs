@@ -16,7 +16,7 @@ namespace HeboTech.ATLib.TestConsole
                     Console.WriteLine("Initialization failed");
                 if (!g.SetModeAsync(Mode.Text).Result)
                     Console.WriteLine("Set mode failed");
-                if (!g.SendSmsAsync("12345678", "Msg").Result)
+                if (!g.SendSmsAsync(new PhoneNumber("12345678"), "Msg").Result)
                     Console.WriteLine("Sending SMS failed");
 
                 Console.WriteLine(Encoding.Default.GetString(stream.ToArray()));

@@ -34,12 +34,13 @@ namespace HeboTech.ATLib
             });
         }
 
-        public Task<bool> SendSmsAsync(string phoneNumber, string message)
+        public Task<bool> SendSmsAsync(PhoneNumber phoneNumber, string message)
         {
             return Task.Factory.StartNew(() =>
             {
                 bool status = false;
-                status = stream.SendCheckReply($"AT+CMGS=\"{phoneNumber}\"\r", "> ", 5_000);
+                //TODO: This times out because it waits for '\r\n', which is not coming (actual response is '> ')
+                status = stream.SendCheckReply($"AT+CMGS=\"{phoneNumber.ToString()}\"\r", "> ", 5_000);
                 if (status)
                 {
                     Thread.Sleep(writeDelayMs);
