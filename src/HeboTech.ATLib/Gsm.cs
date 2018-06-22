@@ -48,5 +48,13 @@ namespace HeboTech.ATLib
                 return status;
             });
         }
+
+        public Task<bool> UnlockSim(Pin pin)
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                return stream.SendCheckReply($"AT+CPIN={pin.ToString()}", OK_RESPONSE, 20_000);
+            });
+        }
     }
 }

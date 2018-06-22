@@ -7,5 +7,6 @@ namespace HeboTech.ATLib
         Task<bool> InitializeAsync();
         Task<bool> SendSmsAsync(string phoneNumber, string message);
         Task<bool> SetMode(Mode mode);
+        Task<bool> UnlockSim(Pin pin);
     }
 }
