@@ -4,13 +4,11 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib
 {
-    public class Gsm
+    public class Gsm : IGsm
     {
         private readonly IGsmStream stream;
         private readonly int writeDelayMs = 25;
         private const string OK_RESPONSE = "OK";
-
-        public enum Mode { Text = 1 } // PDU = 0
 
         public Gsm(IGsmStream stream, int writeDelayMs = 25)
         {
@@ -20,18 +18,19 @@ namespace HeboTech.ATLib
             this.writeDelayMs = writeDelayMs;
         }
 
-        public Task<bool> InitializeAsync(Mode mode)
+        public Task<bool> InitializeAsync()
         {
             return Task.Factory.StartNew(() =>
             {
-                bool status = false;
-                status = stream.SendCheckReply("AT\r\n", OK_RESPONSE, 100);
-                if (status)
-                {
-                    Thread.Sleep(writeDelayMs);
-                    status = stream.SendCheckReply($"AT+CMGF={(int)mode}\r\n", OK_RESPONSE, 5_000);
-                }
-                return status;
+                return stream.SendCheckReply("AT\r\n", OK_RESPONSE, 100);
+            });
+        }
+
+        public Task<bool> SetMode(Mode mode)
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                return stream.SendCheckReply($"AT+CMGF={(int)mode}\r\n", OK_RESPONSE, 5_000);
             });
         }
 
