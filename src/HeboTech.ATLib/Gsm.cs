@@ -8,7 +8,7 @@ namespace HeboTech.ATLib
     {
         private readonly IGsmStream stream;
         private readonly int writeDelayMs = 25;
-        private const string OK_RESPONSE = "OK";
+        private const string OK_RESPONSE = "\r\nOK\r\n";
 
         public Gsm(IGsmStream stream, int writeDelayMs = 25)
         {
@@ -39,7 +39,6 @@ namespace HeboTech.ATLib
             return Task.Factory.StartNew(() =>
             {
                 bool status = false;
-                //TODO: This times out because it waits for '\r\n', which is not coming (actual response is '> ')
                 status = stream.SendCheckReply($"AT+CMGS=\"{phoneNumber.ToString()}\"\r", "> ", 5_000);
                 if (status)
                 {

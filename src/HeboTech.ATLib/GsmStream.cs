@@ -33,11 +33,12 @@ namespace HeboTech.ATLib
                 stream.ReadByte();
         }
 
-        private string Readline(int timeout, bool multiline = false)
+        private string Readline(string expected, int timeout)
         {
+            int expectedIndex = 0;
             int replyidx = 0;
 
-            while (timeout-- > 0)
+            while (timeout-- > 0 && expectedIndex != expected.Length)
             {
                 if (replyidx >= 254)
                 {
@@ -45,21 +46,14 @@ namespace HeboTech.ATLib
                 }
 
                 int b = 0;
-                while ((b = stream.ReadByte()) > -1 && b <= 255)
+                while ((b = stream.ReadByte()) > -1 && b <= 255 && expectedIndex != expected.Length)
                 {
                     byte c = (byte)b;
-                    if (c == '\r') continue;
-                    if (c == '\n')
-                    {
-                        if (replyidx == 0)   // the first \n is ignored
-                            continue;
+                    if (c == expected[expectedIndex])
+                        expectedIndex++;
+                    else
+                        expectedIndex = 0;
 
-                        if (!multiline)
-                        {
-                            timeout = 0;         // the second \n is the end of the line
-                            break;
-                        }
-                    }
                     replybuffer[replyidx] = c;
                     replyidx++;
                 }
@@ -73,18 +67,11 @@ namespace HeboTech.ATLib
             return encoding.GetString(replybuffer, 0, replyidx);
         }
 
-        private (bool success, string reply) GetReply(string send, int timeout)
+        public bool SendCheckReply(string send, string expectedReply, int timeout)
         {
             FlushInput();
             Write(send);
-            string line = Readline(timeout);
-            return (true, line);
-        }
-
-        public bool SendCheckReply(string send, string expectedReply, int timeout)
-        {
-            (bool success, string reply) = GetReply(send, timeout);
-            if (!success) return false;
+            string reply = Readline(expectedReply, timeout);
             return reply == expectedReply;
         }
 
