@@ -107,5 +107,27 @@ namespace HeboTech.ATLib.Tests
                 Assert.True(result);
             }
         }
+
+        [Fact]
+        public void GetBatteryStatusTest()
+        {
+            Encoding enc = Encoding.ASCII;
+            using (TestStream stream = new TestStream(enc))
+            using (GsmStream gsmStream = new GsmStream(stream, enc))
+            {
+                stream.DataWritten += (s, e) =>
+                {
+                    if (e.Data == $"AT+CBC\r\n")
+                        stream.SetReply("+CBC: 2,75\r\nOK\r\n");
+                };
+
+                Gsm g = new Gsm(gsmStream);
+                BatteryStatus result = g.GetBatteryStatusAsync().Result;
+
+                Assert.NotNull(result);
+                Assert.Equal(BatteryChargeStatus.NoBatteryConnected, result.ChargeStatus);
+                Assert.Equal(75, result.ChargeLevel);
+            }
+        }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -54,6 +55,23 @@ namespace HeboTech.ATLib
             return Task.Factory.StartNew(() =>
             {
                 return stream.SendCheckReply($"AT+CPIN={pin.ToString()}", OK_RESPONSE, 20_000);
+            });
+        }
+
+        public Task<BatteryStatus> GetBatteryStatusAsync()
+        {
+            return Task.Factory.StartNew(() =>
+            {
+                string reply = stream.SendGetReply($"AT+CBC\r\n", OK_RESPONSE, 100);
+                Match match = Regex.Match(reply, @"\+CBC: \d,\d*");
+                if (match.Success)
+                {
+                    string[] numberStrings = match.Value.Substring(6).Split(',');
+                    int batteryChargeStatus = Convert.ToInt32(numberStrings[0]);
+                    double batteryChargeLevel = Convert.ToDouble(numberStrings[1]);
+                    return new BatteryStatus((BatteryChargeStatus)batteryChargeStatus, batteryChargeLevel);
+                }
+                return null;
             });
         }
     }

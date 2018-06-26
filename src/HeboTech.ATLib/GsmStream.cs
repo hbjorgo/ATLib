@@ -75,6 +75,14 @@ namespace HeboTech.ATLib
             return reply == expectedReply;
         }
 
+        public string SendGetReply(string send, string terminationReply, int timeout)
+        {
+            FlushInput();
+            Write(send);
+            string reply = Readline(terminationReply, timeout);
+            return reply;
+        }
+
         #region IDisposable
         private bool disposed = false;
 
