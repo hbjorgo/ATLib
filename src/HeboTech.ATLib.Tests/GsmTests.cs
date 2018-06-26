@@ -6,7 +6,7 @@ namespace HeboTech.ATLib.Tests
     public class GsmTests
     {
         [Fact]
-        public void InitializeTest()
+        public void InitializeOkTest()
         {
             Encoding enc = Encoding.ASCII;
             using (TestStream stream = new TestStream(enc))
@@ -22,6 +22,20 @@ namespace HeboTech.ATLib.Tests
                 bool result = g.InitializeAsync().Result;
 
                 Assert.True(result);
+            }
+        }
+
+        [Fact]
+        public void InitializeTimeoutTest()
+        {
+            Encoding enc = Encoding.ASCII;
+            using (TestStream stream = new TestStream(enc))
+            using (GsmStream gsmStream = new GsmStream(stream, enc))
+            {
+                Gsm g = new Gsm(gsmStream);
+                bool result = g.InitializeAsync().Result;
+
+                Assert.False(result);
             }
         }
 
