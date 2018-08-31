@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib
 {
@@ -20,6 +21,16 @@ namespace HeboTech.ATLib
             this.pinDigit1 = pinDigit1;
             this.pinDigit2 = pinDigit2;
             this.pinDigit3 = pinDigit3;
+        }
+
+        public Pin(string pin)
+        {
+            if (!Regex.IsMatch(pin, @"^[0-9]\d{3}$"))
+                throw new ArgumentException("Invalid PIN");
+            this.pinDigit0 = (int)Char.GetNumericValue(pin[0]);
+            this.pinDigit1 = (int)Char.GetNumericValue(pin[1]);
+            this.pinDigit2 = (int)Char.GetNumericValue(pin[2]);
+            this.pinDigit3 = (int)Char.GetNumericValue(pin[3]);
         }
 
         private static void ThrowIfInvalid(int pinDigit)
