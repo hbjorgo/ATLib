@@ -7,7 +7,7 @@ namespace HeboTech.ATLib
 {
     public class GsmStream : IGsmStream, IDisposable
     {
-        private Encoding encoding;
+        private readonly Encoding encoding;
         private readonly Stream stream;
         private readonly int replyBufferSize;
         private readonly byte[] replybuffer;
