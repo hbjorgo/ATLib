@@ -9,10 +9,10 @@ namespace HeboTech.ATLib
     {
         private Encoding encoding;
         private readonly Stream stream;
-        private const int REPLY_BUFFER_SIZE = 1024;
-        private readonly byte[] replybuffer = new byte[REPLY_BUFFER_SIZE];
+        private readonly int replyBufferSize;
+        private readonly byte[] replybuffer;
 
-        public GsmStream(Stream stream, Encoding encoding)
+        public GsmStream(Stream stream, Encoding encoding, int replyBufferSize = 255)
         {
             if (!stream.CanRead)
                 throw new ArgumentException("Stream must support reading");
@@ -20,6 +20,8 @@ namespace HeboTech.ATLib
                 throw new ArgumentException("Stream must support writing");
             this.stream = stream ?? throw new ArgumentNullException(nameof(stream));
             this.encoding = encoding ?? throw new ArgumentNullException(nameof(encoding));
+            this.replyBufferSize = replyBufferSize;
+            replybuffer = new byte[this.replyBufferSize];
         }
 
         private void Write(string text)
@@ -41,13 +43,13 @@ namespace HeboTech.ATLib
 
             while (timeout-- > 0 && expectedIndex != expected.Length)
             {
-                if (replyidx >= REPLY_BUFFER_SIZE - 1)
+                if (replyidx >= replyBufferSize - 1)
                 {
                     break;
                 }
 
                 int b = 0;
-                while ((b = stream.ReadByte()) > -1 && b <= REPLY_BUFFER_SIZE && expectedIndex != expected.Length)
+                while ((b = stream.ReadByte()) > -1 && b <= replyBufferSize && expectedIndex != expected.Length)
                 {
                     byte c = (byte)b;
                     if (c == expected[expectedIndex])
