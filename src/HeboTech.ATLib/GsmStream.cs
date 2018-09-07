@@ -9,7 +9,8 @@ namespace HeboTech.ATLib
     {
         private Encoding encoding;
         private readonly Stream stream;
-        private readonly byte[] replybuffer = new byte[255];
+        private const int REPLY_BUFFER_SIZE = 1024;
+        private readonly byte[] replybuffer = new byte[REPLY_BUFFER_SIZE];
 
         public GsmStream(Stream stream, Encoding encoding)
         {
@@ -40,13 +41,13 @@ namespace HeboTech.ATLib
 
             while (timeout-- > 0 && expectedIndex != expected.Length)
             {
-                if (replyidx >= 254)
+                if (replyidx >= REPLY_BUFFER_SIZE - 1)
                 {
                     break;
                 }
 
                 int b = 0;
-                while ((b = stream.ReadByte()) > -1 && b <= 255 && expectedIndex != expected.Length)
+                while ((b = stream.ReadByte()) > -1 && b <= REPLY_BUFFER_SIZE && expectedIndex != expected.Length)
                 {
                     byte c = (byte)b;
                     if (c == expected[expectedIndex])
