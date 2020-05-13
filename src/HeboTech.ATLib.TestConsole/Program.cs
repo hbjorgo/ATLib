@@ -1,9 +1,9 @@
-﻿using HeboTech.ATLib.Pipelines;
+﻿using HeboTech.ATLib.Commands;
+using HeboTech.MessageReader;
 using System;
-using System.Buffers;
-using System.ComponentModel.Design;
 using System.IO;
 using System.IO.Pipelines;
+using System.IO.Ports;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -12,37 +12,55 @@ namespace HeboTech.ATLib.TestConsole
 {
     class Program
     {
+        static MemoryStream memStream = new MemoryStream();
+
         static async Task Main(string[] args)
         {
-            MemoryStream stream = new MemoryStream();
-            for (int i = 0; i < 100; i++)
+            SerialPort serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
+            //serialPort.DataReceived += SerialPort_DataReceived;
+            serialPort.Open();
+            serialPort.DiscardOutBuffer();
+            serialPort.DiscardInBuffer();
+
+            PipeReader reader = PipeReader.Create(serialPort.BaseStream, new StreamPipeReaderOptions(bufferSize: 2));
+            ICommunicator<string> comm = new Communicator<string>(serialPort.BaseStream, new Pipelines.MessageReader(reader));
+
+            // Initialize
+            for (int i = 0; i < 2; i++)
             {
-                stream.Write(Encoding.UTF8.GetBytes($"{i}_OK\r"));
-                if (i % 3 == 0)
-                    stream.Write(Encoding.UTF8.GetBytes("###"));
+                Console.WriteLine($"Initialize: {comm.Initialize()}");
+                Thread.Sleep(1000);
             }
-            stream.Position = 0;
 
-            PipeReader reader = PipeReader.Create(stream, new StreamPipeReaderOptions(bufferSize: 32));
+            // Read Mode
+            comm.ReadMode();
+            Thread.Sleep(1000);
 
-            ATMessageParser aTMessageReader = new ATMessageParser(reader);
-            ATResult result;
-            do
-            {
-                try
-                {
-                    result = await aTMessageReader.ReadSingleMessageAsync();
-                    Console.WriteLine(result);
-                }
-                catch (InvalidDataException ide)
-                {
-                    Console.WriteLine(ide.Message);
-                    break;
-                }
-            } while (result != null);
+            // Set Mode
+            Console.WriteLine($"Set Mode: {comm.SetMode(Mode.Text)}");
+            Thread.Sleep(1000);
+
+            // Get battery status
+            var batteryStatus = comm.GetBatteryStatus();
+
+            // Send SMS
+            var smsStatus = comm.SendSms(new PhoneNumber("41501790"), "I'm sending you an SMS!");
+            Console.WriteLine($"Send SMS: {smsStatus}");
+
+            serialPort.Close();
 
             Console.WriteLine("Done");
             Console.ReadKey();
+        }
+
+        private static void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
+        {
+            SerialPort serialPort = (SerialPort)sender;
+            string available = serialPort.ReadExisting();
+            //Console.WriteLine($"SP:{available}");
+            long originalPosition = memStream.Position;
+            memStream.Write(Encoding.UTF8.GetBytes(available));
+            memStream.Position = originalPosition;
         }
 
         static void Main2(string[] args)

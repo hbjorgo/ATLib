@@ -5,18 +5,18 @@ using System.IO.Pipelines;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HeboTech.ATLib.Pipelines
+namespace HeboTech.MessageReader
 {
-    public abstract class MessageParserBase<TMessage>
+    public abstract class MessageReaderBase<TMessage>
     {
         private readonly PipeReader reader;
 
-        public MessageParserBase(PipeReader reader)
+        public MessageReaderBase(PipeReader reader)
         {
             this.reader = reader;
         }
 
-        public async ValueTask<TMessage> ReadSingleMessageAsync(CancellationToken cancellationToken = default)
+        public async ValueTask<TMessage> ReadSingleMessageAsync(byte[] delimiter, CancellationToken cancellationToken = default)
         {
             while (true)
             {
@@ -30,10 +30,10 @@ namespace HeboTech.ATLib.Pipelines
 
                 try
                 {
-                    if (TryParseMessage(ref buffer, out TMessage message))
+                    if (TryReadMessage(ref buffer, delimiter, out TMessage message))
                     {
                         // A single message was successfully parsed so mark the start as the
-                        // parsed buffer as consumed. TryParseMessage trims the buffer to
+                        // parsed buffer as consumed. TryReadMessage trims the buffer to
                         // point to the data after the message was parsed.
                         consumed = buffer.Start;
 
@@ -66,6 +66,6 @@ namespace HeboTech.ATLib.Pipelines
             return default;
         }
 
-        protected abstract bool TryParseMessage(ref ReadOnlySequence<byte> buffer, out TMessage message);
+        protected abstract bool TryReadMessage(ref ReadOnlySequence<byte> buffer, byte[] delimiter, out TMessage message);
     }
 }

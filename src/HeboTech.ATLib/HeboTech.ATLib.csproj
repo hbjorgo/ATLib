@@ -8,9 +8,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Superpower" Version="2.3.0" />
     <PackageReference Include="System.ComponentModel.Annotations" Version="4.7.0" />
-    <PackageReference Include="System.IO.Pipelines" Version="4.7.1" />
+    <PackageReference Include="System.IO.Pipelines" Version="4.7.2" />
     <PackageReference Include="System.IO.Ports" Version="4.7.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\HeboTech.MessageReader\HeboTech.MessageReader.csproj" />
   </ItemGroup>
 
   <ItemGroup>
