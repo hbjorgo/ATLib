@@ -8,6 +8,7 @@ namespace HeboTech.ATLib.Pipelines
     public class ATMessageParser : MessageParserBase<ATResult>
     {
         private const byte BYTE_CR = (byte)'\r';
+        private const byte BYTE_NL = (byte)'\n';
         private const byte BYTE_O = (byte)'O';
         private const byte BYTE_K = (byte)'K';
 
@@ -28,32 +29,6 @@ namespace HeboTech.ATLib.Pipelines
 
             message = default;
             return false;
-        }
-
-        protected bool TryParseMessage2(ref ReadOnlySequence<byte> buffer, out ATResult message)
-        {
-            // Look for a EOL in the buffer.
-            SequencePosition? crPosition = buffer.PositionOf(BYTE_CR);
-
-            if (crPosition == null)
-            {
-                message = default;
-                return false;
-            }
-
-            var slice = buffer.Slice(0, crPosition.Value);
-
-            var reader = new SequenceReader<byte>(slice);
-
-            bool oFound = reader.TryAdvanceTo(BYTE_O);
-            bool kFound = false;
-            if (oFound)
-                kFound = reader.IsNext(BYTE_K);
-
-            // Skip the line + the termination character \r.
-            message = new ATResult(Encoding.UTF8.GetString(slice.ToArray()));
-            buffer = buffer.Slice(buffer.GetPosition(1, crPosition.Value));
-            return true;
         }
     }
 }
