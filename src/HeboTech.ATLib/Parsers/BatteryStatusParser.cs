@@ -1,4 +1,5 @@
 ﻿using HeboTech.ATLib.Results;
+using HeboTech.ATLib.States;
 using Superpower;
 using Superpower.Model;
 using Superpower.Parsers;
@@ -13,14 +14,14 @@ namespace HeboTech.ATLib.Parsers
                 (from _ in CommonParsers.Cr
                  from __ in CommonParsers.Lf
                  from ___ in Span.EqualTo("+CBC: ")
-                 from bcs in Character.Digit
+                 from bcs in Numerics.IntegerInt32
                  from ____ in Character.EqualTo(',')
-                 from bcl in Character.Digit.AtLeastOnce()
+                 from bcl in Numerics.IntegerInt32
                  from _____ in Character.EqualTo(',')
-                 from voltage in Character.Digit.AtLeastOnce()
+                 from voltage in Numerics.IntegerInt32
                  from ______ in CommonParsers.Cr
                  from _______ in CommonParsers.Lf
-                 select new BatteryStatusResult((BatteryStatusResult.BatteryChargeStatus)(byte)(bcs + - '0'), int.Parse(bcl), int.Parse(voltage)))
+                 select new BatteryStatusResult((BatteryChargeStatus)bcs, bcl, voltage))
                 .AtEnd();
         }
 
@@ -28,14 +29,14 @@ namespace HeboTech.ATLib.Parsers
         {
             public static TextParser<BatteryStatusResult> Response { get; } =
                  (from _ in Span.EqualTo("+CBC: ")
-                  from bcs in Character.Digit
+                  from bcs in Numerics.IntegerInt32
                   from __ in Character.EqualTo(',')
-                  from bcl in Character.Digit.AtLeastOnce()
+                  from bcl in Numerics.IntegerInt32
                   from ___ in Character.EqualTo(',')
-                  from voltage in Character.Digit.AtLeastOnce()
+                  from voltage in Numerics.IntegerInt32
                   from ____ in CommonParsers.Cr
                   from _____ in CommonParsers.Lf
-                  select new BatteryStatusResult((BatteryStatusResult.BatteryChargeStatus)(bcs + -'0'), int.Parse(bcl), int.Parse(voltage)))
+                  select new BatteryStatusResult((BatteryChargeStatus)bcs, bcl, voltage))
                 .AtEnd();
         }
 

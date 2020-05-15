@@ -1,4 +1,4 @@
-﻿using System.ComponentModel;
+﻿using HeboTech.ATLib.States;
 
 namespace HeboTech.ATLib.Results
 {
@@ -8,18 +8,6 @@ namespace HeboTech.ATLib.Results
         public int ChargeLevel { get; }
         // Millivolt
         public int Voltage { get; }
-
-        public enum BatteryChargeStatus : byte
-        {
-            [Description("Powered by battery")]
-            PoweredByBattery = 0,
-            [Description("Charging")]
-            Charging = 1,
-            [Description("Charging finished")]
-            ChargingFinished = 2,
-            [Description("Power fault")]
-            PowerFault = 3
-        }
 
         public BatteryStatusResult(BatteryChargeStatus status, int chargeLevel, int voltage)
         {

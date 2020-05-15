@@ -10,7 +10,7 @@ namespace HeboTech.ATLib.Commands
         public static async Task<ATResult> InitializeAsync(this ICommunicator<string> comm)
         {
             await comm.Write("AT\r");
-            var message = await comm.ReadSingleMessageAsync((byte)'\n');
+            var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF);
             if (OkParser.TryParseNumeric(message, out OkResult okResult))
                 return okResult;
             else if (ErrorParser.TryParseNumeric(message, out ErrorResult errorResult))

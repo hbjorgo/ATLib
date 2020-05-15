@@ -1,5 +1,4 @@
-﻿using System;
-using System.Buffers;
+﻿using System.Buffers;
 using System.IO.Pipelines;
 using System.Text;
 using System.Threading;
@@ -16,10 +15,10 @@ namespace HeboTech.MessageReader
             this.duplexPipe = duplexPipe;
         }
 
-        public async ValueTask Write(string input)
+        public async ValueTask Write(string input, CancellationToken cancellationToken = default)
         {
             var bytes = Encoding.UTF8.GetBytes(input);
-            await duplexPipe.Output.WriteAsync(bytes);
+            await duplexPipe.Output.WriteAsync(bytes, cancellationToken);
         }
 
         public async ValueTask<TMessage> ReadSingleMessageAsync(byte delimiter, CancellationToken cancellationToken = default)
