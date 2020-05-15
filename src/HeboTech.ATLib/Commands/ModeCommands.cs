@@ -1,29 +1,32 @@
-﻿using HeboTech.ATLib.SuperPower.Parsers;
+﻿using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.Results;
 using HeboTech.MessageReader;
-using System.Text;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Commands
 {
     public static class ModeCommands
     {
-        public static void ReadMode(this ICommunicator<string> comm)
+        public static async Task<ATResult> ReadModeAsync(this ICommunicator<string> comm)
         {
-            comm.Write($"AT+CMGF?\r");
-            Thread.Sleep(2000);
-            var message = comm.GetResponse(Encoding.UTF8.GetBytes("\r\n"));
-            message = comm.GetResponse(Encoding.UTF8.GetBytes("\r\n"));
-            var result = OkParser.TryParse(message, out _);
+            await comm.Write($"AT+CMGF?\r");
+            var message = await comm.ReadSingleMessageAsync((byte)'\r');
+            if (OkParser.TryParseNumeric(message, out OkResult okResult))
+                return okResult;
+            else if (ErrorParser.TryParseNumeric(message, out ErrorResult errorResult))
+                return errorResult;
+            return new UnknownResult();
         }
 
-        public static bool SetMode(this ICommunicator<string> comm, Mode mode)
+        public static async Task<ATResult> SetModeAsync(this ICommunicator<string> comm, Mode mode)
         {
-            comm.Write($"AT+CMGF={(int)mode}\r\n");
-            Thread.Sleep(2000);
-            var message = comm.GetResponse(Encoding.UTF8.GetBytes("\r\n"));
-            message = comm.GetResponse(Encoding.UTF8.GetBytes("\r\n"));
-            var result = OkParser.TryParse(message, out _);
-            return result;
+            await comm.Write($"AT+CMGF={(int)mode}\r");
+            var message = await comm.ReadSingleMessageAsync((byte)'\r');
+            if (OkParser.TryParseNumeric(message, out OkResult okResult))
+                return okResult;
+            else if (ErrorParser.TryParseNumeric(message, out ErrorResult errorResult))
+                return errorResult;
+            return new UnknownResult();
         }
     }
 }

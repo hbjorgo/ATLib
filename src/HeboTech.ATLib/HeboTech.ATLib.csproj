@@ -15,7 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\HeboTech.MessageReader\HeboTech.MessageReader.csproj" />
+    <ProjectReference Include="..\HeboTech.MessageReader\HeboTech.Communicator.csproj" />
   </ItemGroup>
 
   <ItemGroup>

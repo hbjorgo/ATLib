@@ -7,60 +7,61 @@ using System.IO.Ports;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Pipelines.Sockets.Unofficial;
+using HeboTech.ATLib.Pipelines;
+using System.Net.Sockets;
+using System.Net;
 
 namespace HeboTech.ATLib.TestConsole
 {
     class Program
     {
-        static MemoryStream memStream = new MemoryStream();
-
         static async Task Main(string[] args)
         {
-            SerialPort serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
-            //serialPort.DataReceived += SerialPort_DataReceived;
-            serialPort.Open();
-            serialPort.DiscardOutBuffer();
-            serialPort.DiscardInBuffer();
-
-            PipeReader reader = PipeReader.Create(serialPort.BaseStream, new StreamPipeReaderOptions(bufferSize: 2));
-            ICommunicator<string> comm = new Communicator<string>(serialPort.BaseStream, new Pipelines.MessageReader(reader));
-
-            // Initialize
-            for (int i = 0; i < 2; i++)
+            using (SerialPort serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One))
             {
-                Console.WriteLine($"Initialize: {comm.Initialize()}");
+                Console.WriteLine("Opening serial port...");
+                serialPort.Open();
+                Console.WriteLine("Serialport opened");
+
+                var stream = serialPort.BaseStream;
+
+                IDuplexPipe duplexPipe = StreamConnection.GetDuplex(stream);
+                ICommunicator<string> comm = new Communicator(duplexPipe);
+
+                // Initialize
+                var initializeResult = await comm.InitializeAsync();
+                Console.WriteLine($"Initialize: {initializeResult}");
                 Thread.Sleep(1000);
+
+                // Set command echo
+                var echoResult = await comm.EnableCommandEcho(false);
+                Console.WriteLine($"Echo disabled: {echoResult}");
+
+                // PIN status
+                var pinResult = await comm.GetPinStatus();
+                Console.WriteLine(pinResult);
+
+                // Read Mode
+                //await comm.ReadModeAsync();
+                //Thread.Sleep(1000);
+
+                // Set Mode
+                //var setModeResult = await comm.SetModeAsync(Mode.Text);
+                //Console.WriteLine($"Set Mode: {setModeResult}");
+                //Thread.Sleep(1000);
+
+                // Get battery status
+                var batteryStatus = await comm.GetBatteryStatusAsync();
+                Console.WriteLine(batteryStatus);
+
+                // Send SMS
+                //var smsStatus = await comm.SendSmsAsync(new PhoneNumber("NUMBER"), "Im sending you an SMS!");
+                //Console.WriteLine($"Send SMS: {smsStatus}");
             }
-
-            // Read Mode
-            comm.ReadMode();
-            Thread.Sleep(1000);
-
-            // Set Mode
-            Console.WriteLine($"Set Mode: {comm.SetMode(Mode.Text)}");
-            Thread.Sleep(1000);
-
-            // Get battery status
-            var batteryStatus = comm.GetBatteryStatus();
-
-            // Send SMS
-            var smsStatus = comm.SendSms(new PhoneNumber("41501790"), "I'm sending you an SMS!");
-            Console.WriteLine($"Send SMS: {smsStatus}");
-
-            serialPort.Close();
 
             Console.WriteLine("Done");
             Console.ReadKey();
-        }
-
-        private static void SerialPort_DataReceived(object sender, SerialDataReceivedEventArgs e)
-        {
-            SerialPort serialPort = (SerialPort)sender;
-            string available = serialPort.ReadExisting();
-            //Console.WriteLine($"SP:{available}");
-            long originalPosition = memStream.Position;
-            memStream.Write(Encoding.UTF8.GetBytes(available));
-            memStream.Position = originalPosition;
         }
 
         static void Main2(string[] args)

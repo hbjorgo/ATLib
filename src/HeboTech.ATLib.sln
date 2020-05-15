@@ -9,7 +9,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HeboTech.ATLib.TestConsole"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HeboTech.ATLib.Tests", "HeboTech.ATLib.Tests\HeboTech.ATLib.Tests.csproj", "{2CE10183-66E8-417E-9137-59C2AE00FCCD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HeboTech.MessageReader", "HeboTech.MessageReader\HeboTech.MessageReader.csproj", "{EB9DBB1A-C060-488C-AF2F-1861683504EB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HeboTech.Communicator", "HeboTech.MessageReader\HeboTech.Communicator.csproj", "{EB9DBB1A-C060-488C-AF2F-1861683504EB}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

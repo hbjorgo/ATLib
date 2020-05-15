@@ -1,10 +1,10 @@
 ﻿namespace HeboTech.ATLib.Results
 {
-    public class OkResult : ATResult
+    public class UnknownResult : ATResult
     {
         public override string ToString()
         {
-            return "OK";
+            return "Unknown";
         }
     }
 }
