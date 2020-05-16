@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace HeboTech.ATLib
+﻿namespace HeboTech.ATLib
 {
     public class PhoneNumber
     {
@@ -8,7 +6,6 @@ namespace HeboTech.ATLib
 
         public PhoneNumber(string number)
         {
-            (new PhoneAttribute()).Validate(number, nameof(number));
             this.number = number;
         }
 
