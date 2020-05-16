@@ -16,10 +16,13 @@ Using a serial port to communicate with a modem is easy:
 // Create and connect to serial port
 SerialPort serialPort = new SerialPort(); //Use an overload to pass in your settings
 serialPort.Open();
+
 // Pipe the serial port stream through a duplex pipe
 IDuplexPipe duplexPipe = StreamConnection.GetDuplex(serialPort.BaseStream); // See note below
+
 // Pass in the pipe to the communicator and start communicating!
 ICommunicator<string> comm = new Communicator(duplexPipe);
+
 // Send a ping to the modem
 var initializeResult = await comm.InitializeAsync();
 // Get battery status
