@@ -4,7 +4,10 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>HeboTech</Authors>
     <Product>HeboTech ATLib</Product>
+    <Version>0.1.0</Version>
     <PackageTags>atcommand at command gsm sms</PackageTags>
+    <Description>An extensible async AT command library.</Description>
+    <RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>
