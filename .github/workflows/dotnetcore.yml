@@ -17,7 +17,9 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 3.1.101
+    - name: Install dependencies
+      run: dotnet restore src/HeboTech.ATLib.sln
     - name: Build
-      run: dotnet build src/HeboTech.ATLib.sln --configuration Release
+      run: dotnet build src/HeboTech.ATLib.sln --configuration Release --no-restore
     - name: Test
-      run: dotnet test --no-restore --verbosity normal
+      run: dotnet test src/HeboTech.ATLib.sln --no-restore --verbosity normal
