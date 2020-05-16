@@ -1,4 +1,4 @@
-# ATLib ![Continuous Integration](https://github.com/hbjorgo/ATLib/workflows/Continuous%20Integration/badge.svg?branch=master)
+# ATLib ![Continuous Integration](https://github.com/hbjorgo/ATLib/workflows/Continuous%20Integration/badge.svg?branch=master) [![NuGet Version](https://img.shields.io/nuget/vpre/HeboTech.ATLib.svg?style=flat)](https://www.nuget.org/packages/HeboTech.ATLib/)
 ATLib is a C# AT command library that abstracts away the commands and makes it easy to communicate with modems.
 
 Hayes command set (commonly known as AT commands) is a command set commonly used in modems. Read more about it at [Wikipedia](https://en.wikipedia.org/wiki/Hayes_command_set)
