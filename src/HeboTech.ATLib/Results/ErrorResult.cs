@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.Results
 {
-    public class ErrorResult : ATResult
+    public class ErrorResult
     {
         public override string ToString()
         {

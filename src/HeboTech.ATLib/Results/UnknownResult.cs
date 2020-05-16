@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.Results
 {
-    public class UnknownResult : ATResult
+    public class UnknownResult
     {
         public override string ToString()
         {

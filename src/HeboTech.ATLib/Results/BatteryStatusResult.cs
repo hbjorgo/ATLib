@@ -2,7 +2,7 @@
 
 namespace HeboTech.ATLib.Results
 {
-    public class BatteryStatusResult : ATResult
+    public class BatteryStatusResult
     {
         public BatteryChargeStatus Status { get; }
         public int ChargeLevel { get; }

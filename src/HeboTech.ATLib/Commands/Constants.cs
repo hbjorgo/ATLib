@@ -3,5 +3,6 @@
     public static class Constants
     {
         public const byte BYTE_LF = (byte)'\n';
+        public const string PARSING_FAILED = "Parsing failed";
     }
 }

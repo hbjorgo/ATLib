@@ -3,7 +3,7 @@ using System;
 
 namespace HeboTech.ATLib.Results
 {
-    public class PinStatusResult : ATResult
+    public class PinStatusResult
     {
         public PinStatusResult(string status)
         {

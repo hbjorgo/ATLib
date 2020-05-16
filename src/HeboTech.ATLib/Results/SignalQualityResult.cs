@@ -2,7 +2,7 @@
 
 namespace HeboTech.ATLib.Results
 {
-    public class SignalQualityResult : ATResult
+    public class SignalQualityResult
     {
         public SignalQualityResult(int rssi, int ber)
         {

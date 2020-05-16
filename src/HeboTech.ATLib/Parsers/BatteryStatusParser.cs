@@ -1,12 +1,12 @@
 ﻿using HeboTech.ATLib.Results;
 using HeboTech.ATLib.States;
 using Superpower;
-using Superpower.Model;
 using Superpower.Parsers;
+using System;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public static class BatteryStatusParser
+    public class BatteryStatusParser
     {
         private static class Verbose
         {
@@ -40,33 +40,27 @@ namespace HeboTech.ATLib.Parsers
                 .AtEnd();
         }
 
-        public static bool TryParseVerbose(string input, out BatteryStatusResult result)
+        public static bool TryParse(string input, ResponseFormat responseFormat, out ATResult<BatteryStatusResult> result)
         {
-            if (input != null)
+            if (input == null)
             {
-                Result<BatteryStatusResult> parseResult = Verbose.Response.TryParse(input);
-                if (parseResult.HasValue)
-                {
-                    result = parseResult.Value;
-                    return true;
-                }
+                result = ATResult.Error<BatteryStatusResult>(Constants.EmptyInput);
+                return false;
             }
-            result = default;
-            return false;
-        }
 
-        public static bool TryParseNumeric(string input, out BatteryStatusResult result)
-        {
-            if (input != null)
+            var parseResult = responseFormat switch
             {
-                Result<BatteryStatusResult> parseResult = Numeric.Response.TryParse(input);
-                if (parseResult.HasValue)
-                {
-                    result = parseResult.Value;
-                    return true;
-                }
+                ResponseFormat.Numeric => Numeric.Response.TryParse(input),
+                ResponseFormat.Verbose => Verbose.Response.TryParse(input),
+                _ => throw new NotImplementedException(Constants.PARSER_NOT_IMPLEMENTED),
+            };
+            if (parseResult.HasValue)
+            {
+                result = ATResult.Value(parseResult.Value);
+                return true;
             }
-            result = default;
+
+            result = ATResult.Error<BatteryStatusResult>(parseResult.ErrorMessage);
             return false;
         }
     }

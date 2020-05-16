@@ -1,22 +1,24 @@
 ﻿using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
+using HeboTech.ATLib.States;
 using HeboTech.MessageReader;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Commands
 {
     public static class CommandEchoCommand
     {
-        public static async Task<ATResult> EnableCommandEcho(this ICommunicator<string> comm, bool enable)
+        public static async ValueTask<ATResult<OkResult>> EnableCommandEcho(this ICommunicator<string> comm, bool enable, CancellationToken cancellationToken = default)
         {
             byte parameter = (byte)(enable ? 1 : 0);
-            await comm.Write($"ATE{parameter}\r");
-            var message = await comm.ReadSingleMessageAsync((byte)'\n');
-            if (OkParser.TryParseNumeric(message, out OkResult okResult))
+            await comm.Write($"ATE{parameter}\r", cancellationToken);
+            var message = await comm.ReadSingleMessageAsync((byte)'\n', cancellationToken);
+            if (OkParser.TryParse(message, ResponseFormat.Numeric, out ATResult<OkResult> okResult))
                 return okResult;
-            else if (ErrorParser.TryParseNumeric(message, out ErrorResult errorResult))
-                return errorResult;
-            return new UnknownResult();
+            else if (ErrorParser.TryParse(message, ResponseFormat.Numeric, out ATResult<ErrorResult> errorResult))
+                return ATResult.Error<OkResult>(errorResult.ErrorMessage);
+            return ATResult.Error<OkResult>(Constants.PARSING_FAILED);
         }
     }
 }

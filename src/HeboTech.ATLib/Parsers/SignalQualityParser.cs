@@ -1,7 +1,8 @@
 ﻿using HeboTech.ATLib.Results;
+using HeboTech.ATLib.States;
 using Superpower;
-using Superpower.Model;
 using Superpower.Parsers;
+using System;
 
 namespace HeboTech.ATLib.Parsers
 {
@@ -35,33 +36,27 @@ namespace HeboTech.ATLib.Parsers
                 .AtEnd();
         }
 
-        public static bool TryParseVerbose(string input, out SignalQualityResult result)
+        public static bool TryParse(string input, ResponseFormat responseFormat, out ATResult<SignalQualityResult> result)
         {
-            if (input != null)
+            if (input == null)
             {
-                Result<SignalQualityResult> parseResult = Verbose.Response.TryParse(input);
-                if (parseResult.HasValue)
-                {
-                    result = parseResult.Value;
-                    return true;
-                }
+                result = ATResult.Error<SignalQualityResult>(Constants.EmptyInput);
+                return false;
             }
-            result = default;
-            return false;
-        }
 
-        public static bool TryParseNumeric(string input, out SignalQualityResult result)
-        {
-            if (input != null)
+            var parseResult = responseFormat switch
             {
-                Result<SignalQualityResult> parseResult = Numeric.Response.TryParse(input);
-                if (parseResult.HasValue)
-                {
-                    result = parseResult.Value;
-                    return true;
-                }
+                ResponseFormat.Numeric => Numeric.Response.TryParse(input),
+                ResponseFormat.Verbose => Verbose.Response.TryParse(input),
+                _ => throw new NotImplementedException(Constants.PARSER_NOT_IMPLEMENTED),
+            };
+            if (parseResult.HasValue)
+            {
+                result = ATResult.Value(parseResult.Value);
+                return true;
             }
-            result = default;
+
+            result = ATResult.Error<SignalQualityResult>(parseResult.ErrorMessage);
             return false;
         }
     }

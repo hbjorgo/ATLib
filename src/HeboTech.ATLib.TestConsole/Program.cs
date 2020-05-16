@@ -27,20 +27,29 @@ namespace HeboTech.ATLib.TestConsole
 
                 // Initialize
                 var initializeResult = await comm.InitializeAsync();
-                Console.WriteLine($"Initialize: {initializeResult}");
+                if (initializeResult.HasValue)
+                    Console.WriteLine($"Initialize: {initializeResult.Value}");
                 Thread.Sleep(1000);
 
                 // Set command echo
                 var echoResult = await comm.EnableCommandEcho(false);
-                Console.WriteLine($"Echo disabled: {echoResult}");
+                if (echoResult.HasValue)
+                    Console.WriteLine($"Echo disabled: {echoResult.Value}");
 
                 // PIN status
                 var pinResult = await comm.GetPinStatus();
-                Console.WriteLine(pinResult);
+                if (pinResult.HasValue)
+                    Console.WriteLine(pinResult.Value);
 
                 // Signal quality
-                var signalQualityResult = await comm.GetSignalQuality();
-                Console.WriteLine(signalQualityResult);
+                var signalQualityResult = await comm.TryGetSignalQualityAsync();
+                if (signalQualityResult.HasValue)
+                    Console.WriteLine(signalQualityResult.Value);
+
+                // Get battery status
+                var batteryStatus = await comm.GetBatteryStatusAsync();
+                if (batteryStatus.HasValue)
+                    Console.WriteLine(batteryStatus.Value);
 
                 // Read Mode
                 //await comm.ReadModeAsync();
@@ -50,10 +59,6 @@ namespace HeboTech.ATLib.TestConsole
                 //var setModeResult = await comm.SetModeAsync(Mode.Text);
                 //Console.WriteLine($"Set Mode: {setModeResult}");
                 //Thread.Sleep(1000);
-
-                // Get battery status
-                var batteryStatus = await comm.GetBatteryStatusAsync();
-                Console.WriteLine(batteryStatus);
 
                 // Send SMS
                 //var smsStatus = await comm.SendSmsAsync(new PhoneNumber("NUMBER"), "Im sending you an SMS!");
