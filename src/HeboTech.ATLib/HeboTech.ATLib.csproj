@@ -6,10 +6,13 @@
     <Product>HeboTech ATLib</Product>
     <Version>0.0.1-alpha</Version>
     <PackageId>HeboTech.ATLib</PackageId>
-    <PackageTags>atcommand at command gsm sms</PackageTags>
+    <PackageTags>atcommand at command gsm sms hayes</PackageTags>
     <Description>An extensible async AT command library.</Description>
     <RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/hbjorgo/ATLib</PackageProjectUrl>
+    <PackageReleaseNotes>https://github.com/hbjorgo/ATLib/releases</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
