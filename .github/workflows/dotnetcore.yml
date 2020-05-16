@@ -27,5 +27,5 @@ jobs:
     - name: Pack
       run: dotnet pack src/HeboTech.ATLib/HeboTech.ATLib.csproj --configuration Release
     - name: Publish
-      run: dotnet nuget push "src/HeboTech.ATLib/bin/Release/HeboTech.ATLib*.nupkg" --source "github"
+      run: dotnet nuget push "src/HeboTech.ATLib/bin/Release/HeboTech.ATLib*.nupkg" --source "https://github.com/hbjorgo/ATLib/packages"
     
