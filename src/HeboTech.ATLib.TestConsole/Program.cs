@@ -1,27 +1,71 @@
-﻿using System;
-using System.IO;
-using System.Text;
+﻿using HeboTech.ATLib.Commands;
+using HeboTech.ATLib.Pipelines;
+using HeboTech.MessageReader;
+using Pipelines.Sockets.Unofficial;
+using System;
+using System.IO.Pipelines;
+using System.IO.Ports;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
-            using (MemoryStream stream = new MemoryStream())
-            using (GsmStream gsmStream = new GsmStream(stream, Encoding.ASCII))
+            using (SerialPort serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One))
             {
-                Gsm g = new Gsm(gsmStream);
-                if (!g.InitializeAsync().Result)
-                    Console.WriteLine("Initialization failed");
-                if (!g.SetModeAsync(Mode.Text).Result)
-                    Console.WriteLine("Set mode failed");
-                if (!g.SendSmsAsync(new PhoneNumber("12345678"), "Msg").Result)
-                    Console.WriteLine("Sending SMS failed");
+                Console.WriteLine("Opening serial port...");
+                serialPort.Open();
+                Console.WriteLine("Serialport opened");
 
-                Console.WriteLine(Encoding.Default.GetString(stream.ToArray()));
+                var stream = serialPort.BaseStream;
+
+                IDuplexPipe duplexPipe = StreamConnection.GetDuplex(stream);
+                ICommunicator<string> comm = new Communicator(duplexPipe);
+
+                // Initialize
+                var initializeResult = await comm.InitializeAsync();
+                if (initializeResult.HasValue)
+                    Console.WriteLine($"Initialize: {initializeResult.Value}");
+                Thread.Sleep(1000);
+
+                // Set command echo
+                var echoResult = await comm.EnableCommandEchoAsync(false);
+                if (echoResult.HasValue)
+                    Console.WriteLine($"Echo disabled: {echoResult.Value}");
+
+                // PIN status
+                var pinResult = await comm.GetPinStatusAsync();
+                if (pinResult.HasValue)
+                    Console.WriteLine(pinResult.Value);
+
+                // Signal quality
+                var signalQualityResult = await comm.GetSignalQualityAsync();
+                if (signalQualityResult.HasValue)
+                    Console.WriteLine(signalQualityResult.Value);
+
+                // Get battery status
+                var batteryStatus = await comm.GetBatteryStatusAsync();
+                if (batteryStatus.HasValue)
+                    Console.WriteLine(batteryStatus.Value);
+
+                // Read Mode
+                //await comm.ReadModeAsync();
+                //Thread.Sleep(1000);
+
+                // Set Mode
+                //var setModeResult = await comm.SetModeAsync(Mode.Text);
+                //Console.WriteLine($"Set Mode: {setModeResult}");
+                //Thread.Sleep(1000);
+
+                // Send SMS
+                //var smsStatus = await comm.SendSmsAsync(new PhoneNumber("NUMBER"), "Im sending you an SMS!");
+                //Console.WriteLine($"Send SMS: {smsStatus}");
             }
 
+            Console.WriteLine("Done. Press any key to exit...");
             Console.ReadKey();
         }
     }
