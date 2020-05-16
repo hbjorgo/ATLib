@@ -1,4 +1,4 @@
-name: .NET Core
+name: Continuous Integration
 
 on:
   push:
@@ -27,10 +27,4 @@ jobs:
     - name: Test
       run: dotnet test HeboTech.ATLib.sln --no-restore --verbosity normal
       working-directory: src/
-    - name: Pack
-      run: dotnet pack HeboTech.ATLib.csproj --configuration Release
-      working-directory: src/HeboTech.ATLib/
-    - name: Publish
-      run: dotnet nuget push "HeboTech.ATLib*.nupkg" --source "https://github.com/hbjorgo/ATLib/packages"
-      working-directory: src/HeboTech.ATLib/bin/Release
     
