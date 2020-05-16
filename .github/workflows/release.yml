@@ -1,0 +1,25 @@
+name: Release NuGet
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.101
+    - name: Create NuGet Package
+      run: dotnet pack -c Release /p:Version=${{ github.event.release.tag_name }} /p:PackageReleaseNotes="See https://github.com/hbjorgo/ATLib/releases/tag/${{ github.event.release.tag_name }}"
+      working-directory: ./src
+    - name: Archive NuGet Package
+      uses: actions/upload-artifact@v1
+      with:
+        name: HeboTech.ATLib
+        path: ./src/HeboTech.ATLib/bin/Release/HeboTech.ATLib.${{ github.event.release.tag_name }}.nupkg
