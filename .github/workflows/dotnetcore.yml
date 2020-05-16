@@ -25,7 +25,7 @@ jobs:
     - name: Test
       run: dotnet test src/HeboTech.ATLib.sln --no-restore --verbosity normal
     - name: Pack
-      run: dotnet pack --configuration Release
+      run: dotnet pack src/HeboTech.ATLib/HeboTech.ATLib.csproj --configuration Release
     - name: Publish
-      run: dotnet nuget push "src/HeboTech.ATLib/bin/Release/ATLib*.nupkg" --source "github"
+      run: dotnet nuget push "src/HeboTech.ATLib/bin/Release/HeboTech.ATLib*.nupkg" --source "github"
     
