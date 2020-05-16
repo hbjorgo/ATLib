@@ -1,10 +1,8 @@
-﻿using HeboTech.MessageReader;
-using System;
-using System.Buffers;
+﻿using System.Buffers;
 using System.IO.Pipelines;
 using System.Text;
 
-namespace HeboTech.ATLib.Pipelines
+namespace HeboTech.ATLib.Communication
 {
     public class Communicator : CommunicatorBase<string>
     {

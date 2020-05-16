@@ -5,18 +5,16 @@
     <Authors>HeboTech</Authors>
     <Product>HeboTech ATLib</Product>
     <Version>0.0.4</Version>
+    <PackageId>HeboTech.ATLib</PackageId>
     <PackageTags>atcommand at command gsm sms</PackageTags>
     <Description>An extensible async AT command library.</Description>
     <RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Superpower" Version="2.3.0" />
     <PackageReference Include="System.IO.Pipelines" Version="4.7.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\HeboTech.Communicator\HeboTech.Communicator.csproj" />
   </ItemGroup>
 
 </Project>

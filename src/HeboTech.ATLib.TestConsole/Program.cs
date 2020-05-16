@@ -1,6 +1,5 @@
 ﻿using HeboTech.ATLib.Commands;
-using HeboTech.ATLib.Pipelines;
-using HeboTech.MessageReader;
+using HeboTech.ATLib.Communication;
 using Pipelines.Sockets.Unofficial;
 using System;
 using System.IO.Pipelines;

@@ -1,7 +1,7 @@
-﻿using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Communication;
+using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
 using HeboTech.ATLib.States;
-using HeboTech.MessageReader;
 using System;
 using System.Threading;
 using System.Threading.Tasks;

@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HeboTech.ATLib", "HeboTech.
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HeboTech.ATLib.TestConsole", "HeboTech.ATLib.TestConsole\HeboTech.ATLib.TestConsole.csproj", "{82A5A7D4-9AD3-4B95-AD72-CD1B48017AC3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HeboTech.Communicator", "HeboTech.Communicator\HeboTech.Communicator.csproj", "{854E0B3C-FB9C-4B61-8DE3-25C9109F8B69}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -23,10 +21,6 @@ Global
 		{82A5A7D4-9AD3-4B95-AD72-CD1B48017AC3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{82A5A7D4-9AD3-4B95-AD72-CD1B48017AC3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{82A5A7D4-9AD3-4B95-AD72-CD1B48017AC3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{854E0B3C-FB9C-4B61-8DE3-25C9109F8B69}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{854E0B3C-FB9C-4B61-8DE3-25C9109F8B69}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{854E0B3C-FB9C-4B61-8DE3-25C9109F8B69}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{854E0B3C-FB9C-4B61-8DE3-25C9109F8B69}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
