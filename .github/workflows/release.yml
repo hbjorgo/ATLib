@@ -37,5 +37,5 @@ jobs:
       run: dotnet pack -c Release /p:Version=${{ github.event.release.tag_name }} /p:PackageReleaseNotes="See https://github.com/hbjorgo/ATLib/releases/tag/${{ github.event.release.tag_name }}"
       working-directory: ./src/HeboTech.ATLib
     - name: Publish Nuget Package
-      run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.GITHUB_TOKEN }} --source https://github.com/hbjorgo/ATLib/packages --no-symbols true
+      run: dotnet nuget push **/*.nupkg --api-key ${{ secrets.nuget_api_key }} --source https://api.nuget.org/v3/index.json --no-symbols true
       working-directory: ./src/HeboTech.ATLib/bin/Release
