@@ -9,7 +9,7 @@ namespace HeboTech.ATLib.Commands
 {
     public static class SignalQualityCommand
     {
-        public static async ValueTask<ATResult<SignalQualityResult>> TryGetSignalQualityAsync(this ICommunicator<string> comm, CancellationToken cancellationToken = default)
+        public static async ValueTask<ATResult<SignalQualityResult>> GetSignalQualityAsync(this ICommunicator<string> comm, CancellationToken cancellationToken = default)
         {
             await comm.Write("AT+CSQ\r", cancellationToken);
             var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);

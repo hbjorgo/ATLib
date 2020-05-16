@@ -32,17 +32,17 @@ namespace HeboTech.ATLib.TestConsole
                 Thread.Sleep(1000);
 
                 // Set command echo
-                var echoResult = await comm.EnableCommandEcho(false);
+                var echoResult = await comm.EnableCommandEchoAsync(false);
                 if (echoResult.HasValue)
                     Console.WriteLine($"Echo disabled: {echoResult.Value}");
 
                 // PIN status
-                var pinResult = await comm.GetPinStatus();
+                var pinResult = await comm.GetPinStatusAsync();
                 if (pinResult.HasValue)
                     Console.WriteLine(pinResult.Value);
 
                 // Signal quality
-                var signalQualityResult = await comm.TryGetSignalQualityAsync();
+                var signalQualityResult = await comm.GetSignalQualityAsync();
                 if (signalQualityResult.HasValue)
                     Console.WriteLine(signalQualityResult.Value);
 

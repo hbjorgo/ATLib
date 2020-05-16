@@ -9,7 +9,7 @@ namespace HeboTech.ATLib.Commands
 {
     public static class PinCommands
     {
-        public static async ValueTask<ATResult<PinStatusResult>> GetPinStatus(this ICommunicator<string> comm, CancellationToken cancellationToken = default)
+        public static async ValueTask<ATResult<PinStatusResult>> GetPinStatusAsync(this ICommunicator<string> comm, CancellationToken cancellationToken = default)
         {
             await comm.Write($"AT+CPIN?\r", cancellationToken);
             var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
