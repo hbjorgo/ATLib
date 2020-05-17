@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Commands
 {
-    public static class SignalQualityCommand
+    public static class SignalQualityCommands
     {
         public static async ValueTask<ATResult<SignalQualityResult>> GetSignalQualityAsync(
             this ICommunicator<string> comm,

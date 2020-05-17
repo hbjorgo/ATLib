@@ -7,15 +7,17 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Commands
 {
-    public static class InitializeCommand
+    public static class CommandEchoCommands
     {
-        public static async ValueTask<ATResult<OkResult>> InitializeAsync(
+        public static async ValueTask<ATResult<OkResult>> EnableCommandEchoAsync(
             this ICommunicator<string> comm,
             ResponseFormat responseFormat,
+            bool enable,
             CancellationToken cancellationToken = default)
         {
-            await comm.Write("AT\r", cancellationToken);
-            var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
+            byte parameter = (byte)(enable ? 1 : 0);
+            await comm.Write($"ATE{parameter}\r", cancellationToken);
+            var message = await comm.ReadSingleMessageAsync((byte)'\n', cancellationToken);
             if (OkParser.TryParse(message, responseFormat, out ATResult<OkResult> okResult))
                 return okResult;
             else if (ErrorParser.TryParse(message, responseFormat, out ATResult<ErrorResult> errorResult))

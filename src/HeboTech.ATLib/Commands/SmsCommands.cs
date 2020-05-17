@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Commands
 {
-    public static class SendSmsCommand // TODO: Make if equal to the other commands (ATResult<T>)
+    public static class SmsCommands // TODO: Make if equal to the other commands (ATResult<T>)
     {
         public static async ValueTask<ATResult<OkResult>> SendSmsAsync(
             this ICommunicator<string> comm,

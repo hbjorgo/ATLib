@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Commands
 {
-    public static class ResponseFormatCommand
+    public static class ResponseFormatCommands
     {
         public static async ValueTask<ATResult<OkResult>> SetResponseFormatAsync(
             this ICommunicator<string> comm,
