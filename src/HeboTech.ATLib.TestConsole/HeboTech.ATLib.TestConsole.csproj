@@ -7,7 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="Pipelines.Sockets.Unofficial" Version="2.1.11" />
-    <PackageReference Include="System.IO.Ports" Version="5.0.0-preview.3.20214.6" />
+    <PackageReference Include="System.IO.Ports" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
