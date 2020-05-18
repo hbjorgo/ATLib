@@ -16,7 +16,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Superpower" Version="2.3.0" />
     <PackageReference Include="System.IO.Pipelines" Version="4.7.2" />
   </ItemGroup>
 
