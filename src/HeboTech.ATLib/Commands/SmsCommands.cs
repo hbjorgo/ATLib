@@ -8,9 +8,14 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Commands
 {
-    public static class SendSmsCommand // TODO: Make if equal to the other commands (ATResult<T>)
+    public static class SmsCommands // TODO: Make if equal to the other commands (ATResult<T>)
     {
-        public static async ValueTask<ATResult<OkResult>> SendSmsAsync(this ICommunicator<string> comm, PhoneNumber phoneNumber, string message, CancellationToken cancellationToken = default)
+        public static async ValueTask<ATResult<OkResult>> SendSmsAsync(
+            this ICommunicator<string> comm,
+            ResponseFormat responseFormat,
+            PhoneNumber phoneNumber,
+            string message,
+            CancellationToken cancellationToken = default)
         {
             if (message.Length > 160)
                 throw new ArgumentOutOfRangeException($"Message exceeded maximum length of 160");
@@ -21,7 +26,7 @@ namespace HeboTech.ATLib.Commands
             await comm.Write($"{message}\r{0x1A}");
             Thread.Sleep(2000);
             response = await comm.ReadSingleMessageAsync((byte)'\r', cancellationToken);
-            var result = OkParser.TryParse(response, ResponseFormat.Numeric, out _);
+            var result = OkParser.TryParse(response, responseFormat, out _);
             return default;
         }
     }

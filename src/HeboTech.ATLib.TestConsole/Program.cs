@@ -1,5 +1,6 @@
 ﻿using HeboTech.ATLib.Commands;
 using HeboTech.ATLib.Communication;
+using HeboTech.ATLib.States;
 using Pipelines.Sockets.Unofficial;
 using System;
 using System.IO.Pipelines;
@@ -24,29 +25,31 @@ namespace HeboTech.ATLib.TestConsole
                 IDuplexPipe duplexPipe = StreamConnection.GetDuplex(stream);
                 ICommunicator<string> comm = new Communicator(duplexPipe);
 
+                ResponseFormat responseFormat = ResponseFormat.Numeric;
+
                 // Initialize
-                var initializeResult = await comm.InitializeAsync();
+                var initializeResult = await comm.InitializeAsync(responseFormat);
                 if (initializeResult.HasValue)
                     Console.WriteLine($"Initialize: {initializeResult.Value}");
                 Thread.Sleep(1000);
 
                 // Set command echo
-                var echoResult = await comm.EnableCommandEchoAsync(false);
+                var echoResult = await comm.EnableCommandEchoAsync(responseFormat, false);
                 if (echoResult.HasValue)
                     Console.WriteLine($"Echo disabled: {echoResult.Value}");
 
                 // PIN status
-                var pinResult = await comm.GetPinStatusAsync();
+                var pinResult = await comm.GetPinStatusAsync(responseFormat);
                 if (pinResult.HasValue)
                     Console.WriteLine(pinResult.Value);
 
                 // Signal quality
-                var signalQualityResult = await comm.GetSignalQualityAsync();
+                var signalQualityResult = await comm.GetSignalQualityAsync(responseFormat);
                 if (signalQualityResult.HasValue)
                     Console.WriteLine(signalQualityResult.Value);
 
                 // Get battery status
-                var batteryStatus = await comm.GetBatteryStatusAsync();
+                var batteryStatus = await comm.GetBatteryStatusAsync(responseFormat);
                 if (batteryStatus.HasValue)
                     Console.WriteLine(batteryStatus.Value);
 

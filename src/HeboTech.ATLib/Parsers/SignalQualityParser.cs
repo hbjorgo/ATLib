@@ -1,41 +1,12 @@
 ﻿using HeboTech.ATLib.Results;
 using HeboTech.ATLib.States;
-using Superpower;
-using Superpower.Parsers;
 using System;
+using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Parsers
 {
     public static class SignalQualityParser
     {
-        private static class Verbose
-        {
-            public static TextParser<SignalQualityResult> Response { get; } =
-                (from _ in CommonParsers.Cr
-                 from __ in CommonParsers.Lf
-                 from ___ in Span.EqualTo("+CSQ: ")
-                 from rssi in Numerics.IntegerInt32
-                 from ____ in Character.EqualTo(',')
-                 from ber in Numerics.IntegerInt32
-                 from ______ in CommonParsers.Cr
-                 from _______ in CommonParsers.Lf
-                 select new SignalQualityResult(rssi, ber))
-                .AtEnd();
-        }
-
-        public static class Numeric
-        {
-            public static TextParser<SignalQualityResult> Response { get; } =
-                  (from _ in Span.EqualTo("+CSQ: ")
-                   from rssi in Numerics.IntegerInt32
-                   from __ in Character.EqualTo(',')
-                   from ber in Numerics.IntegerInt32
-                   from ___ in CommonParsers.Cr
-                   from ____ in CommonParsers.Lf
-                   select new SignalQualityResult(rssi, ber))
-                .AtEnd();
-        }
-
         public static bool TryParse(string input, ResponseFormat responseFormat, out ATResult<SignalQualityResult> result)
         {
             if (input == null)
@@ -46,17 +17,17 @@ namespace HeboTech.ATLib.Parsers
 
             var parseResult = responseFormat switch
             {
-                ResponseFormat.Numeric => Numeric.Response.TryParse(input),
-                ResponseFormat.Verbose => Verbose.Response.TryParse(input),
+                ResponseFormat.Numeric => Regex.Match(input, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)\r\n"),
+                ResponseFormat.Verbose => Regex.Match(input, @"\r\n\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)\r\n"),
                 _ => throw new NotImplementedException(Constants.PARSER_NOT_IMPLEMENTED),
             };
-            if (parseResult.HasValue)
+            if (parseResult.Success)
             {
-                result = ATResult.Value(parseResult.Value);
+                result = ATResult.Value(new SignalQualityResult(int.Parse(parseResult.Groups["rssi"].Value), int.Parse(parseResult.Groups["ber"].Value)));
                 return true;
             }
 
-            result = ATResult.Error<SignalQualityResult>(parseResult.ErrorMessage);
+            result = ATResult.Error<SignalQualityResult>(Constants.NO_MATCH);
             return false;
         }
     }

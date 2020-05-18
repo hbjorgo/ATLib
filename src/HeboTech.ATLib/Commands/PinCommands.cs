@@ -9,19 +9,22 @@ namespace HeboTech.ATLib.Commands
 {
     public static class PinCommands
     {
-        public static async ValueTask<ATResult<PinStatusResult>> GetPinStatusAsync(this ICommunicator<string> comm, CancellationToken cancellationToken = default)
+        public static async ValueTask<ATResult<PinStatusResult>> GetPinStatusAsync(
+            this ICommunicator<string> comm,
+            ResponseFormat responseFormat,
+            CancellationToken cancellationToken = default)
         {
             await comm.Write($"AT+CPIN?\r", cancellationToken);
             var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
-            if (PinStatusParser.TryParse(message, ResponseFormat.Numeric, out ATResult<PinStatusResult> pinResult))
+            if (PinStatusParser.TryParse(message, responseFormat, out ATResult<PinStatusResult> pinResult))
             {
                 message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
-                if (OkParser.TryParse(message, ResponseFormat.Numeric, out ATResult<OkResult> _))
+                if (OkParser.TryParse(message, responseFormat, out ATResult<OkResult> _))
                     return pinResult;
-                else if (ErrorParser.TryParse(message, ResponseFormat.Numeric, out ATResult<ErrorResult> errorResult))
+                else if (ErrorParser.TryParse(message, responseFormat, out ATResult<ErrorResult> errorResult))
                     return ATResult.Error<PinStatusResult>(errorResult.ErrorMessage);
             }
-            else if (ErrorParser.TryParse(message, ResponseFormat.Numeric, out ATResult<ErrorResult> errorResult))
+            else if (ErrorParser.TryParse(message, responseFormat, out ATResult<ErrorResult> errorResult))
                 return ATResult.Error<PinStatusResult>(errorResult.ErrorMessage);
             return ATResult.Error<PinStatusResult>(Constants.PARSING_FAILED);
         }
