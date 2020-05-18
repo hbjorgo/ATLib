@@ -33,9 +33,15 @@ var batteryStatus = await comm.GetBatteryStatusAsync();
 
 ```
 Note:
-IDuplexPipe is an interface in System.IO.Pipelines. Microsoft and ATLib doesn't come with an implementations for this, but Pipelines.Sockets.Unofficial has one that works great!
-```
+IDuplexPipe is an interface in System.IO.Pipelines.
+Microsoft and ATLib doesn't come with an implementations for this, but Pipelines.Sockets.Unofficial has one that works great!
 Install it with
-```shell
 dotnet add package Pipelines.Sockets.Unofficial
 ```
+
+| Command  | Response type        |
+|----------|---------------|------|
+|          | Numeric       | Text |
+|----------|---------------|------|
+| AT+CPIN? |       [x]     | [x]  |
+|          |               |      |
