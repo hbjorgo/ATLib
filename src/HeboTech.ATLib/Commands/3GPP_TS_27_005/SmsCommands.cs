@@ -6,7 +6,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HeboTech.ATLib.Commands
+namespace HeboTech.ATLib.Commands._3GPP_TS_27_005
 {
     public static class SmsCommands // TODO: Make if equal to the other commands (ATResult<T>)
     {

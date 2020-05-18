@@ -5,7 +5,7 @@ using HeboTech.ATLib.States;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HeboTech.ATLib.Commands
+namespace HeboTech.ATLib.Commands.V25TER
 {
     public static class CommandEchoCommands
     {

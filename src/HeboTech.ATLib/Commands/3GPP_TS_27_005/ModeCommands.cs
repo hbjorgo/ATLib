@@ -5,7 +5,7 @@ using HeboTech.ATLib.States;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace HeboTech.ATLib.Commands
+namespace HeboTech.ATLib.Commands._3GPP_TS_27_005
 {
     public static class ModeCommands
     {

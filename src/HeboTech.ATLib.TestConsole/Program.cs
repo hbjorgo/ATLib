@@ -1,4 +1,7 @@
 ﻿using HeboTech.ATLib.Commands;
+using HeboTech.ATLib.Commands.V25TER;
+using HeboTech.ATLib.Commands._3GPP_TS_27_005;
+using HeboTech.ATLib.Commands._3GPP_TS_27_007;
 using HeboTech.ATLib.Communication;
 using HeboTech.ATLib.States;
 using Pipelines.Sockets.Unofficial;
