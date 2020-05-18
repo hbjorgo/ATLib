@@ -38,10 +38,19 @@ Microsoft and ATLib doesn't come with an implementations for this, but Pipelines
 Install it with
 dotnet add package Pipelines.Sockets.Unofficial
 ```
+## Supported commands:
 
-| Command  | Response type        |
-|----------|---------------|------|
-|          | Numeric       | Text |
-|----------|---------------|------|
-| AT+CPIN? |       [x]     | [x]  |
-|          |               |      |
+:heavy_check_mark: = Done  
+:wrench: = In progress
+
+| Command         | Numeric          |    Text          | Notes |
+|-----------------|:----------------:|:----------------:|:-----:|
+| AT              |:heavy_check_mark:|:heavy_check_mark:|       |
+| ATE[n]          |:heavy_check_mark:|:heavy_check_mark:|       |
+| ATV[format]     |:heavy_check_mark:|:heavy_check_mark:|       |
+| AT+CBC          |:heavy_check_mark:|:heavy_check_mark:|       |
+| AT+CSQ          |:heavy_check_mark:|:heavy_check_mark:|       |
+| AT+CMGF?        |:heavy_check_mark:|:heavy_check_mark:|       |
+| AT+CPIN?        |:heavy_check_mark:|:heavy_check_mark:|       |
+| AT+CMGF=[mode]  |:heavy_check_mark:|:heavy_check_mark:|       |
+| AT+CMGS=[da]    |:wrench:          |:wrench:          |       |
