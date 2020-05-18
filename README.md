@@ -40,17 +40,26 @@ dotnet add package Pipelines.Sockets.Unofficial
 ```
 ## Supported commands:
 
-:heavy_check_mark: = Done  
-:wrench: = In progress
+:heavy_check_mark: = Done   :wrench: = In progress
+### V.25TER
+| Command         | Numeric          |    Text          | Description | Notes |
+|-----------------|:----------------:|:----------------:|-------------|-------|
+| ATE[n]          |:heavy_check_mark:|:heavy_check_mark:|             |       |
+| ATV[format]     |:heavy_check_mark:|:heavy_check_mark:|             |       |
 
-| Command         | Numeric          |    Text          | Notes |
-|-----------------|:----------------:|:----------------:|:-----:|
-| AT              |:heavy_check_mark:|:heavy_check_mark:|       |
-| ATE[n]          |:heavy_check_mark:|:heavy_check_mark:|       |
-| ATV[format]     |:heavy_check_mark:|:heavy_check_mark:|       |
-| AT+CBC          |:heavy_check_mark:|:heavy_check_mark:|       |
-| AT+CSQ          |:heavy_check_mark:|:heavy_check_mark:|       |
-| AT+CMGF?        |:heavy_check_mark:|:heavy_check_mark:|       |
-| AT+CPIN?        |:heavy_check_mark:|:heavy_check_mark:|       |
-| AT+CMGF=[mode]  |:heavy_check_mark:|:heavy_check_mark:|       |
-| AT+CMGS=[da]    |:wrench:          |:wrench:          |       |
+### 3GPP TS 27.005
+
+| Command         | Numeric          |    Text          | Description | Notes |
+|-----------------|:----------------:|:----------------:|-------------|-------|
+| AT+CMGF?        |:heavy_check_mark:|:heavy_check_mark:|             |       |
+| AT+CMGF=[mode]  |:heavy_check_mark:|:heavy_check_mark:|             |       |
+| AT+CMGS=[da]    |:wrench:          |:wrench:          |             |       |
+
+
+### 3GPP TS 27.005
+
+| Command         | Numeric          |    Text          | Description | Notes |
+|-----------------|:----------------:|:----------------:|-------------|-------|
+| AT+CBC          |:heavy_check_mark:|:heavy_check_mark:|             |       |
+| AT+CSQ          |:heavy_check_mark:|:heavy_check_mark:|             |       |
+| AT+CPIN?        |:heavy_check_mark:|:heavy_check_mark:|             |       |
