@@ -56,7 +56,7 @@ dotnet add package Pipelines.Sockets.Unofficial
 | AT+CMGS=[da]    |:wrench:          |:wrench:          |             |       |
 
 
-### 3GPP TS 27.005
+### 3GPP TS 27.007
 
 | Command         | Numeric          |    Text          | Description | Notes |
 |-----------------|:----------------:|:----------------:|-------------|-------|
