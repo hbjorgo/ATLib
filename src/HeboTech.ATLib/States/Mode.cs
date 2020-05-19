@@ -1,4 +1,8 @@
 ﻿namespace HeboTech.ATLib.States
 {
-    public enum Mode { Text = 1 } // PDU = 0
+    public enum Mode : byte
+    {
+        PDU = 0,
+        Text = 1
+    }
 }

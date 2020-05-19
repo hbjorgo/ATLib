@@ -2,16 +2,21 @@
 {
     public class PhoneNumber
     {
-        private readonly string number;
-
         public PhoneNumber(string number)
         {
-            this.number = number;
+            Number = number;
+            if (number.StartsWith('+'))
+                Format = PhoneNumberFormat.International;
+            else
+                Format = PhoneNumberFormat.National;
         }
+
+        public PhoneNumberFormat Format { get; }
+        public string Number { get; set; }
 
         public override string ToString()
         {
-            return number;
+            return Number;
         }
     }
 }
