@@ -3,6 +3,7 @@ using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
 using HeboTech.ATLib.States;
 using System;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -30,14 +31,50 @@ namespace HeboTech.ATLib.Commands._3GPP_TS_27_005
             ICommunicator<string> comm,
             ResponseFormat responseFormat,
             PhoneNumber phoneNumber,
-            SmsMessage message,
+            SmsMessage smsMessage,
             CancellationToken cancellationToken)
         {
             await comm.Write($"AT+CMGS=\"{phoneNumber}\",{(byte)phoneNumber.Format}\r", cancellationToken);
-            var response = await comm.ReadSingleMessageAsync((byte)'>', cancellationToken);
-            await comm.Write($"{message}\r{0x1A}");
-            response = await comm.ReadSingleMessageAsync((byte)'\r', cancellationToken);
-            if (SmsStatusParser.TryParse(response, responseFormat, out ATResult<SmsSentResult> result))
+
+            var message = await comm.ReadSingleMessageAsync(new byte[] { (byte)'>', (byte)'\r' }, cancellationToken);
+            switch (responseFormat)
+            {
+                case ResponseFormat.Numeric:
+                    if (Regex.Match(message, ">").Success)
+                    {
+                        await comm.Write($"{smsMessage}\r{0x1A}");
+
+                        message = await comm.ReadSingleMessageAsync((byte)'\r', cancellationToken);
+                        Match match;
+                        if ((match = Regex.Match(message, @"\r\n\+CMGS: (?<mr>\d+)\r\n")).Success)
+                            return ATResult.Value(new SmsSentResult(int.Parse(match.Groups["mr"].Value)));
+                        else if (Regex.Match(message, Regexes.Numeric.ERROR).Success)
+                            return ATResult.Error<SmsSentResult>(Constants.ERROR);
+                    }
+                    else if (Regex.Match(message, Regexes.Numeric.ERROR).Success)
+                        return ATResult.Error<SmsSentResult>(Constants.ERROR);
+                    break;
+                case ResponseFormat.Verbose:
+                    if(Regex.Match(message, ">").Success)
+                    {
+                        await comm.Write($"{smsMessage}\r{0x1A}");
+
+                        message = await comm.ReadSingleMessageAsync((byte)'\r', cancellationToken);
+                        Match match;
+                        if ((match = Regex.Match(message, @"\+CMGS: (?<mr>\d+)\r\n")).Success)
+                            return ATResult.Value(new SmsSentResult(int.Parse(match.Groups["mr"].Value)));
+                        else if (Regex.Match(message, Regexes.Verbose.ERROR).Success)
+                            return ATResult.Error<SmsSentResult>(Constants.ERROR);
+                    }
+                    else if (Regex.Match(message, Regexes.Verbose.ERROR).Success)
+                        return ATResult.Error<SmsSentResult>(Constants.ERROR);
+                    break;
+            }
+
+
+            await comm.Write($"{smsMessage}\r{0x1A}");
+            message = await comm.ReadSingleMessageAsync((byte)'\r', cancellationToken);
+            if (SmsStatusParser.TryParse(message, responseFormat, out ATResult<SmsSentResult> result))
                 return result;
             return default;
         }

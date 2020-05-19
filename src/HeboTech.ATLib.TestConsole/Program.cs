@@ -66,8 +66,11 @@ namespace HeboTech.ATLib.TestConsole
                 //Thread.Sleep(1000);
 
                 // Send SMS
-                //var smsStatus = await comm.SendSmsAsync(new PhoneNumber("NUMBER"), "Im sending you an SMS!");
-                //Console.WriteLine($"Send SMS: {smsStatus}");
+                var smsStatus = await comm.SendSmsAsync(ResponseFormat.Numeric, new PhoneNumber("12345678"), new SmsMessage("Im sending you an SMS!", Mode.Text));
+                if (smsStatus.HasValue)
+                    Console.WriteLine($"Send SMS: {smsStatus.Value}");
+                else
+                    Console.WriteLine($"Send SMS: {smsStatus.ErrorMessage}");
             }
 
             Console.WriteLine("Done. Press any key to exit...");

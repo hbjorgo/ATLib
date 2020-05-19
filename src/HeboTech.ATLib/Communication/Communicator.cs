@@ -1,4 +1,5 @@
-﻿using System.Buffers;
+﻿using System;
+using System.Buffers;
 using System.IO.Pipelines;
 using System.Text;
 
@@ -16,10 +17,27 @@ namespace HeboTech.ATLib.Communication
         {
         }
 
-        protected override bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out string message, byte delimiter)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="buffer"></param>
+        /// <param name="message"></param>
+        /// <param name="delimiters">Returns the result based on the first match in the array</param>
+        /// <returns></returns>
+        protected override bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out string message, byte[] delimiters)
         {
             // find the end-of-line marker
-            var eol = buffer.PositionOf(delimiter);
+            SequencePosition? eol = null;
+            byte delimiter = 0;
+            foreach (byte del in delimiters)
+            {
+                eol = buffer.PositionOf(del);
+                if (eol != null)
+                {
+                    delimiter = del;
+                    break;
+                }
+            }
             if (eol == null)
             {
                 message = default;

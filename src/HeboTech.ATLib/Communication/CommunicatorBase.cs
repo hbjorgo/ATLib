@@ -21,14 +21,14 @@ namespace HeboTech.ATLib.Communication
             await duplexPipe.Output.WriteAsync(bytes, cancellationToken);
         }
 
-        public async ValueTask<TMessage> ReadSingleMessageAsync(byte delimiter, CancellationToken cancellationToken = default)
+        public async ValueTask<TMessage> ReadSingleMessageAsync(byte[] delimiters, CancellationToken cancellationToken = default)
         {
             while (true)
             {
                 ReadResult result = await duplexPipe.Input.ReadAsync(cancellationToken);
                 ReadOnlySequence<byte> buffer = result.Buffer;
 
-                if (TryReadMessage(ref buffer, out TMessage message, delimiter))
+                if (TryReadMessage(ref buffer, out TMessage message, delimiters))
                 {
                     duplexPipe.Input.AdvanceTo(buffer.Start, buffer.Start);
                     return message;
@@ -47,6 +47,12 @@ namespace HeboTech.ATLib.Communication
             return default;
         }
 
-        protected abstract bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out TMessage message, byte delimiter);
+        public ValueTask<TMessage> ReadSingleMessageAsync(byte delimiter, CancellationToken cancellationToken = default)
+        {
+            return ReadSingleMessageAsync(new byte[] { delimiter }, cancellationToken);
+        }
+
+        protected abstract bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out TMessage message, byte[] delimiters);
+
     }
 }

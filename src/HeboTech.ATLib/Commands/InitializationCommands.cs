@@ -2,6 +2,7 @@
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
 using HeboTech.ATLib.States;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,11 +16,23 @@ namespace HeboTech.ATLib.Commands
             CancellationToken cancellationToken = default)
         {
             await comm.Write("AT\r", cancellationToken);
+
             var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
-            if (OkParser.TryParse(message, responseFormat, out ATResult<OkResult> okResult))
-                return okResult;
-            else if (ErrorParser.TryParse(message, responseFormat, out ATResult<ErrorResult> errorResult))
-                return ATResult.Error<OkResult>(errorResult.ErrorMessage);
+            switch (responseFormat)
+            {
+                case ResponseFormat.Numeric:
+                    if (Regex.Match(message, Regexes.Numeric.OK).Success)
+                        return ATResult.Value(new OkResult());
+                    else if (Regex.Match(message, Regexes.Numeric.ERROR).Success)
+                        return ATResult.Error<OkResult>(Constants.ERROR);
+                    break;
+                case ResponseFormat.Verbose:
+                    if (Regex.Match(message, Regexes.Verbose.OK).Success)
+                        return ATResult.Value(new OkResult());
+                    else if (Regex.Match(message, Regexes.Verbose.ERROR).Success)
+                        return ATResult.Error<OkResult>(Constants.ERROR);
+                    break;
+            }
             return ATResult.Error<OkResult>(Constants.PARSING_FAILED);
         }
     }
