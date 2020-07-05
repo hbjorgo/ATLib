@@ -17,8 +17,8 @@ namespace HeboTech.ATLib.Parsers
 
             var parseResult = responseFormat switch
             {
-                ResponseFormat.Numeric => Regex.Match(input, @"\+CPIN:\s(?<code>[\w-]+)\r\n"),
-                ResponseFormat.Verbose => Regex.Match(input, @"\r\n\+CPIN:\s(?<code>[\w-]+)\r\n"),
+                ResponseFormat.Numeric => Regex.Match(input, @"\+CPIN:\s(?<code>\w+\s?\w+)"),
+                ResponseFormat.Verbose => Regex.Match(input, @"\r\n\+CPIN:\s(?<code>\w+\s?\w+)\r\n"),
                 _ => throw new NotImplementedException(Constants.PARSER_NOT_IMPLEMENTED),
             };
             if (parseResult.Success)

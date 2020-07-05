@@ -11,13 +11,13 @@ namespace HeboTech.ATLib.Commands
     public static class InitializationCommands
     {
         public static async ValueTask<ATResult<OkResult>> InitializeAsync(
-            this ICommunicator<string> comm,
+            this ICommunicator comm,
             ResponseFormat responseFormat,
             CancellationToken cancellationToken = default)
         {
             await comm.Write("AT\r", cancellationToken);
 
-            var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
+            var message = await comm.ReadLineAsync(cancellationToken);
             switch (responseFormat)
             {
                 case ResponseFormat.Numeric:

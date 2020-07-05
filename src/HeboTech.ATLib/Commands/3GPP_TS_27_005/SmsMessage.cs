@@ -15,5 +15,10 @@ namespace HeboTech.ATLib.Commands._3GPP_TS_27_005
 
         public string Message { get; }
         public Mode Mode { get; }
+
+        public override string ToString()
+        {
+            return Message;
+        }
     }
 }

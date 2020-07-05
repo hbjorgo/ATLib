@@ -8,5 +8,10 @@
         }
 
         public int MessageReferenceNumber { get; }
+
+        public override string ToString()
+        {
+            return $"SMS reference number: {MessageReferenceNumber}";
+        }
     }
 }

@@ -9,15 +9,24 @@ namespace HeboTech.ATLib.Commands.V25TER
 {
     public static class CommandEchoCommands
     {
+        public static async ValueTask EnableCommandEchoAsync(
+            this ICommunicator comm,
+            bool enable,
+            CancellationToken cancellationToken = default)
+        {
+            byte parameter = (byte)(enable ? 1 : 0);
+            await comm.Write($"ATE{parameter}\r", cancellationToken);
+        }
+
         public static async ValueTask<ATResult<OkResult>> EnableCommandEchoAsync(
-            this ICommunicator<string> comm,
+            this ICommunicator comm,
             ResponseFormat responseFormat,
             bool enable,
             CancellationToken cancellationToken = default)
         {
             byte parameter = (byte)(enable ? 1 : 0);
             await comm.Write($"ATE{parameter}\r", cancellationToken);
-            var message = await comm.ReadSingleMessageAsync((byte)'\n', cancellationToken);
+            var message = await comm.ReadLineAsync(cancellationToken);
             if (OkParser.TryParse(message, responseFormat, out ATResult<OkResult> okResult))
                 return okResult;
             else if (ErrorParser.TryParse(message, responseFormat, out ATResult<ErrorResult> errorResult))

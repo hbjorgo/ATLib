@@ -16,7 +16,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Stateless" Version="5.1.2" />
     <PackageReference Include="System.IO.Pipelines" Version="4.7.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Modems\" />
   </ItemGroup>
 
 </Project>

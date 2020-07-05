@@ -9,14 +9,22 @@ namespace HeboTech.ATLib.Commands.V25TER
 {
     public static class ResponseFormatCommands
     {
+        public static async ValueTask SetResponseFormatAsync(
+            this ICommunicator comm,
+            ResponseFormat targetResponseFormat,
+            CancellationToken cancellationToken = default)
+        {
+            await comm.Write($"ATV{targetResponseFormat}\r", cancellationToken);
+        }
+
         public static async ValueTask<ATResult<OkResult>> SetResponseFormatAsync(
-            this ICommunicator<string> comm,
+            this ICommunicator comm,
             ResponseFormat currentResponseFormat,
             ResponseFormat targetResponseFormat,
             CancellationToken cancellationToken = default)
         {
             await comm.Write($"ATV{targetResponseFormat}\r", cancellationToken);
-            var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
+            var message = await comm.ReadLineAsync(cancellationToken);
             if (OkParser.TryParse(message, currentResponseFormat, out ATResult<OkResult> okResult))
                 return okResult;
             else if (ErrorParser.TryParse(message, currentResponseFormat, out ATResult<ErrorResult> errorResult))

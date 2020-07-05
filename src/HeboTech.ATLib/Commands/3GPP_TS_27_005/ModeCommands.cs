@@ -10,12 +10,12 @@ namespace HeboTech.ATLib.Commands._3GPP_TS_27_005
     public static class ModeCommands
     {
         public static async ValueTask<ATResult<OkResult>> ReadModeAsync(
-            this ICommunicator<string> comm,
+            this ICommunicator comm,
             ResponseFormat responseFormat,
             CancellationToken cancellationToken = default)
         {
             await comm.Write($"AT+CMGF?\r", cancellationToken);
-            var message = await comm.ReadSingleMessageAsync((byte)'\r', cancellationToken);
+            var message = await comm.ReadLineAsync(cancellationToken);
             if (OkParser.TryParse(message, responseFormat, out ATResult<OkResult> okResult))
                 return okResult;
             else if (ErrorParser.TryParse(message, responseFormat, out ATResult<ErrorResult> errorResult))
@@ -24,13 +24,13 @@ namespace HeboTech.ATLib.Commands._3GPP_TS_27_005
         }
 
         public static async ValueTask<ATResult<OkResult>> SetModeAsync(
-            this ICommunicator<string> comm,
+            this ICommunicator comm,
             ResponseFormat responseFormat,
             Mode mode,
             CancellationToken cancellationToken = default)
         {
             await comm.Write($"AT+CMGF={(int)mode}\r", cancellationToken);
-            var message = await comm.ReadSingleMessageAsync((byte)'\r', cancellationToken);
+            var message = await comm.ReadLineAsync(cancellationToken);
             if (OkParser.TryParse(message, responseFormat, out ATResult<OkResult> okResult))
                 return okResult;
             else if (ErrorParser.TryParse(message, responseFormat, out ATResult<ErrorResult> errorResult))

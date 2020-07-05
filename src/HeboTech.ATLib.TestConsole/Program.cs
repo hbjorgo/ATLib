@@ -1,7 +1,6 @@
-﻿using HeboTech.ATLib.Commands;
-using HeboTech.ATLib.Commands.V25TER;
-using HeboTech.ATLib.Commands._3GPP_TS_27_005;
+﻿using HeboTech.ATLib.Commands._3GPP_TS_27_005;
 using HeboTech.ATLib.Commands._3GPP_TS_27_007;
+using HeboTech.ATLib.Commands.V25TER;
 using HeboTech.ATLib.Communication;
 using HeboTech.ATLib.States;
 using Pipelines.Sockets.Unofficial;
@@ -17,7 +16,9 @@ namespace HeboTech.ATLib.TestConsole
     {
         static async Task Main(string[] args)
         {
-            using (SerialPort serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One))
+            TimeService.SetProvider(new SystemTimeProvider());
+
+            using (SerialPort serialPort = new SerialPort("COM7", 9600, Parity.None, 8, StopBits.One))
             {
                 Console.WriteLine("Opening serial port...");
                 serialPort.Open();
@@ -26,51 +27,63 @@ namespace HeboTech.ATLib.TestConsole
                 var stream = serialPort.BaseStream;
 
                 IDuplexPipe duplexPipe = StreamConnection.GetDuplex(stream);
-                ICommunicator<string> comm = new Communicator(duplexPipe);
+                ICommunicator comm = new Communicator(duplexPipe);
 
-                ResponseFormat responseFormat = ResponseFormat.Numeric;
+                var responseFormat = ResponseFormat.Numeric;
+                await comm.EnableCommandEchoAsync(false);
+                await comm.SetResponseFormatAsync(responseFormat);
 
-                // Initialize
-                var initializeResult = await comm.InitializeAsync(responseFormat);
-                if (initializeResult.HasValue)
-                    Console.WriteLine($"Initialize: {initializeResult.Value}");
-                Thread.Sleep(1000);
+                var pinResult = await comm.GetPinStatusAsync(responseFormat, new CancellationTokenSource(60000).Token);
+                if (!pinResult.HasValue)
+                {
+                    Console.WriteLine("PIN error");
+                    Environment.Exit(0);
+                }
+                switch (pinResult.Value.Status)
+                {
+                    case PinStatus.READY:
+                        break;
+                    case PinStatus.SIM_PIN:
+                        var enterPinResult = await comm.EnterPinAsync(responseFormat, new Pin("<PIN>"), new CancellationTokenSource(2000).Token);
+                        if (!enterPinResult.HasValue)
+                        {
+                            Console.WriteLine("PIN Enter error");
+                            Environment.Exit(0);
+                        }
+                        break;
+                    case PinStatus.SIM_PUK:
+                        break;
+                    case PinStatus.PH_SIM_PIN:
+                        break;
+                    case PinStatus.PH_FSIM_PIN:
+                        break;
+                    case PinStatus.PH_FSIM_PUK:
+                        break;
+                    case PinStatus.SIM_PIN2:
+                        break;
+                    case PinStatus.SIM_PUK2:
+                        break;
+                    case PinStatus.PH_NET_PIN:
+                        break;
+                    case PinStatus.PH_NET_PUK:
+                        break;
+                    case PinStatus.PH_NETSUB_PIN:
+                        break;
+                    case PinStatus.PH_NETSUB_PUK:
+                        break;
+                    case PinStatus.PH_SP_PIN:
+                        break;
+                    case PinStatus.PH_SP_PUK:
+                        break;
+                    case PinStatus.PH_CORP_PIN:
+                        break;
+                    case PinStatus.PH_CORP_PUK:
+                        break;
+                }
 
-                // Set command echo
-                var echoResult = await comm.EnableCommandEchoAsync(responseFormat, false);
-                if (echoResult.HasValue)
-                    Console.WriteLine($"Echo disabled: {echoResult.Value}");
-
-                // PIN status
-                var pinResult = await comm.GetPinStatusAsync(responseFormat);
-                if (pinResult.HasValue)
-                    Console.WriteLine(pinResult.Value);
-
-                // Signal quality
-                var signalQualityResult = await comm.GetSignalQualityAsync(responseFormat);
-                if (signalQualityResult.HasValue)
-                    Console.WriteLine(signalQualityResult.Value);
-
-                // Get battery status
-                var batteryStatus = await comm.GetBatteryStatusAsync(responseFormat);
-                if (batteryStatus.HasValue)
-                    Console.WriteLine(batteryStatus.Value);
-
-                // Read Mode
-                //await comm.ReadModeAsync();
-                //Thread.Sleep(1000);
-
-                // Set Mode
-                //var setModeResult = await comm.SetModeAsync(Mode.Text);
-                //Console.WriteLine($"Set Mode: {setModeResult}");
-                //Thread.Sleep(1000);
-
-                // Send SMS
-                var smsStatus = await comm.SendSmsAsync(ResponseFormat.Numeric, new PhoneNumber("12345678"), new SmsMessage("Im sending you an SMS!", Mode.Text));
-                if (smsStatus.HasValue)
-                    Console.WriteLine($"Send SMS: {smsStatus.Value}");
-                else
-                    Console.WriteLine($"Send SMS: {smsStatus.ErrorMessage}");
+                var smsResponse = await comm.SendSmsAsync(responseFormat, new PhoneNumber("<NUMBER>"), new SmsMessage("I'm sending you an SMS!", Mode.Text), new CancellationTokenSource(2000).Token);
+                if (smsResponse.HasValue)
+                    Console.WriteLine(smsResponse.Value);
             }
 
             Console.WriteLine("Done. Press any key to exit...");

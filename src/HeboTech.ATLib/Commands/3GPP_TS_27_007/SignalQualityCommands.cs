@@ -10,15 +10,15 @@ namespace HeboTech.ATLib.Commands._3GPP_TS_27_007
     public static class SignalQualityCommands
     {
         public static async ValueTask<ATResult<SignalQualityResult>> GetSignalQualityAsync(
-            this ICommunicator<string> comm,
+            this ICommunicator comm,
             ResponseFormat responseFormat,
             CancellationToken cancellationToken = default)
         {
             await comm.Write("AT+CSQ\r", cancellationToken);
-            var message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
+            var message = await comm.ReadLineAsync(cancellationToken);
             if (SignalQualityParser.TryParse(message, responseFormat, out ATResult<SignalQualityResult> signalQualityResult))
             {
-                message = await comm.ReadSingleMessageAsync(Constants.BYTE_LF, cancellationToken);
+                message = await comm.ReadLineAsync(cancellationToken);
                 if (OkParser.TryParse(message, responseFormat, out ATResult<OkResult> _))
                     return signalQualityResult;
                 else if (ErrorParser.TryParse(message, responseFormat, out ATResult<ErrorResult> errorResult))

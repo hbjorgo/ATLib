@@ -2,82 +2,82 @@
 using System.Buffers;
 using System.IO.Pipelines;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Communication
 {
-    public class Communicator : CommunicatorBase<string>
+    public class Communicator : ICommunicator
     {
-        private const byte BYTE_HASH = (byte)'#';
-        private const byte BYTE_CR = (byte)'\r';
-        private const byte BYTE_NL = (byte)'\n';
-        private const byte BYTE_O = (byte)'O';
-        private const byte BYTE_K = (byte)'K';
+        private static ReadOnlyMemory<byte> NewLine => new byte[] { (byte)'\r', (byte)'\n' };
+        private readonly IDuplexPipe duplexPipe;
 
-        public Communicator(IDuplexPipe duplexPipe) : base(duplexPipe)
+        public Communicator(IDuplexPipe duplexPipe)
         {
+            this.duplexPipe = duplexPipe;
         }
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="buffer"></param>
-        /// <param name="message"></param>
-        /// <param name="delimiters">Returns the result based on the first match in the array</param>
-        /// <returns></returns>
-        protected override bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out string message, byte[] delimiters)
+        public async ValueTask Write(string input, CancellationToken cancellationToken = default)
         {
-            // find the end-of-line marker
-            SequencePosition? eol = null;
-            byte delimiter = 0;
-            foreach (byte del in delimiters)
+            var bytes = Encoding.UTF8.GetBytes(input);
+            await duplexPipe.Output.WriteAsync(bytes, cancellationToken);
+        }
+
+        public Task<string> ReadLineAsync(CancellationToken cancellationToken = default)
+        {
+            return ReadLineAsync(NewLine, cancellationToken);
+        }
+
+        public async Task<string> ReadLineAsync(ReadOnlyMemory<byte> delimiter, CancellationToken cancellationToken = default)
+        {
+            while (true)
             {
-                eol = buffer.PositionOf(del);
-                if (eol != null)
+                ReadResult result = await duplexPipe.Input.ReadAsync(cancellationToken);
+                ReadOnlySequence<byte> buffer = result.Buffer;
+
+                try
                 {
-                    delimiter = del;
-                    break;
+                    // Process all messages from the buffer, modifying the input buffer on each
+                    // iteration.
+                    while (TryParseLine(ref buffer, delimiter.Span, out ReadOnlySequence<byte> line))
+                    {
+                        return Encoding.UTF8.GetString(line.ToArray());
+                    }
+
+                    // There's no more data to be processed.
+                    if (result.IsCompleted)
+                    {
+                        //if (buffer.Length > 0)
+                        //{
+                        //    // The message is incomplete and there's no more data to process.
+                        //    throw new InvalidDataException("Incomplete message.");
+                        //}
+                        break;
+                    }
+                }
+                finally
+                {
+                    // Since all messages in the buffer are being processed, you can use the
+                    // remaining buffer's Start and End position to determine consumed and examined.
+                    duplexPipe.Input.AdvanceTo(buffer.Start, buffer.Start);
                 }
             }
-            if (eol == null)
-            {
-                message = default;
-                return false;
-            }
 
-            var payload = buffer.Slice(0, eol.Value);
-            message = Encoding.UTF8.GetString(payload.ToArray()) + (char)delimiter;
-            buffer = buffer.Slice(buffer.GetPosition(1, eol.Value));
-            return true;
+            return default;
         }
 
-        //protected override bool TryReadMessage(ref ReadOnlySequence<byte> buffer, byte[] delimiter, out string message)
-        //{
-        //    var reader = new SequenceReader<byte>(buffer);
-        //    if (reader.TryReadTo(out ReadOnlySequence<byte> itemBytes, delimiter, advancePastDelimiter: true)) // we have an item to handle
-        //    {
-        //        // Skip the line + the termination character \r.
-        //        message = Encoding.UTF8.GetString(itemBytes.ToArray()) + Encoding.UTF8.GetString(delimiter);
-        //        buffer = buffer.Slice(buffer.GetPosition(0, reader.Position));
-        //        return true;
-        //    }
+        private static bool TryParseLine(ref ReadOnlySequence<byte> buffer, ReadOnlySpan<byte> delimiter, out ReadOnlySequence<byte> line)
+        {
+            var reader = new SequenceReader<byte>(buffer);
 
-        //    message = default;
-        //    return false;
-        //}
+            if (reader.TryReadTo(out line, delimiter))
+            {
+                buffer = buffer.Slice(reader.Position);
+                return true;
+            }
 
-        //protected override bool TryReadMessage(ref ReadOnlySequence<byte> buffer, byte[] delimiter, out string message)
-        //{
-        //    var reader = new SequenceReader<byte>(buffer);
-        //    if (reader.TryReadTo(out ReadOnlySpan<byte> itemBytes, BYTE_CR, advancePastDelimiter: true)) // we have an item to handle
-        //    {
-        //        // Skip the line + the termination character \r.
-        //        message = Encoding.UTF8.GetString(itemBytes);
-        //        buffer = buffer.Slice(buffer.GetPosition(0, reader.Position));
-        //        return true;
-        //    }
-
-        //    message = default;
-        //    return false;
-        //}
+            line = default;
+            return false;
+        }
     }
 }
