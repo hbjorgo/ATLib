@@ -18,10 +18,13 @@
   <ItemGroup>
     <PackageReference Include="Stateless" Version="5.1.2" />
     <PackageReference Include="System.IO.Pipelines" Version="4.7.2" />
+    <PackageReference Include="System.IO.Ports" Version="4.7.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Modems\" />
+    <Folder Include="Commands\3GPP_TS_27_005\" />
+    <Folder Include="Commands\3GPP_TS_27_007\" />
+    <Folder Include="Commands\V25TER\" />
   </ItemGroup>
 
 </Project>
