@@ -4,8 +4,8 @@ namespace HeboTech.ATLib.Modems
 {
     public class AdafruitFona : ModemBase
     {
-        public AdafruitFona(ICommunicator comm)
-            : base(comm)
+        public AdafruitFona(ICommunicator communicator)
+            : base(communicator)
         {
         }
     }

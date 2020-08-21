@@ -2,66 +2,87 @@
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.States;
 using System;
-using System.Net.Cache;
-using System.Threading.Tasks;
+using System.Diagnostics;
+using System.Linq;
 
 namespace HeboTech.ATLib.Modems
 {
     public abstract class ModemBase
     {
-        private readonly ICommunicator comm;
+        private readonly AtChannel atChannel;
 
-        public enum Error
+        public ModemBase(ICommunicator communicator)
         {
-            NO_ERROR = 0,
-            TIMEOUT
+            atChannel = new AtChannel(communicator);
         }
 
-        public enum CME_ERROR
+        public virtual SimStatus GetSimStatus()
         {
-            NO_ERROR
-        }
+            var error = atChannel.SendSingleLineCommand("AT+CPIN?", "+CPIN:", out AtResponse response);
 
-        public ModemBase(ICommunicator comm)
-        {
-            this.comm = comm;
-        }
-
-        public virtual PinStatus ReadPinStatus()
-        {
-            var err = Write("AT+CPIN?", "+CPIN:", out string response);
-            switch (err)
+            if (error != AtChannel.AtError.NO_ERROR)
             {
-                case Error.NO_ERROR:
-                    switch (GetCmeError(response))
-                    {
-                        case CME_ERROR.NO_ERROR:
-                            response = AtTokenizer.TokenizeStart(response);
-                            response = AtTokenizer.TokenizeNextString(response, out string token);
-                            if (token == "READY")
-                                return PinStatus.READY;
-                            break;
-                        default:
-                            break;
-                    }
+                Console.WriteLine("Error :(");
+                return SimStatus.SIM_NOT_READY;
+            }
+
+            switch (AtChannel.GetCmeError(response))
+            {
+                case AtChannel.AtCmeError.CME_SUCCESS:
                     break;
-                case Error.TIMEOUT:
-                    break;
+                case AtChannel.AtCmeError.CME_SIM_NOT_INSERTED:
+                    return SimStatus.SIM_ABSENT;
                 default:
-                    break;
+                    return SimStatus.SIM_NOT_READY;
+            }
+
+            // CPIN? has succeeded, now look at the result
+            string cpinLine = response.Intermediates.First();
+            if (!AtTokenizer.TokenizeStart(cpinLine, out cpinLine))
+            {
+                return SimStatus.SIM_NOT_READY;
+            }
+
+            if (AtTokenizer.TokenizeNextString(cpinLine, out string cpinResult) == null)
+            {
+                return SimStatus.SIM_NOT_READY;
+            }
+
+            switch (cpinResult)
+            {
+                case "SIM PIN":
+                    return SimStatus.SIM_PIN;
+                case "SIM PUK":
+                    return SimStatus.SIM_PUK;
+                case "PH-NET PIN":
+                    return SimStatus.SIM_NETWORK_PERSONALIZATION;
+                case "READY":
+                    return SimStatus.SIM_READY;
+                default:
+                    // Treat unsupported lock types as "sim absent"
+                    return SimStatus.SIM_ABSENT;
             }
         }
 
-        private CME_ERROR GetCmeError(string response)
+        public virtual void GetSignalStrength()
         {
-            return CME_ERROR.NO_ERROR;
+            var error = atChannel.SendSingleLineCommand("AT+CSQ", "+CSQ:", out AtResponse response);
+
+            if (Debugger.IsAttached)
+                Debugger.Break();
         }
 
-        private Error Write(string command, string responsePrefix, out string response)
+        public virtual void GetBatteryStatus()
         {
-            comm.Write(command).GetAwaiter().GetResult();
-            response = null;
-            return Error.NO_ERROR;
+            var error = atChannel.SendSingleLineCommand("AT+CBC", "+CBC:", out AtResponse response);
+
+            if (Debugger.IsAttached)
+                Debugger.Break();
+        }
+
+        public void Close()
+        {
+            atChannel.OnReadClosed();
         }
     }
 }

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Communication
 {
-    public class Communicator : ICommunicator
+    public class Communicator
     {
         private static ReadOnlyMemory<byte> NewLine => new byte[] { (byte)'\r', (byte)'\n' };
         private readonly IDuplexPipe duplexPipe;

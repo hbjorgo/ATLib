@@ -1,13 +1,12 @@
-﻿using System;
-using System.Threading;
+﻿using System.Threading;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Communication
 {
     public interface ICommunicator
     {
-        Task<string> ReadLineAsync(CancellationToken cancellationToken = default);
-        Task<string> ReadLineAsync(ReadOnlyMemory<byte> delimiter, CancellationToken cancellationToken = default);
+        ValueTask<int> Read(char[] buffer, int offset, int count, CancellationToken cancellationToken = default);
         ValueTask Write(string input, CancellationToken cancellationToken = default);
+        ValueTask Write(char[] input, int offset, int count, CancellationToken cancellationToken = default);
     }
 }
