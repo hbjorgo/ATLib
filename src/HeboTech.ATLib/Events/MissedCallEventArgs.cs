@@ -13,8 +13,8 @@
 
         public static MissedCallEventArgs CreateFromResponse(string response)
         {
-            string[] split = response.Split(' ', 2);
-            return new MissedCallEventArgs(split[0], split[1]);
+            string[] split = response.Split(' ', 3);
+            return new MissedCallEventArgs(split[1], split[2]);
         }
     }
 }

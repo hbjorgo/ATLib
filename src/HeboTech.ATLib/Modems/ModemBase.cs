@@ -21,13 +21,13 @@ namespace HeboTech.ATLib.Modems
         {
             atChannel = new AtChannel(communicator)
             {
-                UnsolicitedHandler = new Action<string, string>((a, b) =>
+                UnsolicitedHandler = new Action<string, string>((line1, line2) =>
                 {
-                    if (a == "RING")
+                    if (line1 == "RING")
                         IncomingCall?.Invoke(this, new IncomingCallEventArgs());
-                    else if (a.StartsWith("MISSED_CALL: "))
+                    else if (line1.StartsWith("MISSED_CALL: "))
                     {
-                        MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(a.Substring(13)));
+                        MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(line1));
                     }
                 })
             };
