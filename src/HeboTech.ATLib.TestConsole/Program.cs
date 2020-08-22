@@ -3,7 +3,6 @@ using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.IO.Ports;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -35,7 +34,7 @@ namespace HeboTech.ATLib.TestConsole
 
                 if (simStatus == States.SimStatus.SIM_PIN)
                 {
-                    var simPinStatus = modem.EnterSimPin(new Pin("<pin>"));
+                    var simPinStatus = modem.EnterSimPin(new Pin(args[0]));
                     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 
                     simStatus = modem.GetSimStatus();
@@ -48,8 +47,8 @@ namespace HeboTech.ATLib.TestConsole
                 var batteryStatus = modem.GetBatteryStatus();
                 Console.WriteLine($"Battery Status: {batteryStatus}");
 
-                //var smsReference = modem.SendSMS(new PhoneNumber("<number>"), "Hello ATLib!");
-                //Console.WriteLine($"SMS Reference: {smsReference}");
+                var smsReference = modem.SendSMS(new PhoneNumber(args[1]), "Hello ATLib!");
+                Console.WriteLine($"SMS Reference: {smsReference}");
 
                 Console.WriteLine("Done. Press any key to exit...");
                 ConsoleKey key;
