@@ -15,8 +15,8 @@ namespace HeboTech.ATLib.Communication
 
         public ValueTask<int> Read(char[] buffer, int offset, int count, CancellationToken cancellationToken = default)
         {
-            if (serialPort.IsOpen)
-                return new ValueTask<int>(serialPort.Read(buffer, offset, count));
+            if (serialPort.IsOpen && serialPort.BytesToRead > 0)
+                return new ValueTask<int>(serialPort.Read(buffer, offset, serialPort.BytesToRead));
             return new ValueTask<int>(0);
         }
 

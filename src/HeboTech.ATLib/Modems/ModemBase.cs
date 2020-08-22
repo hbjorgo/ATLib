@@ -1,11 +1,12 @@
-﻿using HeboTech.ATLib.Communication;
-using HeboTech.ATLib.Events;
+﻿using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
 using HeboTech.ATLib.States;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Modems
@@ -15,27 +16,39 @@ namespace HeboTech.ATLib.Modems
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
         public event EventHandler<MissedCallEventArgs> MissedCall;
 
-        private readonly AtChannel atChannel;
+        private readonly AtChannel channel;
 
-        public ModemBase(ICommunicator communicator)
+        public ModemBase(AtChannel channel)
         {
-            atChannel = new AtChannel(communicator)
+            this.channel = channel;
+            RegisterHandlers();
+        }
+
+        private void RegisterHandlers()
+        {
+            channel.UnsolicitedHandler = new Action<string, string>((line1, line2) =>
             {
-                UnsolicitedHandler = new Action<string, string>((line1, line2) =>
+                if (line1 == "RING")
+                    IncomingCall?.Invoke(this, new IncomingCallEventArgs());
+                else if (line1.StartsWith("MISSED_CALL: "))
                 {
-                    if (line1 == "RING")
-                        IncomingCall?.Invoke(this, new IncomingCallEventArgs());
-                    else if (line1.StartsWith("MISSED_CALL: "))
-                    {
-                        MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(line1));
-                    }
-                })
-            };
+                    MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(line1));
+                }
+            });
+        }
+
+        public virtual Status DisableEcho()
+        {
+            var error = channel.SendCommand("ATE0", out AtResponse response);
+
+            if (error == AtChannel.AtError.NO_ERROR)
+                return Status.OK;
+            return Status.ERROR;
         }
 
         public virtual SimStatus GetSimStatus()
         {
-            var error = atChannel.SendSingleLineCommand("AT+CPIN?", "+CPIN:", out AtResponse response);
+            var error = channel.SendSingleLineCommand("AT+CPIN?", "+CPIN:", out AtResponse response);
 
             if (error != AtChannel.AtError.NO_ERROR)
             {
@@ -75,9 +88,17 @@ namespace HeboTech.ATLib.Modems
             };
         }
 
+        public virtual Status EnterSimPin(Pin pin)
+        {
+            var error = channel.SendCommand($"AT+CPIN={pin}", out AtResponse response);
+            if (error == AtChannel.AtError.NO_ERROR && response.Success)
+                return Status.OK;
+            else return Status.ERROR;
+        }
+
         public virtual SignalStrength GetSignalStrength()
         {
-            var error = atChannel.SendSingleLineCommand("AT+CSQ", "+CSQ:", out AtResponse response);
+            var error = channel.SendSingleLineCommand("AT+CSQ", "+CSQ:", out AtResponse response);
 
             if (error != AtChannel.AtError.NO_ERROR)
                 return null;
@@ -93,9 +114,33 @@ namespace HeboTech.ATLib.Modems
             return null;
         }
 
+        public virtual Status AnswerIncomingCall()
+        {
+            var error = channel.SendCommand("ATA", out AtResponse response);
+            if (error == AtChannel.AtError.NO_ERROR)
+                return Status.OK;
+            return Status.ERROR;
+        }
+
+        public virtual CallDetails Hangup()
+        {
+            var error = channel.SendSingleLineCommand("AT+CHUP", "VOICE CALL:", out AtResponse response);
+            if (error != AtChannel.AtError.NO_ERROR)
+                return null;
+
+            string line = response.Intermediates.First();
+            var match = Regex.Match(line, @"VOICE CALL: END: (?<duration>\d+)");
+            if (match.Success)
+            {
+                int duration = int.Parse(match.Groups["duration"].Value);
+                return new CallDetails(TimeSpan.FromSeconds(duration));
+            }
+            return null;
+        }
+
         public virtual BatteryStatus GetBatteryStatus()
         {
-            var error = atChannel.SendSingleLineCommand("AT+CBC", "+CBC:", out AtResponse response);
+            var error = channel.SendSingleLineCommand("AT+CBC", "+CBC:", out AtResponse response);
 
             if (error != AtChannel.AtError.NO_ERROR)
                 return null;
@@ -116,7 +161,7 @@ namespace HeboTech.ATLib.Modems
         {
             string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
             string cmd2 = message;
-            var error = atChannel.SendSms(cmd1, cmd2, "+CMGS:", out AtResponse response);
+            var error = channel.SendSms(cmd1, cmd2, "+CMGS:", out AtResponse response);
 
             string line = response.Intermediates.First();
             var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
@@ -131,7 +176,7 @@ namespace HeboTech.ATLib.Modems
 
         public void Close()
         {
-            atChannel.Close();
+            channel.Close();
         }
     }
 }

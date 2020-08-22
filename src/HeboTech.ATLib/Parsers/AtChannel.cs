@@ -1,7 +1,8 @@
 ﻿using HeboTech.ATLib.Communication;
 using System;
+using System.Diagnostics;
 using System.Linq;
-using System.Text;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -66,11 +67,17 @@ namespace HeboTech.ATLib.Parsers
         {
             this.comm = comm;
             this.lineReader = new ImprovedLineReader2(comm);
+
             readerThread = new Thread(new ThreadStart(ReaderLoop));
             readerThread.Start();
         }
 
-        // DONE
+        public AtError SendCommand(string command, out AtResponse response)
+        {
+            AtError error = SendFullCommand(command, AtCommandType.NO_RESULT, null, null, TimeSpan.Zero, out response);
+            return error;
+        }
+
         public AtError SendSingleLineCommand(string command, string responsePrefix, out AtResponse response)
         {
             AtError error = SendFullCommand(command, AtCommandType.SINGELLINE, responsePrefix, null, TimeSpan.Zero, out response);
@@ -82,6 +89,12 @@ namespace HeboTech.ATLib.Parsers
                 return AtError.INVALID_RESPONSE;
             }
 
+            return error;
+        }
+
+        public AtError SendMultilineCommand(string command, string responsePrefix, out AtResponse response)
+        {
+            AtError error = SendFullCommand(command, AtCommandType.MULTILINE, responsePrefix, null, TimeSpan.Zero, out response);
             return error;
         }
 
@@ -203,7 +216,7 @@ namespace HeboTech.ATLib.Parsers
                     ProcessLine(line1);
                 }
 
-                Thread.Sleep(10);
+                Thread.Yield();
             }
         }
 
@@ -246,7 +259,7 @@ namespace HeboTech.ATLib.Parsers
                             }
                             else
                             {
-                                // Either we already have an intermediate response or the line doesnæt begin with a digit
+                                // Either we already have an intermediate response or the line doesn't begin with a digit
                                 HandleUnsolicited(line);
                             }
                             break;
@@ -339,6 +352,11 @@ namespace HeboTech.ATLib.Parsers
             return false;
         }
 
+        public void Start()
+        {
+
+        }
+
         public void Close()
         {
             if (!readerClosed)
@@ -350,7 +368,7 @@ namespace HeboTech.ATLib.Parsers
                     Monitor.Pulse(lockObject);
                 }
 
-                var status = readerThread.Join(TimeSpan.FromSeconds(10));
+                var status = readerThread.Join(TimeSpan.FromSeconds(5));
             }
         }
     }

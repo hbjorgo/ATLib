@@ -51,8 +51,8 @@ namespace HeboTech.ATLib.Parsers
                     {
                         return null;
                     }
-                    Thread.Sleep(1);
-                } while (count < 0 && !closed);
+                    Thread.Yield();
+                } while (count <= 0 && !closed);
 
                 if (count > 0)
                 {
