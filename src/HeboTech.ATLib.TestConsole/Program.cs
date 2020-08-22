@@ -35,7 +35,7 @@ namespace HeboTech.ATLib.TestConsole
 
                 if (simStatus == States.SimStatus.SIM_PIN)
                 {
-                    var simPinStatus = modem.EnterSimPin(new Pin("1111"));
+                    var simPinStatus = modem.EnterSimPin(new Pin("<pin>"));
                     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 
                     simStatus = modem.GetSimStatus();
@@ -48,7 +48,7 @@ namespace HeboTech.ATLib.TestConsole
                 var batteryStatus = modem.GetBatteryStatus();
                 Console.WriteLine($"Battery Status: {batteryStatus}");
 
-                //var smsReference = modem.SendSMS(new PhoneNumber("41501790"), "Hello ATLib!");
+                //var smsReference = modem.SendSMS(new PhoneNumber("<number>"), "Hello ATLib!");
                 //Console.WriteLine($"SMS Reference: {smsReference}");
 
                 Console.WriteLine("Done. Press any key to exit...");
