@@ -1,9 +1,12 @@
 ﻿using HeboTech.ATLib.Communication;
 using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.Results;
 using HeboTech.ATLib.States;
 using System;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Modems
 {
@@ -26,11 +29,11 @@ namespace HeboTech.ATLib.Modems
                 return SimStatus.SIM_NOT_READY;
             }
 
-            switch (AtChannel.GetCmeError(response))
+            switch (ResponseParsers.GetCmeError(response))
             {
-                case AtChannel.AtCmeError.CME_SUCCESS:
+                case ResponseParsers.AtCmeError.CME_SUCCESS:
                     break;
-                case AtChannel.AtCmeError.CME_SIM_NOT_INSERTED:
+                case ResponseParsers.AtCmeError.CME_SIM_NOT_INSERTED:
                     return SimStatus.SIM_ABSENT;
                 default:
                     return SimStatus.SIM_NOT_READY;
@@ -38,43 +41,62 @@ namespace HeboTech.ATLib.Modems
 
             // CPIN? has succeeded, now look at the result
             string cpinLine = response.Intermediates.First();
-            if (!AtTokenizer.TokenizeStart(cpinLine, out cpinLine))
+            if (!ImprovedTokenizer.TokenizeStart(cpinLine, out cpinLine))
             {
                 return SimStatus.SIM_NOT_READY;
             }
 
-            if (AtTokenizer.TokenizeNextString(cpinLine, out string cpinResult) == null)
+            if (!ImprovedTokenizer.TokenizeNextString(cpinLine, out _, out string cpinResult))
             {
                 return SimStatus.SIM_NOT_READY;
             }
 
-            switch (cpinResult)
+            return cpinResult switch
             {
-                case "SIM PIN":
-                    return SimStatus.SIM_PIN;
-                case "SIM PUK":
-                    return SimStatus.SIM_PUK;
-                case "PH-NET PIN":
-                    return SimStatus.SIM_NETWORK_PERSONALIZATION;
-                case "READY":
-                    return SimStatus.SIM_READY;
-                default:
-                    // Treat unsupported lock types as "sim absent"
-                    return SimStatus.SIM_ABSENT;
-            }
+                "SIM PIN" => SimStatus.SIM_PIN,
+                "SIM PUK" => SimStatus.SIM_PUK,
+                "PH-NET PIN" => SimStatus.SIM_NETWORK_PERSONALIZATION,
+                "READY" => SimStatus.SIM_READY,
+                _ => SimStatus.SIM_ABSENT,// Treat unsupported lock types as "sim absent"
+            };
         }
 
-        public virtual void GetSignalStrength()
+        public virtual SignalStrength GetSignalStrength()
         {
             var error = atChannel.SendSingleLineCommand("AT+CSQ", "+CSQ:", out AtResponse response);
 
-            if (Debugger.IsAttached)
-                Debugger.Break();
+            if (error != AtChannel.AtError.NO_ERROR)
+                return null;
+
+            string line = response.Intermediates.First();
+            var match = Regex.Match(line, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)");
+            int rssi = int.Parse(match.Groups["rssi"].Value);
+            int ber = int.Parse(match.Groups["ber"].Value);
+            
+            return new SignalStrength(rssi, ber);
         }
 
-        public virtual void GetBatteryStatus()
+        public virtual BatteryStatus GetBatteryStatus()
         {
             var error = atChannel.SendSingleLineCommand("AT+CBC", "+CBC:", out AtResponse response);
+
+            if (error != AtChannel.AtError.NO_ERROR)
+                return null;
+
+            string line = response.Intermediates.First();
+            var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+),(?<voltage>\d+(?:\.\d+)?)V");
+            int bcs = int.Parse(match.Groups["bcs"].Value);
+            int bcl = int.Parse(match.Groups["bcl"].Value);
+            double voltage = double.Parse(match.Groups["voltage"].Value, CultureInfo.InvariantCulture);
+
+            return new BatteryStatus((BatteryChargeStatus)bcs, bcl, voltage);
+        }
+
+        public virtual void SendSMS(PhoneNumber phoneNumber, string message)
+        {
+            string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
+            string cmd2 = message;
+            var error = atChannel.SendSms(cmd1, cmd2, "+CMGS:", out AtResponse response);
 
             if (Debugger.IsAttached)
                 Debugger.Break();

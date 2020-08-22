@@ -2,14 +2,13 @@
 
 namespace HeboTech.ATLib.Results
 {
-    public class BatteryStatusResult
+    public class BatteryStatus
     {
         public BatteryChargeStatus Status { get; }
         public int ChargeLevel { get; }
-        // Millivolt
-        public int Voltage { get; }
+        public double Voltage { get; }
 
-        public BatteryStatusResult(BatteryChargeStatus status, int chargeLevel, int voltage)
+        public BatteryStatus(BatteryChargeStatus status, int chargeLevel, double voltage)
         {
             Status = status;
             ChargeLevel = chargeLevel;
@@ -18,7 +17,7 @@ namespace HeboTech.ATLib.Results
 
         public override string ToString()
         {
-            return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel}%, Voltage: {Voltage }mV";
+            return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel}%, Voltage: {Voltage }V";
         }
     }
 }

@@ -26,13 +26,6 @@ namespace HeboTech.ATLib.Parsers
             CHANNEL_CLOSED
         }
 
-        public enum AtCmeError
-        {
-            CME_ERROR_NON_CME = -1,
-            CME_SUCCESS = 0,
-            CME_SIM_NOT_INSERTED = 10
-        }
-
         private string[] FinalResponseErrors = new string[]
         {
             "ERROR",
@@ -80,6 +73,20 @@ namespace HeboTech.ATLib.Parsers
         public AtError SendSingleLineCommand(string command, string responsePrefix, out AtResponse response)
         {
             AtError error = SendFullCommand(command, AtCommandType.SINGELLINE, responsePrefix, null, TimeSpan.Zero, out response);
+
+            if (error == AtError.NO_ERROR && response != null && response.Success && !response.Intermediates.Any())
+            {
+                // Successful command must have an intermediate response
+                response = null;
+                return AtError.INVALID_RESPONSE;
+            }
+
+            return error;
+        }
+
+        public AtError SendSms(string command, string pdu, string responsePrefix, out AtResponse response)
+        {
+            var error = SendFullCommand(command, AtCommandType.SINGELLINE, responsePrefix, pdu, TimeSpan.Zero, out response);
 
             if (error == AtError.NO_ERROR && response != null && response.Success && !response.Intermediates.Any())
             {
@@ -330,35 +337,6 @@ namespace HeboTech.ATLib.Parsers
                 }
             }
             return false;
-        }
-
-        /*
-         * Returns error code from response
-         * Assumes AT+CMEE=1 (numeric) mode
-         */
-        public static AtCmeError GetCmeError(AtResponse response)
-        {
-            if (response.Success)
-            {
-                return AtCmeError.CME_SUCCESS;
-            }
-
-            if (response.FinalResponse == null || !response.FinalResponse.StartsWith("+CME ERROR:"))
-            {
-                return AtCmeError.CME_ERROR_NON_CME;
-            }
-
-            if (!AtTokenizer.TokenizeStart(response.FinalResponse, out string tokenizerResponse))
-            {
-                return AtCmeError.CME_ERROR_NON_CME;
-            }
-
-            if (!AtTokenizer.TokenizeNextInt(tokenizerResponse, out int ret))
-            {
-                return AtCmeError.CME_ERROR_NON_CME;
-            }
-
-            return (AtCmeError)ret;
         }
 
         public void OnReadClosed()

@@ -31,6 +31,8 @@ namespace HeboTech.ATLib.Parsers
             }
             else
             {
+                // There is data in the buffer from the last read
+
                 // Skip over leading newlines
                 while (buffer[headIndex] == '\r' || buffer[headIndex] == '\n')
                     headIndex++;
@@ -60,7 +62,7 @@ namespace HeboTech.ATLib.Parsers
                 {
                     try
                     {
-                        count = comm.Read(buffer, tailIndex, buffer.Length).GetAwaiter().GetResult();
+                        count = comm.Read(buffer, tailIndex, buffer.Length - tailIndex - 1).GetAwaiter().GetResult();
                     }
                     catch (OperationCanceledException oce)
                     {

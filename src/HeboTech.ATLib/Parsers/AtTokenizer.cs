@@ -1,8 +1,6 @@
-﻿using System;
-
-namespace HeboTech.ATLib.Parsers
+﻿namespace HeboTech.ATLib.Parsers
 {
-    public class AtTokenizer
+    public static class AtTokenizer
     {
         public static bool TokenizeStart(string input, out string output)
         {

@@ -27,8 +27,13 @@ namespace HeboTech.ATLib.TestConsole
                 var simStatus = modem.GetSimStatus();
                 Console.WriteLine($"SIM Status: {simStatus}");
 
-                modem.GetSignalStrength();
-                modem.GetBatteryStatus();
+                var signalStrength = modem.GetSignalStrength();
+                Console.WriteLine($"Signal Strength: {signalStrength}");
+                
+                var batteryStatus = modem.GetBatteryStatus();
+                Console.WriteLine($"Battery Status: {batteryStatus}");
+
+                modem.SendSMS(new PhoneNumber("<number>"), "Hello ATLib!");
 
                 modem.Close();
 
