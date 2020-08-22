@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.TestConsole
 
             using (SerialPort serialPort = new SerialPort("COM7", 9600, Parity.None, 8, StopBits.One))
             {
-                serialPort.ReadTimeout = 60_000;
+                serialPort.ReadTimeout = 1_000;
                 Console.WriteLine("Opening serial port...");
                 serialPort.Open();
                 Console.WriteLine("Serialport opened");
@@ -38,7 +38,7 @@ namespace HeboTech.ATLib.TestConsole
                 //var smsReference = modem.SendSMS(new PhoneNumber("<number>"), "Hello ATLib!");
                 //Console.WriteLine($"SMS Reference: {smsReference}");
 
-                Thread.Sleep(30_000);
+                //Thread.Sleep(30_000);
                 modem.Close();
             }
 

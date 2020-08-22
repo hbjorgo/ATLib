@@ -17,16 +17,16 @@ namespace HeboTech.ATLib.Communication
             return new ValueTask<int>(charactersWritten);
         }
 
-        public ValueTask Write(string input, CancellationToken cancellationToken = default)
+        public ValueTask<bool> Write(string input, CancellationToken cancellationToken = default)
         {
             Console.WriteLine(input);
-            return new ValueTask();
+            return new ValueTask<bool>(true);
         }
 
-        public ValueTask Write(char[] input, int offset, int count, CancellationToken cancellationToken = default)
+        public ValueTask<bool> Write(char[] input, int offset, int count, CancellationToken cancellationToken = default)
         {
             Console.WriteLine(input, offset, count);
-            return new ValueTask();
+            return new ValueTask<bool>(true);
         }
     }
 }

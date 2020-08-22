@@ -1,5 +1,6 @@
 ﻿using HeboTech.ATLib.Communication;
 using System;
+using System.Threading;
 
 namespace HeboTech.ATLib.Parsers
 {
@@ -10,6 +11,7 @@ namespace HeboTech.ATLib.Parsers
         private readonly char[] buffer = new char[maxAtResponse];
         private int headIndex = 0;
         private int tailIndex = 0;
+        private bool closed;
 
         public ImprovedLineReader2(ICommunicator comm)
         {
@@ -36,7 +38,7 @@ namespace HeboTech.ATLib.Parsers
                 eolIndex = FindNextEOL(buffer, tailIndex, headIndex);
             }
 
-            while (eolIndex < 0)
+            while (eolIndex < 0 && !closed)
             {
                 int count;
                 do
@@ -49,7 +51,8 @@ namespace HeboTech.ATLib.Parsers
                     {
                         return null;
                     }
-                } while (count < 0);
+                    Thread.Sleep(1);
+                } while (count < 0 && !closed);
 
                 if (count > 0)
                 {
@@ -106,6 +109,11 @@ namespace HeboTech.ATLib.Parsers
             {
                 return -1;
             }
+        }
+
+        public void Close()
+        {
+            closed = true;
         }
     }
 }

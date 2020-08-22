@@ -15,19 +15,29 @@ namespace HeboTech.ATLib.Communication
 
         public ValueTask<int> Read(char[] buffer, int offset, int count, CancellationToken cancellationToken = default)
         {
-            return new ValueTask<int>(serialPort.Read(buffer, offset, count));
+            if (serialPort.IsOpen)
+                return new ValueTask<int>(serialPort.Read(buffer, offset, count));
+            return new ValueTask<int>(0);
         }
 
-        public ValueTask Write(string text, CancellationToken cancellationToken = default)
+        public ValueTask<bool> Write(string text, CancellationToken cancellationToken = default)
         {
-            serialPort.Write(text);
-            return new ValueTask();
+            if (serialPort.IsOpen)
+            {
+                serialPort.Write(text);
+                return new ValueTask<bool>(true);
+            }
+            return new ValueTask<bool>(false);
         }
 
-        public ValueTask Write(char[] input, int offset, int count, CancellationToken cancellationToken = default)
+        public ValueTask<bool> Write(char[] input, int offset, int count, CancellationToken cancellationToken = default)
         {
-            serialPort.Write(input, offset, count);
-            return new ValueTask();
+            if (serialPort.IsOpen)
+            {
+                serialPort.Write(input, offset, count);
+                return new ValueTask<bool>(true);
+            }
+            return new ValueTask<bool>(false);
         }
     }
 }

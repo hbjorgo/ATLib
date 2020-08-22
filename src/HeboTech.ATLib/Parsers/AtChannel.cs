@@ -53,6 +53,7 @@ namespace HeboTech.ATLib.Parsers
         private readonly ICommunicator comm;
         private readonly ImprovedLineReader2 lineReader;
         private bool readerClosed;
+        private Thread readerThread;
 
         public Action<string, string> UnsolicitedHandler { get; set; }
 
@@ -65,7 +66,7 @@ namespace HeboTech.ATLib.Parsers
         {
             this.comm = comm;
             this.lineReader = new ImprovedLineReader2(comm);
-            Thread readerThread = new Thread(new ThreadStart(ReaderLoop));
+            readerThread = new Thread(new ThreadStart(ReaderLoop));
             readerThread.Start();
         }
 
@@ -179,7 +180,7 @@ namespace HeboTech.ATLib.Parsers
 
         private void ReaderLoop()
         {
-            while (true)
+            while (!readerClosed)
             {
                 string line1 = lineReader.ReadLine();
                 if (line1 == null)
@@ -204,7 +205,6 @@ namespace HeboTech.ATLib.Parsers
 
                 Thread.Sleep(10);
             }
-
         }
 
         private void ProcessLine(string line)
@@ -339,15 +339,18 @@ namespace HeboTech.ATLib.Parsers
             return false;
         }
 
-        public void OnReadClosed()
+        public void Close()
         {
             if (!readerClosed)
             {
                 lock (lockObject)
                 {
+                    lineReader.Close();
                     readerClosed = true;
                     Monitor.Pulse(lockObject);
                 }
+
+                var status = readerThread.Join(TimeSpan.FromSeconds(10));
             }
         }
     }

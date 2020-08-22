@@ -131,7 +131,7 @@ namespace HeboTech.ATLib.Modems
 
         public void Close()
         {
-            atChannel.OnReadClosed();
+            atChannel.Close();
         }
     }
 }
