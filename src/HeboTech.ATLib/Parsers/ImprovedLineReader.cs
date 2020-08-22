@@ -12,6 +12,7 @@ namespace HeboTech.ATLib.Parsers
         private const int maxAtResponse = 8 * 1024;
         private readonly char[] buffer = new char[maxAtResponse];
         private int headIndex = 0;
+        private int tailIndex = -1;
 
         public ImprovedLineReader(ICommunicator comm)
         {
@@ -21,7 +22,6 @@ namespace HeboTech.ATLib.Parsers
         public string ReadLine()
         {
             int eolIndex = -1;
-            int tailIndex = -1;
 
             if (buffer[headIndex] == '\0')
             {

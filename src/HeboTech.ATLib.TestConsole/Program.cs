@@ -33,7 +33,8 @@ namespace HeboTech.ATLib.TestConsole
                 var batteryStatus = modem.GetBatteryStatus();
                 Console.WriteLine($"Battery Status: {batteryStatus}");
 
-                modem.SendSMS(new PhoneNumber("<number>"), "Hello ATLib!");
+                var smsReference = modem.SendSMS(new PhoneNumber("<number>"), "Hello ATLib!");
+                Console.WriteLine($"SMS Reference: {smsReference}");
 
                 modem.Close();
 

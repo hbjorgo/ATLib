@@ -51,7 +51,7 @@ namespace HeboTech.ATLib.Parsers
 
         private readonly object lockObject = new object();
         private readonly ICommunicator comm;
-        private readonly ImprovedLineReader lineReader;
+        private readonly ImprovedLineReader2 lineReader;
         private bool readerClosed;
 
         public Action<string, string> UnsolicitedHandler { get; set; }
@@ -64,7 +64,7 @@ namespace HeboTech.ATLib.Parsers
         public AtChannel(ICommunicator comm)
         {
             this.comm = comm;
-            this.lineReader = new ImprovedLineReader(comm);
+            this.lineReader = new ImprovedLineReader2(comm);
             Thread readerThread = new Thread(new ThreadStart(ReaderLoop));
             readerThread.Start();
         }

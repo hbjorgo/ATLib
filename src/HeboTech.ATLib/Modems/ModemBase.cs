@@ -70,10 +70,13 @@ namespace HeboTech.ATLib.Modems
 
             string line = response.Intermediates.First();
             var match = Regex.Match(line, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)");
-            int rssi = int.Parse(match.Groups["rssi"].Value);
-            int ber = int.Parse(match.Groups["ber"].Value);
-            
-            return new SignalStrength(rssi, ber);
+            if (match.Success)
+            {
+                int rssi = int.Parse(match.Groups["rssi"].Value);
+                int ber = int.Parse(match.Groups["ber"].Value);
+                return new SignalStrength(rssi, ber);
+            }
+            return null;
         }
 
         public virtual BatteryStatus GetBatteryStatus()
@@ -85,21 +88,31 @@ namespace HeboTech.ATLib.Modems
 
             string line = response.Intermediates.First();
             var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+),(?<voltage>\d+(?:\.\d+)?)V");
-            int bcs = int.Parse(match.Groups["bcs"].Value);
-            int bcl = int.Parse(match.Groups["bcl"].Value);
-            double voltage = double.Parse(match.Groups["voltage"].Value, CultureInfo.InvariantCulture);
-
-            return new BatteryStatus((BatteryChargeStatus)bcs, bcl, voltage);
+            if (match.Success)
+            {
+                int bcs = int.Parse(match.Groups["bcs"].Value);
+                int bcl = int.Parse(match.Groups["bcl"].Value);
+                double voltage = double.Parse(match.Groups["voltage"].Value, CultureInfo.InvariantCulture);
+                return new BatteryStatus((BatteryChargeStatus)bcs, bcl, voltage);
+            }
+            return null;
         }
 
-        public virtual void SendSMS(PhoneNumber phoneNumber, string message)
+        public virtual SmsReference SendSMS(PhoneNumber phoneNumber, string message)
         {
             string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
             string cmd2 = message;
             var error = atChannel.SendSms(cmd1, cmd2, "+CMGS:", out AtResponse response);
 
-            if (Debugger.IsAttached)
-                Debugger.Break();
+            string line = response.Intermediates.First();
+            var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+            if (match.Success)
+            {
+                int mr = int.Parse(match.Groups["mr"].Value);
+                return new SmsReference(mr);
+            }
+
+            return null;
         }
 
         public void Close()
