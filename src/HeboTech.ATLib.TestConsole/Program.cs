@@ -1,6 +1,5 @@
 ﻿using HeboTech.ATLib.Communication;
 using HeboTech.ATLib.Modems;
-using HeboTech.ATLib.Parsers;
 using System;
 using System.IO.Ports;
 using System.Threading;
@@ -24,6 +23,9 @@ namespace HeboTech.ATLib.TestConsole
                 ICommunicator comm = new SerialPortCommunicator(serialPort);
 
                 AdafruitFona modem = new AdafruitFona(comm);
+                modem.IncomingCall += Modem_IncomingCall;
+                modem.MissedCall += Modem_MissedCall;
+
                 var simStatus = modem.GetSimStatus();
                 Console.WriteLine($"SIM Status: {simStatus}");
 
@@ -33,16 +35,25 @@ namespace HeboTech.ATLib.TestConsole
                 var batteryStatus = modem.GetBatteryStatus();
                 Console.WriteLine($"Battery Status: {batteryStatus}");
 
-                var smsReference = modem.SendSMS(new PhoneNumber("<number>"), "Hello ATLib!");
-                Console.WriteLine($"SMS Reference: {smsReference}");
+                //var smsReference = modem.SendSMS(new PhoneNumber("<number>"), "Hello ATLib!");
+                //Console.WriteLine($"SMS Reference: {smsReference}");
 
+                Thread.Sleep(30_000);
                 modem.Close();
-
-                Thread.Sleep(1000);
             }
 
             Console.WriteLine("Done. Press any key to exit...");
             Console.ReadKey();
+        }
+
+        private static void Modem_MissedCall(object sender, Events.MissedCallEventArgs e)
+        {
+            Console.WriteLine($"Missed call at {e.Time} from {e.PhoneNumber}");
+        }
+
+        private static void Modem_IncomingCall(object sender, Events.IncomingCallEventArgs e)
+        {
+            Console.WriteLine("Incoming call...");
         }
     }
 }

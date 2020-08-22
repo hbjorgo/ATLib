@@ -1,9 +1,9 @@
 ﻿using HeboTech.ATLib.Communication;
+using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
 using HeboTech.ATLib.States;
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -12,11 +12,25 @@ namespace HeboTech.ATLib.Modems
 {
     public abstract class ModemBase
     {
+        public event EventHandler<IncomingCallEventArgs> IncomingCall;
+        public event EventHandler<MissedCallEventArgs> MissedCall;
+
         private readonly AtChannel atChannel;
 
         public ModemBase(ICommunicator communicator)
         {
-            atChannel = new AtChannel(communicator);
+            atChannel = new AtChannel(communicator)
+            {
+                UnsolicitedHandler = new Action<string, string>((a, b) =>
+                {
+                    if (a == "RING")
+                        IncomingCall?.Invoke(this, new IncomingCallEventArgs());
+                    else if (a.StartsWith("MISSED_CALL: "))
+                    {
+                        MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(a.Substring(13)));
+                    }
+                })
+            };
         }
 
         public virtual SimStatus GetSimStatus()
