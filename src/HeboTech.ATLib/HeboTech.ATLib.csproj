@@ -18,7 +18,6 @@
   <ItemGroup>
     <Compile Remove="Communication\ScriptCommunicator.cs" />
     <Compile Remove="Communication\SocketCommunicator.cs" />
-    <Compile Remove="Parsers\LineReader.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -27,12 +26,6 @@
     <PackageReference Include="System.IO.Pipelines" Version="4.7.2" />
     <PackageReference Include="System.IO.Ports" Version="4.7.0" />
     <PackageReference Include="System.Threading.Channels" Version="4.7.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Commands\3GPP_TS_27_005\" />
-    <Folder Include="Commands\3GPP_TS_27_007\" />
-    <Folder Include="Commands\V25TER\" />
   </ItemGroup>
 
 </Project>

@@ -4,7 +4,7 @@ using System.Threading;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class ImprovedLineReader2
+    public class AtLineReader
     {
         private readonly ICommunicator comm;
         private const int maxAtResponse = 8 * 1024;
@@ -13,7 +13,7 @@ namespace HeboTech.ATLib.Parsers
         private int tailIndex = 0;
         private bool closed;
 
-        public ImprovedLineReader2(ICommunicator comm)
+        public AtLineReader(ICommunicator comm)
         {
             this.comm = comm;
         }
@@ -51,7 +51,7 @@ namespace HeboTech.ATLib.Parsers
                     {
                         return null;
                     }
-                    Thread.Yield();
+                    Thread.Sleep(10);
                 } while (count <= 0 && !closed);
 
                 if (count > 0)

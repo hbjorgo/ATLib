@@ -1,6 +1,8 @@
 ﻿using HeboTech.ATLib.Communication;
+using HeboTech.ATLib.Inputs;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.Results;
 using System;
 using System.IO.Ports;
 using System.Threading.Tasks;
@@ -23,7 +25,7 @@ namespace HeboTech.ATLib.TestConsole
 
                 AtChannel atChannel = new AtChannel(comm);
 
-                AdafruitFona modem = new AdafruitFona(atChannel);
+                AdafruitFona3G modem = new AdafruitFona3G(atChannel);
                 modem.IncomingCall += Modem_IncomingCall;
                 modem.MissedCall += Modem_MissedCall;
 
@@ -32,9 +34,12 @@ namespace HeboTech.ATLib.TestConsole
                 var simStatus = modem.GetSimStatus();
                 Console.WriteLine($"SIM Status: {simStatus}");
 
-                if (simStatus == States.SimStatus.SIM_PIN)
+                var remainingCodeAttemps = modem.GetRemainingPinPukAttempts();
+                Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
+
+                if (simStatus == SimStatus.SIM_PIN)
                 {
-                    var simPinStatus = modem.EnterSimPin(new Pin(args[0]));
+                    var simPinStatus = modem.EnterSimPin(new PersonalIdentificationNumber(args[0]));
                     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 
                     simStatus = modem.GetSimStatus();
@@ -50,7 +55,7 @@ namespace HeboTech.ATLib.TestConsole
                 var smsReference = modem.SendSMS(new PhoneNumber(args[1]), "Hello ATLib!");
                 Console.WriteLine($"SMS Reference: {smsReference}");
 
-                Console.WriteLine("Done. Press any key to exit...");
+                Console.WriteLine("Done. Press 'a' to answer call, 'h' to hang up, and 'q' to exit...");
                 ConsoleKey key;
                 while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
                 {

@@ -1,4 +1,4 @@
-﻿namespace HeboTech.ATLib
+﻿namespace HeboTech.ATLib.Inputs
 {
     public class PhoneNumber
     {

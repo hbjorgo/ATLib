@@ -1,4 +1,4 @@
-﻿using HeboTech.ATLib.States;
+﻿using HeboTech.ATLib.Extensions;
 
 namespace HeboTech.ATLib.Results
 {

@@ -1,8 +1,6 @@
 ﻿using HeboTech.ATLib.Communication;
 using System;
-using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -27,7 +25,7 @@ namespace HeboTech.ATLib.Parsers
             CHANNEL_CLOSED
         }
 
-        private string[] FinalResponseErrors = new string[]
+        private readonly string[] FinalResponseErrors = new string[]
         {
             "ERROR",
             "+CMS ERROR:",
@@ -37,13 +35,13 @@ namespace HeboTech.ATLib.Parsers
             "NO DIALTONE"
         };
 
-        private string[] FinalResponseSuccesses = new string[]
+        private readonly string[] FinalResponseSuccesses = new string[]
         {
             "OK",
             "CONNECT"
         };
 
-        private string[] SmsUnsoliciteds = new string[]
+        private readonly string[] SmsUnsoliciteds = new string[]
         {
             "+CMT:",
             "+CDS:",
@@ -52,9 +50,9 @@ namespace HeboTech.ATLib.Parsers
 
         private readonly object lockObject = new object();
         private readonly ICommunicator comm;
-        private readonly ImprovedLineReader2 lineReader;
+        private readonly AtLineReader lineReader;
+        private readonly Thread readerThread;
         private bool readerClosed;
-        private Thread readerThread;
 
         public Action<string, string> UnsolicitedHandler { get; set; }
 
@@ -66,7 +64,7 @@ namespace HeboTech.ATLib.Parsers
         public AtChannel(ICommunicator comm)
         {
             this.comm = comm;
-            this.lineReader = new ImprovedLineReader2(comm);
+            this.lineReader = new AtLineReader(comm);
 
             readerThread = new Thread(new ThreadStart(ReaderLoop));
             readerThread.Start();

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 
-namespace HeboTech.ATLib
+namespace HeboTech.ATLib.Extensions
 {
     public static class EnumExtensions
     {

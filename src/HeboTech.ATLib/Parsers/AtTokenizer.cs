@@ -2,58 +2,33 @@
 {
     public static class AtTokenizer
     {
-        public static bool TokenizeStart(string input, out string output)
+        public static bool TokenizeStart(string input, out string remainder)
+        {
+            var split = input.Split(':', 2);
+            if (split.Length == 2)
+            {
+                remainder = split[1];
+                return true;
+            }
+
+            remainder = null;
+            return false;
+        }
+
+        public static bool TokenizeNextString(string input, out string remainder, out string token)
         {
             if (input == null)
             {
-                output = null;
+                remainder = null;
+                token = null;
                 return false;
             }
 
-            int pos = input.IndexOf(':');
-            if (pos < 0 || pos == input.Length - 1)
-            {
-                output = null;
-                return false;
-            }
-
-            output = input.Substring(pos + 1);
-            return true;
+            remainder = NextToken(input, out token);
+            return token != null;
         }
 
         private static string NextToken(string input, out string token)
-        {
-            token = null;
-            if (input == null)
-                return null;
-
-            input = input.Replace(" ", string.Empty);
-
-            if (string.IsNullOrEmpty(input))
-                return null;
-            else if (input.StartsWith('"'))
-            {
-                var pos = input.IndexOf('"', 1);
-                if (pos == -1)
-                    pos = input.Length;
-                token = input.Substring(1, pos);
-                if (pos == input.Length)
-                    return null;
-                return input.Substring(pos);
-            }
-            else
-            {
-                var pos = input.IndexOf(',');
-                if (pos == -1)
-                    pos = input.Length;
-                token = input.Substring(0, pos);
-                if (pos == input.Length)
-                    return string.Empty;
-                return input.Substring(pos);
-            }
-        }
-
-        public static string TokenizeNextString(string input, out string token)
         {
             if (input == null)
             {
@@ -61,34 +36,55 @@
                 return null;
             }
 
-            return NextToken(input, out token);
+            input = input.TrimStart();
+
+            if (input.StartsWith('"'))
+            {
+                var split = input.Split('\"', 2);
+                if (split.Length == 2)
+                {
+                    token = split[0];
+                    return split[1];
+                }
+                else
+                {
+                    token = split[0];
+                    return null;
+                }
+            }
+            else
+            {
+                var split = input.Split(',', 2);
+                if (split.Length == 2)
+                {
+                    token = split[0];
+                    return split[1];
+                }
+                else
+                {
+                    token = split[0];
+                    return null;
+                }
+            }
         }
 
-        public static bool HasMoreTokens(string input)
+        public static bool TokenizeNextInt(string input, out string remainder, out int result)
         {
-            return !(input == null || string.IsNullOrWhiteSpace(input));
+            return TokenizeNextIntBase(input, out remainder, out result, 10, false);
         }
 
-        public static bool TokenizeNextInt(string input, out int result)
+        private static bool TokenizeNextIntBase(string input, out string remainder, out int result, int @base, bool unsigned)
         {
-            return TokenizeNextIntBase(input, out result, 10, false);
-        }
-
-        private static bool TokenizeNextIntBase(string input, out int result, int @base, bool unsigned)
-        {
+            remainder = null;
             result = 0;
 
-            if (string.IsNullOrWhiteSpace(input))
-            {
+            if (input == null)
                 return false;
-            }
 
-            NextToken(input, out string token);
+            remainder = NextToken(input, out string token);
 
             if (token == null)
-            {
                 return false;
-            }
             else
             {
                 if (unsigned)

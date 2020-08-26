@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.Parsers
 {
-    public static class ResponseParsers
+    public static class ErrorParsers
     {
         public enum AtCmeError
         {
@@ -30,7 +30,7 @@
                 return AtCmeError.CME_ERROR_NON_CME;
             }
 
-            if (!AtTokenizer.TokenizeNextInt(tokenizerResponse, out int ret))
+            if (!AtTokenizer.TokenizeNextInt(tokenizerResponse, out _, out int ret))
             {
                 return AtCmeError.CME_ERROR_NON_CME;
             }

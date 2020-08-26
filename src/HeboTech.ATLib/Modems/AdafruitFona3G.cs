@@ -2,9 +2,9 @@
 
 namespace HeboTech.ATLib.Modems
 {
-    public class AdafruitFona : ModemBase
+    public class AdafruitFona3G : ModemBase
     {
-        public AdafruitFona(AtChannel channel)
+        public AdafruitFona3G(AtChannel channel)
             : base(channel)
         {
         }
