@@ -11,11 +11,9 @@ namespace HeboTech.ATLib.TestConsole
 {
     class Program
     {
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
-            TimeService.SetProvider(new SystemTimeProvider());
-
-            using (SerialPort serialPort = new SerialPort("COM7", 9600, Parity.None, 8, StopBits.One))
+            using (SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, StopBits.One))
             {
                 Console.WriteLine("Opening serial port...");
                 serialPort.Open();
@@ -39,7 +37,7 @@ namespace HeboTech.ATLib.TestConsole
 
                 if (simStatus == SimStatus.SIM_PIN)
                 {
-                    var simPinStatus = modem.EnterSimPin(new PersonalIdentificationNumber(args[0]));
+                    var simPinStatus = modem.EnterSimPin(new PersonalIdentificationNumber(args[1]));
                     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 
                     simStatus = modem.GetSimStatus();
@@ -52,10 +50,10 @@ namespace HeboTech.ATLib.TestConsole
                 var batteryStatus = modem.GetBatteryStatus();
                 Console.WriteLine($"Battery Status: {batteryStatus}");
 
-                var smsReference = modem.SendSMS(new PhoneNumber(args[1]), "Hello ATLib!");
-                Console.WriteLine($"SMS Reference: {smsReference}");
+                var productInfo = modem.GetProductIdentificationInformation();
+                Console.WriteLine($"Product Information:{Environment.NewLine}{productInfo}");
 
-                Console.WriteLine("Done. Press 'a' to answer call, 'h' to hang up, and 'q' to exit...");
+                Console.WriteLine("Done. Press 'a' to answer call, 'h' to hang up, 's' to send SMS and 'q' to exit...");
                 ConsoleKey key;
                 while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
                 {
@@ -68,6 +66,11 @@ namespace HeboTech.ATLib.TestConsole
                         case ConsoleKey.H:
                             var callDetails = modem.Hangup();
                             Console.WriteLine($"Call Details: {callDetails}");
+                            break;
+                        case ConsoleKey.S:
+                            Console.WriteLine("Sending SMS...");
+                            var smsReference = modem.SendSMS(new PhoneNumber(args[2]), "Hello ATLib!");
+                            Console.WriteLine($"SMS Reference: {smsReference}");
                             break;
                     }
                 }

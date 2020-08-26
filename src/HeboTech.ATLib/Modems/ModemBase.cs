@@ -3,8 +3,10 @@ using HeboTech.ATLib.Inputs;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
 using System;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Modems
@@ -40,7 +42,7 @@ namespace HeboTech.ATLib.Modems
 
         public virtual CommandStatus DisableEcho()
         {
-            var error = channel.SendCommand("ATE0", out _);
+            var error = channel.SendCommand("ATE0");
 
             if (error == AtChannel.AtError.NO_ERROR)
                 return CommandStatus.OK;
@@ -84,9 +86,9 @@ namespace HeboTech.ATLib.Modems
 
         public virtual CommandStatus EnterSimPin(PersonalIdentificationNumber pin)
         {
-            var error = channel.SendCommand($"AT+CPIN={pin}", out AtResponse response);
+            var error = channel.SendCommand($"AT+CPIN={pin}");
 
-            if (error == AtChannel.AtError.NO_ERROR && response.Success)
+            if (error == AtChannel.AtError.NO_ERROR)
                 return CommandStatus.OK;
             else return CommandStatus.ERROR;
         }
@@ -111,7 +113,7 @@ namespace HeboTech.ATLib.Modems
 
         public virtual CommandStatus AnswerIncomingCall()
         {
-            var error = channel.SendCommand("ATA", out _);
+            var error = channel.SendCommand("ATA");
 
             if (error == AtChannel.AtError.NO_ERROR)
                 return CommandStatus.OK;
@@ -189,6 +191,23 @@ namespace HeboTech.ATLib.Modems
                     int puk2 = int.Parse(match.Groups["puk2"].Value);
                     return new RemainingPinPukAttempts(pin1, pin2, puk1, puk2);
                 }
+            }
+            return null;
+        }
+
+        public ProductIdentificationInformation GetProductIdentificationInformation()
+        {
+            var error = channel.SendMultilineCommand("ATI", null, out AtResponse response);
+
+            if (error == AtChannel.AtError.NO_ERROR)
+            {
+                StringBuilder builder = new StringBuilder();
+                foreach (string line in response.Intermediates)
+                {
+                    builder.AppendLine(line);
+                }
+
+                return new ProductIdentificationInformation(builder.ToString());
             }
             return null;
         }

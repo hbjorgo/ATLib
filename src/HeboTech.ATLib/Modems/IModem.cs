@@ -14,10 +14,11 @@ namespace HeboTech.ATLib.Modems
         CommandStatus DisableEcho();
         CommandStatus EnterSimPin(PersonalIdentificationNumber pin);
         BatteryStatus GetBatteryStatus();
+        ProductIdentificationInformation GetProductIdentificationInformation();
+        RemainingPinPukAttempts GetRemainingPinPukAttempts();
         SignalStrength GetSignalStrength();
         SimStatus GetSimStatus();
         CallDetails Hangup();
         SmsReference SendSMS(PhoneNumber phoneNumber, string message);
-        RemainingPinPukAttempts GetRemainingPinPukAttempts();
     }
 }

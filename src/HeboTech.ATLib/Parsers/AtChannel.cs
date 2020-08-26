@@ -13,7 +13,8 @@ namespace HeboTech.ATLib.Parsers
             NO_RESULT, // No intermediate response expected
             NUMERIC, // A single intermediate response starting with a 0-9
             SINGELLINE, // A single intermediate response starting with a prefix
-            MULTILINE // Multiple line intermediate response starting with a prefix
+            MULTILINE, // Multiple line intermediate response starting with a prefix
+            MULTILINE_NO_PREFIX // Multiple line intermediate response without a prefix
         }
 
         public enum AtError
@@ -70,9 +71,15 @@ namespace HeboTech.ATLib.Parsers
             readerThread.Start();
         }
 
-        public AtError SendCommand(string command, out AtResponse response)
+        /// <summary>
+        /// Send command and get command status
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        public AtError SendCommand(string command)
         {
-            AtError error = SendFullCommand(command, AtCommandType.NO_RESULT, null, null, TimeSpan.Zero, out response);
+            AtError error = SendFullCommand(command, AtCommandType.NO_RESULT, null, null, TimeSpan.Zero, out _);
             return error;
         }
 
@@ -92,7 +99,8 @@ namespace HeboTech.ATLib.Parsers
 
         public AtError SendMultilineCommand(string command, string responsePrefix, out AtResponse response)
         {
-            AtError error = SendFullCommand(command, AtCommandType.MULTILINE, responsePrefix, null, TimeSpan.Zero, out response);
+            AtCommandType commandType = responsePrefix == null ? AtCommandType.MULTILINE_NO_PREFIX : AtCommandType.MULTILINE;
+            AtError error = SendFullCommand(command, commandType, responsePrefix, null, TimeSpan.Zero, out response);
             return error;
         }
 
@@ -281,6 +289,9 @@ namespace HeboTech.ATLib.Parsers
                             {
                                 HandleUnsolicited(line);
                             }
+                            break;
+                        case AtCommandType.MULTILINE_NO_PREFIX:
+                            AddIntermediate(line);
                             break;
                         default:
                             // This should never be reached
