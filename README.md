@@ -3,7 +3,7 @@
 
 ATLib is a C# AT command library that abstracts away the commands and makes it easy to communicate with modems.
 
-Hayes command set (commonly known as AT commands) is a command set commonly used in modems. Read more about it at [Wikipedia](https://en.wikipedia.org/wiki/Hayes_command_set)
+Hayes command set (commonly known as AT commands) is a command set frequently used in modems. Read more about it at [Wikipedia](https://en.wikipedia.org/wiki/Hayes_command_set).
 
 ATLib is just in the beginning. Currently only a few commands are implemented, but more will come.
 
