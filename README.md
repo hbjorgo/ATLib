@@ -19,6 +19,11 @@ ATLib is just in the beginning. Currently only a few commands are implemented, b
 - Get signal strength
 - Disable echo
 
+## Supported modems:
+- SIMCOM SIM5320
+- Adafruit FONA 3G
+* Other modems may work using one of the implementations above
+
 ## Usage
 Install as NuGet package
 ```shell
