@@ -1,11 +1,10 @@
 ﻿using HeboTech.ATLib.Communication;
 using HeboTech.ATLib.Inputs;
-using HeboTech.ATLib.Modems;
+using HeboTech.ATLib.Modems.Adafruit;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
 using System;
 using System.IO.Ports;
-using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
 {

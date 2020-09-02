@@ -3,22 +3,22 @@ using HeboTech.ATLib.Inputs;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.Results;
 using System;
-using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 
-namespace HeboTech.ATLib.Modems
+namespace HeboTech.ATLib.Modems.SIMCOM
 {
-    public abstract class ModemBase : IModem
+    public class SIMCOM_SIM5320
     {
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
         public event EventHandler<MissedCallEventArgs> MissedCall;
 
         private readonly AtChannel channel;
 
-        public ModemBase(AtChannel channel)
+        public SIMCOM_SIM5320(AtChannel channel)
         {
             this.channel = channel;
             RegisterHandlers();
@@ -56,11 +56,11 @@ namespace HeboTech.ATLib.Modems
             if (error != AtChannel.AtError.NO_ERROR)
                 return SimStatus.SIM_NOT_READY;
 
-            switch (ErrorParsers.GetCmeError(response))
+            switch (AtErrorParsers.GetCmeError(response))
             {
-                case ErrorParsers.AtCmeError.CME_SUCCESS:
+                case AtErrorParsers.AtCmeError.CME_SUCCESS:
                     break;
-                case ErrorParsers.AtCmeError.CME_SIM_NOT_INSERTED:
+                case AtErrorParsers.AtCmeError.CME_SIM_NOT_INSERTED:
                     return SimStatus.SIM_ABSENT;
                 default:
                     return SimStatus.SIM_NOT_READY;
@@ -87,6 +87,8 @@ namespace HeboTech.ATLib.Modems
         public virtual CommandStatus EnterSimPin(PersonalIdentificationNumber pin)
         {
             var error = channel.SendCommand($"AT+CPIN={pin}");
+
+            Thread.Sleep(1500); // Without it, the reader loop crashes
 
             if (error == AtChannel.AtError.NO_ERROR)
                 return CommandStatus.OK;
@@ -195,7 +197,7 @@ namespace HeboTech.ATLib.Modems
             return null;
         }
 
-        public ProductIdentificationInformation GetProductIdentificationInformation()
+        public virtual ProductIdentificationInformation GetProductIdentificationInformation()
         {
             var error = channel.SendMultilineCommand("ATI", null, out AtResponse response);
 

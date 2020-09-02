@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.Parsers
 {
-    public static class ErrorParsers
+    public static class AtErrorParsers
     {
         public enum AtCmeError
         {
