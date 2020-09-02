@@ -7,6 +7,18 @@ Hayes command set (commonly known as AT commands) is a command set commonly used
 
 ATLib is just in the beginning. Currently only a few commands are implemented, but more will come.
 
+## Supported commands:
+- Send SMS
+- Answer incoming call
+- Hang up call
+- Get SIM status
+- Enter SIM PIN
+- Get remaining PIN & PUK attempts
+- Get product information
+- Get battery status
+- Get signal strength
+- Disable echo
+
 ## Usage
 Install as NuGet package
 ```shell
@@ -15,51 +27,33 @@ dotnet add package HeboTech.ATLib
 
 Using a serial port to communicate with a modem is easy:
 ```csharp
-// Create and connect to serial port
-SerialPort serialPort = new SerialPort(); //Use an overload to pass in your settings
-serialPort.Open();
+// Set up serial port
+using (SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, StopBits.One))
+{
+  // Open serial port
+  serialPort.Open();
+  
+  // Create a new communicator based on the serial port
+  ICommunicator comm = new SerialPortCommunicator(serialPort);
 
-// Pipe the serial port stream through a duplex pipe
-IDuplexPipe duplexPipe = StreamConnection.GetDuplex(serialPort.BaseStream); // See note below
+  // Create a new AT channel based on the communicator
+  AtChannel atChannel = new AtChannel(comm);
 
-// Pass in the pipe to the communicator and start communicating!
-ICommunicator<string> comm = new Communicator(duplexPipe);
+  // Create the modem
+  AdafruitFona3G modem = new AdafruitFona3G(atChannel);
 
-// Send a ping to the modem
-var initializeResult = await comm.InitializeAsync();
-// Get battery status
-var batteryStatus = await comm.GetBatteryStatusAsync();
+  // The library doesn't support echo, so turn it off
+  modem.DisableEcho();
+
+  // Get SIM status
+  var simStatus = modem.GetSimStatus();
+  Console.WriteLine($"SIM Status: {simStatus}");
+  
+  // Send SMS to the specified number
+  var smsReference = modem.SendSMS(new PhoneNumber("0123456789"), "Hello ATLib!");
+  Console.WriteLine($"SMS Reference: {smsReference}");
+}
 ```
+For more examples, check out the TestConsole project in the code.
 
-```
-Note:
-IDuplexPipe is an interface in System.IO.Pipelines.
-Microsoft and ATLib doesn't come with an implementations for this, but Pipelines.Sockets.Unofficial has one that works great!
-Install it with
-dotnet add package Pipelines.Sockets.Unofficial
-```
-## Supported commands:
-
-:heavy_check_mark: = Done   :wrench: = In progress
-### V.25TER
-| Command         | Numeric          |    Text          | Description | Notes |
-|-----------------|:----------------:|:----------------:|-------------|-------|
-| ATE[n]          |:heavy_check_mark:|:heavy_check_mark:|             |       |
-| ATV[format]     |:heavy_check_mark:|:heavy_check_mark:|             |       |
-
-### 3GPP TS 27.005
-
-| Command         | Numeric          |    Text          | Description | Notes |
-|-----------------|:----------------:|:----------------:|-------------|-------|
-| AT+CMGF?        |:heavy_check_mark:|:heavy_check_mark:|             |       |
-| AT+CMGF=[mode]  |:heavy_check_mark:|:heavy_check_mark:|             |       |
-| AT+CMGS=[da]    |:wrench:          |:wrench:          |             |       |
-
-
-### 3GPP TS 27.007
-
-| Command         | Numeric          |    Text          | Description | Notes |
-|-----------------|:----------------:|:----------------:|-------------|-------|
-| AT+CBC          |:heavy_check_mark:|:heavy_check_mark:|             |       |
-| AT+CSQ          |:heavy_check_mark:|:heavy_check_mark:|             |       |
-| AT+CPIN?        |:heavy_check_mark:|:heavy_check_mark:|             |       |
+Feedback is welcome :)
