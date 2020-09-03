@@ -52,8 +52,8 @@ namespace HeboTech.ATLib.Parsers
         private readonly object lockObject = new object();
         private readonly ICommunicator comm;
         private readonly AtLineReader lineReader;
-        private readonly Thread readerThread;
         private bool readerClosed;
+        private readonly Task readerTask;
 
         public Action<string, string> UnsolicitedHandler { get; set; }
 
@@ -65,10 +65,8 @@ namespace HeboTech.ATLib.Parsers
         public AtChannel(ICommunicator comm)
         {
             this.comm = comm;
-            this.lineReader = new AtLineReader(comm);
-
-            readerThread = new Thread(new ThreadStart(ReaderLoop));
-            readerThread.Start();
+            lineReader = new AtLineReader(comm);
+            readerTask = Task.Factory.StartNew(ReaderLoopAsync);
         }
 
         /// <summary>
@@ -177,11 +175,6 @@ namespace HeboTech.ATLib.Parsers
             }
         }
 
-        private ValueTask<AtError> ReadLine(CancellationToken token)
-        {
-            throw new NotImplementedException();
-        }
-
         private AtError WriteLine(string command)
         {
             comm.Write(command);
@@ -197,11 +190,11 @@ namespace HeboTech.ATLib.Parsers
             smsPdu = null;
         }
 
-        private void ReaderLoop()
+        private async Task ReaderLoopAsync()
         {
             while (!readerClosed)
             {
-                string line1 = lineReader.ReadLine();
+                string line1 = await lineReader.ReadLineAsync();
                 if (line1 == null)
                 {
                     break;
@@ -209,7 +202,7 @@ namespace HeboTech.ATLib.Parsers
 
                 if (IsSMSUnsolicited(line1))
                 {
-                    string line2 = lineReader.ReadLine();
+                    string line2 = await lineReader.ReadLineAsync();
                     if (line2 == null)
                     {
                         break;
@@ -377,7 +370,7 @@ namespace HeboTech.ATLib.Parsers
                     Monitor.Pulse(lockObject);
                 }
 
-                var status = readerThread.Join(TimeSpan.FromSeconds(5));
+                var status = readerTask.Wait(TimeSpan.FromSeconds(5));
             }
         }
     }

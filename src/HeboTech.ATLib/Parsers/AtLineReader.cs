@@ -2,7 +2,7 @@
 using HeboTech.ATLib.Communication;
 using System;
 using System.Linq;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.Parsers
             ringBuffer = new CircularBuffer<char>(maxAtResponse, true);
         }
 
-        public string ReadLine()
+        public async Task<string> ReadLineAsync()
         {
             SkipLeadingNewLines();
             int eolCount = FindNextEOL();
@@ -31,13 +31,12 @@ namespace HeboTech.ATLib.Parsers
                 {
                     try
                     {
-                        readCount = comm.Read(readBuffer, 0, readBuffer.Length).GetAwaiter().GetResult();
+                        readCount = await comm.Read(readBuffer, 0, readBuffer.Length);
                     }
                     catch (OperationCanceledException)
                     {
                         return null;
                     }
-                    Thread.Sleep(10);
                 } while (readCount <= 0 && !closed);
 
                 if (readCount > 0)

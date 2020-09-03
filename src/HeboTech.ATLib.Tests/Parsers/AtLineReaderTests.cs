@@ -17,7 +17,7 @@ namespace HeboTech.ATLib.Tests.Parsers
            
             AtLineReader dut = new AtLineReader(commMock);
 
-            string result = dut.ReadLine();
+            string result = dut.ReadLineAsync();
 
             Assert.AreEqual("OK", result);
         }
@@ -32,49 +32,49 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             string result;
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CP READY", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+SPIC: 3,10,1,10", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CSQ: 16,99", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CBC: 0,100,4.232V", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("Manufacturer: SIMCOM INCORPORATED", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("Model: SIMCOM_SIM5320E", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("Revision: SIM5320E_V1.5", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("IMEI: 012345678901234", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+GCAP: +CGSM,+DS,+ES", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
         }
 
@@ -88,82 +88,82 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             string result;
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("START", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+ST 25", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+ST 25", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CP SIM PIN", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("ATE0", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CP SIM PIN", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+SPIC: 3,10,1,10", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CP READY", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("SMS DONE", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("PB DONE", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CP READY", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CSQ: 16,99", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+CBC: 0,100,4.232V", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("Manufacturer: SIMCOM INCORPORATED", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("Model: SIMCOM_SIM5320E", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("Revision: SIM5320E_V1.5", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("IMEI: 012345678901234", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("+GCAP: +CGSM,+DS,+ES", result);
 
-            result = dut.ReadLine();
+            result = dut.ReadLineAsync();
             Assert.AreEqual("OK", result);
         }
 
