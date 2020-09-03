@@ -1,5 +1,7 @@
-﻿using HeboTech.ATLib.Communication;
+﻿using Cyotek.Collections.Generic;
+using HeboTech.ATLib.Communication;
 using System;
+using System.Linq;
 using System.Threading;
 
 namespace HeboTech.ATLib.Parsers
@@ -8,63 +10,44 @@ namespace HeboTech.ATLib.Parsers
     {
         private readonly ICommunicator comm;
         private const int maxAtResponse = 8 * 1024;
-        private readonly char[] buffer = new char[maxAtResponse];
-        private int headIndex = 0;
-        private int tailIndex = 0;
         private bool closed;
+        private readonly char[] readBuffer = new char[maxAtResponse];
+        private readonly CircularBuffer<char> ringBuffer;
 
         public AtLineReader(ICommunicator comm)
         {
             this.comm = comm;
+            ringBuffer = new CircularBuffer<char>(maxAtResponse, true);
         }
 
         public string ReadLine()
         {
-            int eolIndex = -1;
-
-            if (0 == maxAtResponse - headIndex)
+            SkipLeadingNewLines();
+            int eolCount = FindNextEOL();
+            while (eolCount < 0 && !closed)
             {
-                // Ditch buffer and start over again
-                headIndex = 0;
-                tailIndex = 0;
-            }
-
-            if (headIndex != tailIndex)
-            {
-                // Skip over leading newlines
-                while ((buffer[tailIndex] == '\r' || buffer[tailIndex] == '\n') && tailIndex < headIndex)
-                    tailIndex++;
-
-                eolIndex = FindNextEOL(buffer, tailIndex, headIndex);
-            }
-
-            while (eolIndex < 0 && !closed)
-            {
-                int count;
+                int readCount;
                 do
                 {
                     try
                     {
-                        count = comm.Read(buffer, headIndex, buffer.Length - headIndex).GetAwaiter().GetResult();
+                        readCount = comm.Read(readBuffer, 0, readBuffer.Length).GetAwaiter().GetResult();
                     }
-                    catch (OperationCanceledException oce)
+                    catch (OperationCanceledException)
                     {
                         return null;
                     }
                     Thread.Sleep(10);
-                } while (count <= 0 && !closed);
+                } while (readCount <= 0 && !closed);
 
-                if (count > 0)
+                if (readCount > 0)
                 {
-                    headIndex += count;
+                    ringBuffer.Put(readBuffer, 0, readCount);
 
-                    // Skip over leading newlines
-                    while (buffer[tailIndex] == '\r' || buffer[tailIndex] == '\n')
-                        tailIndex++;
-
-                    eolIndex = FindNextEOL(buffer, tailIndex, headIndex);
+                    SkipLeadingNewLines();
+                    eolCount = FindNextEOL();
                 }
-                else if (count <= 0)
+                else if (readCount <= 0)
                 {
                     // Read error encountered or EOF reached
                     // count == 0 => EOF reached
@@ -73,42 +56,38 @@ namespace HeboTech.ATLib.Parsers
                 }
             }
 
-            string line = new string(buffer, tailIndex, eolIndex - tailIndex);
-
-            // Move remaining data to start of buffer
-            Array.Copy(buffer, eolIndex, buffer, 0, headIndex - eolIndex);
-            tailIndex = 0;
-            headIndex -= eolIndex;
-
+            string line = new string(ringBuffer.Get(eolCount));
             return line;
         }
 
-        private int FindNextEOL(char[] input, int startIndex, int endIndex)
+        private void SkipLeadingNewLines()
         {
-            if (startIndex == endIndex)
+            while (!ringBuffer.IsEmpty && (ringBuffer.Peek() == '\r' || ringBuffer.Peek() == '\n'))
+                ringBuffer.Skip(1);
+        }
+
+        private int FindNextEOL()
+        {
+            if (ringBuffer.IsEmpty)
                 return -1;
 
-            if (startIndex + 2 < endIndex && input[startIndex] == '>' && input[startIndex + 1] == ' ' && input[startIndex + 2] == '\0')
-            {
-                // SMS prompt character... not \r terminated
-                return startIndex + 2;
-            }
+            // SMS prompt character... not \r terminated
+            char[] tail = ringBuffer.Peek(3);
+            if (tail.Length == 3 && tail[0] == '>' && tail[1] == ' ' && tail[2] == '\0')
+                return 2;
 
             // Find next newline
-            int i = startIndex;
-            while (startIndex < endIndex && input[i] != '\0' && input[i] != '\r' && input[i] != '\n')
+            int i = 0;
+            foreach (char c in ringBuffer)
             {
-                i++;
+                if (c != '\0' && c != '\r' && c != '\n')
+                    i++;
+                else
+                    break;
             }
-
-            if (input[i] == '\r' || input[i] == '\n')
-            {
+            if (ringBuffer.ElementAt(i) == '\r' || ringBuffer.ElementAt(i) == '\n')
                 return i;
-            }
-            else
-            {
-                return -1;
-            }
+            return -1;
         }
 
         public void Close()
