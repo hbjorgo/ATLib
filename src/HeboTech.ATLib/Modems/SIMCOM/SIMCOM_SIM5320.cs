@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace HeboTech.ATLib.Modems.SIMCOM
 {
-    public class SIMCOM_SIM5320
+    public class SIMCOM_SIM5320 : IModem
     {
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
         public event EventHandler<MissedCallEventArgs> MissedCall;
@@ -44,7 +44,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             var error = channel.SendCommand("ATE0");
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
@@ -53,7 +53,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             var error = channel.SendSingleLineCommand("AT+CPIN?", "+CPIN:", out AtResponse response);
 
-            if (error != AtChannel.AtError.NO_ERROR)
+            if (error != AtError.NO_ERROR)
                 return SimStatus.SIM_NOT_READY;
 
             switch (AtErrorParsers.GetCmeError(response))
@@ -90,7 +90,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
             Thread.Sleep(1500); // Without it, the reader loop crashes
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             else return CommandStatus.ERROR;
         }
@@ -99,7 +99,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             var error = channel.SendSingleLineCommand("AT+CSQ", "+CSQ:", out AtResponse response);
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)");
@@ -117,7 +117,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             var error = channel.SendCommand("ATA");
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
@@ -126,7 +126,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             var error = channel.SendSingleLineCommand("AT+CHUP", "VOICE CALL:", out AtResponse response);
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"VOICE CALL: END: (?<duration>\d+)");
@@ -143,7 +143,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             var error = channel.SendSingleLineCommand("AT+CBC", "+CBC:", out AtResponse response);
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+),(?<voltage>\d+(?:\.\d+)?)V");
@@ -164,7 +164,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             string cmd2 = message;
             var error = channel.SendSms(cmd1, cmd2, "+CMGS:", out AtResponse response);
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
@@ -181,7 +181,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             var error = channel.SendSingleLineCommand("AT+SPIC", "+SPIC:", out AtResponse response);
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+SPIC:\s(?<pin1>\d+),(?<pin2>\d+),(?<puk1>\d+),(?<puk2>\d+)");
@@ -201,7 +201,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             var error = channel.SendMultilineCommand("ATI", null, out AtResponse response);
 
-            if (error == AtChannel.AtError.NO_ERROR)
+            if (error == AtError.NO_ERROR)
             {
                 StringBuilder builder = new StringBuilder();
                 foreach (string line in response.Intermediates)

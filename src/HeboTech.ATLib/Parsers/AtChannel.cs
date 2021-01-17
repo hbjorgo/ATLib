@@ -6,26 +6,8 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtChannel
+    public partial class AtChannel
     {
-        public enum AtCommandType
-        {
-            NO_RESULT, // No intermediate response expected
-            NUMERIC, // A single intermediate response starting with a 0-9
-            SINGELLINE, // A single intermediate response starting with a prefix
-            MULTILINE, // Multiple line intermediate response starting with a prefix
-            MULTILINE_NO_PREFIX // Multiple line intermediate response without a prefix
-        }
-
-        public enum AtError
-        {
-            NO_ERROR,
-            INVALID_RESPONSE,
-            COMMAND_PENDING,
-            TIMEOUT,
-            CHANNEL_CLOSED
-        }
-
         private readonly string[] FinalResponseErrors = new string[]
         {
             "ERROR",
