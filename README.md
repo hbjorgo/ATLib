@@ -65,4 +65,4 @@ using (SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, Sto
 ```
 For more examples, check out the TestConsole project in the code.
 
-Feedback is welcome :)
+Feedback is welcome 🙂
