@@ -1,5 +1,7 @@
 # ATLib
-![Continuous Integration](https://github.com/hbjorgo/ATLib/workflows/Continuous%20Integration/badge.svg?branch=master) [![NuGet Version](https://img.shields.io/nuget/vpre/HeboTech.ATLib.svg?style=flat)](https://www.nuget.org/packages/HeboTech.ATLib/)
+![Continuous Integration](https://github.com/hbjorgo/ATLib/workflows/Continuous%20Integration/badge.svg?branch=master)
+![Nuget](https://img.shields.io/nuget/v/hebotech.atlib)
+![Nuget](https://img.shields.io/nuget/dt/HeboTech.ATLib)
 
 ATLib is a C# AT command library that abstracts away the commands and makes it easy to communicate with modems.
 
