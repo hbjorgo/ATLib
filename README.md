@@ -7,6 +7,8 @@ Hayes command set (commonly known as AT commands) is a command set frequently us
 
 ATLib is just in the beginning. Currently only a few commands are implemented, but more will come.
 
+[HeboTech.GsmApi](https://github.com/hbjorgo/GsmApi) is a REST API wrapping this library.
+
 ## Supported commands:
 - Send SMS
 - Answer incoming call
