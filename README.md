@@ -1,5 +1,5 @@
 # ATLib
-[![Continuous Integration](https://github.com/hbjorgo/ATLib/workflows/Continuous%20Integration/badge.svg?branch=master)](https://github.com/hbjorgo/ATLib)
+[![CI](https://github.com/hbjorgo/ATLib/workflows/CI/badge.svg)](https://github.com/hbjorgo/ATLib)
 [![Nuget](https://img.shields.io/nuget/v/hebotech.atlib)](https://www.nuget.org/packages/HeboTech.ATLib)
 [![Nuget](https://img.shields.io/nuget/dt/HeboTech.ATLib)](https://www.nuget.org/packages/HeboTech.ATLib)
 
