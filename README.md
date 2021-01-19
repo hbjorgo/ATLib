@@ -11,6 +11,8 @@ ATLib is just in the beginning. Currently only a few commands are implemented, b
 
 [HeboTech.GsmApi](https://github.com/hbjorgo/GsmApi) is a REST API wrapping this library.
 
+Feedback is welcome 🙂
+
 ## Supported commands:
 - Send SMS
 - Answer incoming call
@@ -64,5 +66,3 @@ using (SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, Sto
 }
 ```
 For more examples, check out the TestConsole project in the code.
-
-Feedback is welcome 🙂
