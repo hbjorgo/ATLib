@@ -213,5 +213,43 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             }
             return null;
         }
+
+        public virtual CommandStatus SetDateTime(DateTimeOffset value)
+        {
+            var sb = new StringBuilder("AT+CCLK=\"");
+            int offsetQuarters = value.Offset.Hours * 4;
+            sb.Append(value.ToString(@"yy/MM/dd,HH:mm:ss", CultureInfo.InvariantCulture));
+            sb.Append(offsetQuarters.ToString("+00;-#", CultureInfo.InvariantCulture));
+            sb.Append("\"");
+            var error = channel.SendCommand(sb.ToString());
+
+            if (error == AtError.NO_ERROR)
+                return CommandStatus.OK;
+            return CommandStatus.ERROR;
+        }
+
+        public virtual DateTimeOffset? GetDateTime()
+        {
+            var error = channel.SendSingleLineCommand("AT+CCLK?", "+CCLK:", out AtResponse response);
+
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CCLK:\s""(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d)""");
+                if (match.Success)
+                {
+                    int year = int.Parse(match.Groups["year"].Value);
+                    int month = int.Parse(match.Groups["month"].Value);
+                    int day = int.Parse(match.Groups["day"].Value);
+                    int hour = int.Parse(match.Groups["hour"].Value);
+                    int minute = int.Parse(match.Groups["minute"].Value);
+                    int second = int.Parse(match.Groups["second"].Value);
+                    int zone = int.Parse(match.Groups["zone"].Value);
+                    DateTimeOffset time = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+                    return time;
+                }
+            }
+            return null;
+        }
     }
 }

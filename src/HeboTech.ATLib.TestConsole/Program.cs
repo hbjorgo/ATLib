@@ -52,6 +52,12 @@ namespace HeboTech.ATLib.TestConsole
                 var productInfo = modem.GetProductIdentificationInformation();
                 Console.WriteLine($"Product Information:{Environment.NewLine}{productInfo}");
 
+                var setDateTimeResult = modem.SetDateTime(DateTimeOffset.Now);
+                Console.WriteLine($"Setting date and time: {setDateTimeResult}");
+
+                var dateTime = modem.GetDateTime();
+                Console.WriteLine($"Date and time: {dateTime}");
+
                 Console.WriteLine("Done. Press 'a' to answer call, 'h' to hang up, 's' to send SMS and 'q' to exit...");
                 ConsoleKey key;
                 while ((key = Console.ReadKey().Key) != ConsoleKey.Q)

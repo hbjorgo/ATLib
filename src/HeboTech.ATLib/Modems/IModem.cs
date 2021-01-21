@@ -20,5 +20,7 @@ namespace HeboTech.ATLib.Modems
         SimStatus GetSimStatus();
         CallDetails Hangup();
         SmsReference SendSMS(PhoneNumber phoneNumber, string message);
+        CommandStatus SetDateTime(DateTimeOffset value);
+        DateTimeOffset? GetDateTime();
     }
 }
