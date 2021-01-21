@@ -4,7 +4,7 @@
     {
         public ProductIdentificationInformation(string information)
         {
-            Information = information;
+            Information = information.TrimEnd('\r', '\n');
         }
 
         public string Information { get; }
