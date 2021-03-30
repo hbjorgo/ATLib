@@ -1,8 +1,8 @@
 ﻿using HeboTech.ATLib.Communication;
+using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Inputs;
-using HeboTech.ATLib.Modems.Adafruit;
+using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
-using HeboTech.ATLib.Results;
 using System;
 using System.IO.Ports;
 
@@ -14,6 +14,7 @@ namespace HeboTech.ATLib.TestConsole
         {
             using (SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, StopBits.One))
             {
+                serialPort.Handshake = Handshake.RequestToSend;
                 Console.WriteLine("Opening serial port...");
                 serialPort.Open();
                 Console.WriteLine("Serialport opened");
@@ -22,7 +23,7 @@ namespace HeboTech.ATLib.TestConsole
 
                 AtChannel atChannel = new AtChannel(comm);
 
-                AdafruitFona3G modem = new AdafruitFona3G(atChannel);
+                DWM_222 modem = new DWM_222(atChannel);
                 modem.IncomingCall += Modem_IncomingCall;
                 modem.MissedCall += Modem_MissedCall;
 
@@ -31,8 +32,8 @@ namespace HeboTech.ATLib.TestConsole
                 var simStatus = modem.GetSimStatus();
                 Console.WriteLine($"SIM Status: {simStatus}");
 
-                var remainingCodeAttemps = modem.GetRemainingPinPukAttempts();
-                Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
+                //var remainingCodeAttemps = modem.GetRemainingPinPukAttempts();
+                //Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
 
                 if (simStatus == SimStatus.SIM_PIN)
                 {
@@ -57,6 +58,18 @@ namespace HeboTech.ATLib.TestConsole
 
                 var dateTime = modem.GetDateTime();
                 Console.WriteLine($"Date and time: {dateTime}");
+
+                var smsTextFormatResult = modem.SetSmsMessageFormat(SmsTextFormat.Text);
+                Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
+
+                var singleSms = modem.ReadSMS(0);
+                Console.WriteLine($"Single SMS: {singleSms}");
+
+                var smss = modem.ListSMSs(SmsStatus.ALL);
+                foreach (var sms in smss)
+                {
+                    Console.WriteLine($"SMS: {sms}");
+                }
 
                 Console.WriteLine("Done. Press 'a' to answer call, 'h' to hang up, 's' to send SMS and 'q' to exit...");
                 ConsoleKey key;

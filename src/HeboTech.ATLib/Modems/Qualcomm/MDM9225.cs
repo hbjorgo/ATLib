@@ -10,16 +10,17 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 
-namespace HeboTech.ATLib.Modems.SIMCOM
+
+namespace HeboTech.ATLib.Modems.Qualcomm
 {
-    public class SIMCOM_SIM5320 : IModem
+    public class MDM9225 : IModem
     {
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
         public event EventHandler<MissedCallEventArgs> MissedCall;
 
         private readonly AtChannel channel;
 
-        public SIMCOM_SIM5320(AtChannel channel)
+        public MDM9225(AtChannel channel)
         {
             this.channel = channel;
             RegisterHandlers();
@@ -147,16 +148,24 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             if (error == AtError.NO_ERROR)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+),(?<voltage>\d+(?:\.\d+)?)V");
+                var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+)");
                 if (match.Success)
                 {
                     int bcs = int.Parse(match.Groups["bcs"].Value);
                     int bcl = int.Parse(match.Groups["bcl"].Value);
-                    double voltage = double.Parse(match.Groups["voltage"].Value, CultureInfo.InvariantCulture);
-                    return new BatteryStatus((BatteryChargeStatus)bcs, bcl, voltage);
+                    return new BatteryStatus((BatteryChargeStatus)bcs, bcl);
                 }
             }
             return null;
+        }
+
+        public virtual CommandStatus SetSmsMessageFormat(SmsTextFormat format)
+        {
+            var error = channel.SendCommand($"AT+CMGF={(int)format}");
+
+            if (error == AtError.NO_ERROR)
+                return CommandStatus.OK;
+            return CommandStatus.ERROR;
         }
 
         public virtual SmsReference SendSMS(PhoneNumber phoneNumber, string message)
@@ -176,6 +185,65 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                 }
             }
             return null;
+        }
+
+        public virtual Sms ReadSMS(int index)
+        {
+            var error = channel.SendMultilineCommand($"AT+CMGR={index},0", null, out AtResponse response);
+
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
+                if (match.Success)
+                {
+                    SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
+                    PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                    int year = int.Parse(match.Groups["year"].Value);
+                    int month = int.Parse(match.Groups["month"].Value);
+                    int day = int.Parse(match.Groups["day"].Value);
+                    int hour = int.Parse(match.Groups["hour"].Value);
+                    int minute = int.Parse(match.Groups["minute"].Value);
+                    int second = int.Parse(match.Groups["second"].Value);
+                    int zone = int.Parse(match.Groups["zone"].Value);
+                    DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+                    string message = response.Intermediates.Last();
+                    return new Sms(status, sender, received, message);
+                }
+            }
+            return null;
+        }
+
+        public virtual IList<Sms> ListSMSs(SmsStatus smsStatus)
+        {
+            var error = channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null, out AtResponse response);
+
+            List<Sms> smss = new List<Sms>();
+            if (error == AtError.NO_ERROR)
+            {
+                for (int i = 0; i < response.Intermediates.Count; i += 2)
+                {
+                    string metaData = response.Intermediates[i];
+                    var match = Regex.Match(metaData, @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
+                    if (match.Success)
+                    {
+                        int index = int.Parse(match.Groups["index"].Value);
+                        SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
+                        PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                        int year = int.Parse(match.Groups["year"].Value);
+                        int month = int.Parse(match.Groups["month"].Value);
+                        int day = int.Parse(match.Groups["day"].Value);
+                        int hour = int.Parse(match.Groups["hour"].Value);
+                        int minute = int.Parse(match.Groups["minute"].Value);
+                        int second = int.Parse(match.Groups["second"].Value);
+                        int zone = int.Parse(match.Groups["zone"].Value);
+                        DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+                        string message = response.Intermediates[i + 1];
+                        smss.Add(new SmsWithIndex(index, status, sender, received, message));
+                    }
+                }
+            }
+            return smss;
         }
 
         public virtual RemainingPinPukAttempts GetRemainingPinPukAttempts()
@@ -251,25 +319,6 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                 }
             }
             return null;
-        }
-
-        public CommandStatus SetSmsMessageFormat(SmsTextFormat format)
-        {
-            var error = channel.SendCommand($"AT+CMGF={(int)format}");
-
-            if (error == AtError.NO_ERROR)
-                return CommandStatus.OK;
-            return CommandStatus.ERROR;
-        }
-
-        public Sms ReadSMS(int index)
-        {
-            throw new NotImplementedException();
-        }
-
-        public IList<Sms> ListSMSs(SmsStatus smsStatus)
-        {
-            throw new NotImplementedException();
         }
     }
 }
