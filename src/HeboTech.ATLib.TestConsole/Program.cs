@@ -63,7 +63,7 @@ namespace HeboTech.ATLib.TestConsole
                 var smsTextFormatResult = modem.SetSmsMessageFormat(SmsTextFormat.Text);
                 Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
 
-                var singleSms = modem.ReadSMS(0);
+                var singleSms = modem.ReadSMS(2);
                 Console.WriteLine($"Single SMS: {singleSms}");
 
                 var smss = modem.ListSMSs(SmsStatus.ALL);
