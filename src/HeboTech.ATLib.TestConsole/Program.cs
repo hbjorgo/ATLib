@@ -1,7 +1,7 @@
 ﻿using HeboTech.ATLib.Communication;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Inputs;
-using HeboTech.ATLib.Modems.D_LINK;
+using HeboTech.ATLib.Modems.TP_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.IO.Ports;
@@ -23,7 +23,7 @@ namespace HeboTech.ATLib.TestConsole
 
                 AtChannel atChannel = new AtChannel(comm);
 
-                DWM_222 modem = new DWM_222(atChannel);
+                MA260 modem = new MA260(atChannel);
                 modem.IncomingCall += Modem_IncomingCall;
                 modem.MissedCall += Modem_MissedCall;
 
@@ -32,8 +32,8 @@ namespace HeboTech.ATLib.TestConsole
                 var simStatus = modem.GetSimStatus();
                 Console.WriteLine($"SIM Status: {simStatus}");
 
-                //var remainingCodeAttemps = modem.GetRemainingPinPukAttempts();
-                //Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
+                var remainingCodeAttemps = modem.GetRemainingPinPukAttempts();
+                Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
 
                 if (simStatus == SimStatus.SIM_PIN)
                 {
@@ -62,7 +62,7 @@ namespace HeboTech.ATLib.TestConsole
                 var smsTextFormatResult = modem.SetSmsMessageFormat(SmsTextFormat.Text);
                 Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
 
-                var singleSms = modem.ReadSMS(0);
+                var singleSms = modem.ReadSMS(2);
                 Console.WriteLine($"Single SMS: {singleSms}");
 
                 var smss = modem.ListSMSs(SmsStatus.ALL);
