@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public partial class AtChannel
+    public class AtChannel
     {
         private readonly string[] FinalResponseErrors = new string[]
         {
