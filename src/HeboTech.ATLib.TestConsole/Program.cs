@@ -1,7 +1,6 @@
 ﻿using HeboTech.ATLib.Communication;
 using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Inputs;
-using HeboTech.ATLib.Modems.D_LINK;
+using HeboTech.ATLib.Modems.Adafruit;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.IO.Ports;
@@ -14,7 +13,7 @@ namespace HeboTech.ATLib.TestConsole
         {
             using (SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, StopBits.One))
             {
-                serialPort.Handshake = Handshake.RequestToSend;
+                serialPort.Handshake = Handshake.None;
                 Console.WriteLine("Opening serial port...");
                 serialPort.Open();
                 Console.WriteLine("Serialport opened");
@@ -23,15 +22,17 @@ namespace HeboTech.ATLib.TestConsole
 
                 AtChannel atChannel = new AtChannel(comm);
 
-                DWM_222 modem = new DWM_222(atChannel);
+                var modem = new Fona3G(atChannel);
                 modem.IncomingCall += Modem_IncomingCall;
                 modem.MissedCall += Modem_MissedCall;
+                modem.SmsReceived += Modem_SmsReceived;
 
                 modem.DisableEcho();
 
                 var simStatus = modem.GetSimStatus();
                 Console.WriteLine($"SIM Status: {simStatus}");
 
+                // SIMCOM SIM5320
                 //var remainingCodeAttemps = modem.GetRemainingPinPukAttempts();
                 //Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
 
@@ -69,6 +70,8 @@ namespace HeboTech.ATLib.TestConsole
                 foreach (var sms in smss)
                 {
                     Console.WriteLine($"SMS: {sms}");
+                    var smsDeleteStatus = modem.DeleteSMS(sms.Index);
+                    Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
                 }
 
                 Console.WriteLine("Done. Press 'a' to answer call, 'h' to hang up, 's' to send SMS and 'q' to exit...");
@@ -94,6 +97,11 @@ namespace HeboTech.ATLib.TestConsole
                 }
                 modem.Close();
             }
+        }
+
+        private static void Modem_SmsReceived(object sender, Events.SmsReceivedEventArgs e)
+        {
+            Console.WriteLine($"SMS received. Index {e.Index} at storage location {e.Storage}");
         }
 
         private static void Modem_MissedCall(object sender, Events.MissedCallEventArgs e)

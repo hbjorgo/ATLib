@@ -5,9 +5,9 @@ using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
 
-namespace HeboTech.ATLib.Modems.Qualcomm
+namespace HeboTech.ATLib.Modems.TP_LINK
 {
-    public class MDM9225 : IMDM9225
+    public class MA260 : IMA260
     {
         private readonly AtChannel channel;
         private readonly _V_25TER _V_25TER;
@@ -18,7 +18,13 @@ namespace HeboTech.ATLib.Modems.Qualcomm
         public event EventHandler<MissedCallEventArgs> MissedCall;
         public event EventHandler<SmsReceivedEventArgs> SmsReceived;
 
-        public MDM9225(AtChannel channel)
+        /// <summary>
+        /// Based on some Qualcomm chipset
+        /// 
+        /// Serial port settings:
+        /// 9600 8N1 Handshake.RequestToSend
+        /// </summary>
+        public MA260(AtChannel channel)
         {
             this.channel = channel;
 
@@ -31,6 +37,8 @@ namespace HeboTech.ATLib.Modems.Qualcomm
 
         protected void RegisterHandlers()
         {
+            IncomingCall += (s, e) => IncomingCall?.Invoke(this, e);
+            MissedCall += (s, e) => MissedCall?.Invoke(this, e);
             SmsReceived += (s, e) => SmsReceived?.Invoke(this, e);
         }
 
@@ -40,6 +48,8 @@ namespace HeboTech.ATLib.Modems.Qualcomm
         }
 
         #region _V_25TER
+        public CommandStatus AnswerIncomingCall() => _V_25TER.AnswerIncomingCall();
+        public CallDetails Hangup() => _V_25TER.Hangup();
         public CommandStatus DisableEcho() => _V_25TER.DisableEcho();
         public ProductIdentificationInformation GetProductIdentificationInformation() => _V_25TER.GetProductIdentificationInformation();
 

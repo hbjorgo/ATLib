@@ -1,4 +1,4 @@
-﻿namespace HeboTech.ATLib.Inputs
+﻿namespace HeboTech.ATLib.DTOs
 {
     public enum SmsTextFormat
     {

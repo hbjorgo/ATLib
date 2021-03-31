@@ -3,7 +3,7 @@ using HeboTech.ATLib.Parsers;
 
 namespace HeboTech.ATLib.Modems.Adafruit
 {
-    public class AdafruitFona3G : SIMCOM_SIM5320
+    public class Fona3G : SIM5320, IFona3G
     {
         /// <summary>
         /// Based on SIMCOM SIM5320 chipset
@@ -11,7 +11,7 @@ namespace HeboTech.ATLib.Modems.Adafruit
         /// Serial port settings:
         /// 9600 8N1 Handshake.None
         /// </summary>
-        public AdafruitFona3G(AtChannel channel)
+        public Fona3G(AtChannel channel)
             : base(channel)
         {
         }

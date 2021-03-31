@@ -37,7 +37,7 @@ namespace HeboTech.ATLib.Parsers
         private bool readerClosed;
         private readonly Task readerTask;
 
-        public Action<string, string> UnsolicitedHandler { get; set; }
+        public event EventHandler<UnsolicitedEventArgs> UnsolicitedEvent;
 
         private AtCommandType commandType;
         private string responsePrefix;
@@ -190,7 +190,7 @@ namespace HeboTech.ATLib.Parsers
                         break;
                     }
 
-                    UnsolicitedHandler?.Invoke(line1, line2);
+                    HandleUnsolicited(line1, line2);
                 }
                 else
                 {
@@ -319,9 +319,9 @@ namespace HeboTech.ATLib.Parsers
             return false;
         }
 
-        private void HandleUnsolicited(string line)
+        private void HandleUnsolicited(string line1, string line2 = null)
         {
-            UnsolicitedHandler?.Invoke(line, null);
+            UnsolicitedEvent?.Invoke(this, new UnsolicitedEventArgs(line1, line2));
         }
 
         private bool IsSMSUnsolicited(string line)

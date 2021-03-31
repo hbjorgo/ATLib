@@ -1,5 +1,4 @@
-﻿using HeboTech.ATLib.Inputs;
-using System;
+﻿using System;
 
 namespace HeboTech.ATLib.DTOs
 {

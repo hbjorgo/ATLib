@@ -3,7 +3,7 @@ using HeboTech.ATLib.Parsers;
 
 namespace HeboTech.ATLib.Modems.D_LINK
 {
-    public class DWM_222 : MDM9225
+    public class DWM222 : MDM9225, IDWM222
     {
         /// <summary>
         /// Based on Qualcomm MDM9225 chipset
@@ -11,7 +11,7 @@ namespace HeboTech.ATLib.Modems.D_LINK
         /// Serial port settings:
         /// 9600 8N1 Handshake.RequestToSend
         /// </summary>
-        public DWM_222(AtChannel channel)
+        public DWM222(AtChannel channel)
             : base(channel)
         {
         }
