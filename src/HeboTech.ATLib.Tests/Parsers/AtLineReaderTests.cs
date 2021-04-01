@@ -1,5 +1,4 @@
-﻿using HeboTech.ATLib.Communication;
-using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Parsers;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             var commMock = new CommunicatorMock();
             commMock.AppendReturnValue("\r\nOK\r\n");
            
-            AtLineReader dut = new AtLineReader(commMock);
+            AtLineReader dut = new AtLineReader((buffer, offset, count, cancellationToken) => commMock.Read(buffer, offset, count, cancellationToken));
 
             string result = await dut.ReadLineAsync();
 
@@ -28,7 +27,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             var commMock = new CommunicatorMock();
             commMock.AppendReturnValue("\r\n\r\n\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n+CP READY\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n+SPIC: 3,10,1,10\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n+CSQ: 16,99\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n+CBC: 0,100,4.232V\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\nManufacturer: SIMCOM INCORPORATED\r\nModel: SIMCOM_SIM5320E\r\nRevision: SIM5320E_V1.5\r\nIMEI: 012345678901234\r\n+GCAP: +CGSM,+DS,+ES\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n\r\n");
 
-            AtLineReader dut = new AtLineReader(commMock);
+            AtLineReader dut = new AtLineReader((buffer, offset, count, cancellationToken) => commMock.Read(buffer, offset, count, cancellationToken));
 
             string result;
 
@@ -84,7 +83,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             var commMock = new CommunicatorMock();
             commMock.AppendReturnValue("\r\n\r\nSTART\r\n\r\n+ST 25\r\n\r\n+ST 25\r\n\r\n+CP SIM PIN\r\n\r\n\r\nATE0\r\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n+CP SIM PIN\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n+SPIC: 3,10,1,10\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n+CP READY\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nSMS DONE\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\nPB DONE\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n+CP READY\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n+CSQ: 16,99\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n+CBC: 0,100,4.232V\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\nManufacturer: SIMCOM INCORPORATED\r\nModel: SIMCOM_SIM5320E\r\nRevision: SIM5320E_V1.5\r\nIMEI: 012345678901234\r\n+GCAP: +CGSM,+DS,+ES\r\n\r\nOK\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n\r\n");
 
-            AtLineReader dut = new AtLineReader(commMock);
+            AtLineReader dut = new AtLineReader((buffer, offset, count, cancellationToken) => commMock.Read(buffer, offset, count, cancellationToken));
 
             string result;
 
@@ -167,7 +166,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             Assert.AreEqual("OK", result);
         }
 
-        private class CommunicatorMock : ICommunicator
+        private class CommunicatorMock
         {
             private string returnValue;
             public void AppendReturnValue(string value)
