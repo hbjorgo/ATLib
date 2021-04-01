@@ -1,12 +1,11 @@
-﻿using HeboTech.ATLib.Communication;
-using System;
+﻿using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtChannel
+    public abstract class AtChannel : IDisposable
     {
         private readonly string[] FinalResponseErrors = new string[]
         {
@@ -32,7 +31,6 @@ namespace HeboTech.ATLib.Parsers
         };
 
         private readonly object lockObject = new object();
-        private readonly ICommunicator comm;
         private readonly AtLineReader lineReader;
         private bool readerClosed;
         private readonly Task readerTask;
@@ -43,13 +41,17 @@ namespace HeboTech.ATLib.Parsers
         private string responsePrefix;
         private string smsPdu;
         private AtResponse response;
+        private bool disposedValue;
 
-        public AtChannel(ICommunicator comm)
+        public AtChannel()
         {
-            this.comm = comm;
-            lineReader = new AtLineReader(comm);
+            lineReader = new AtLineReader((buffer, offset, count, cancellationToken) => Read(buffer, offset, count, cancellationToken));
             readerTask = Task.Factory.StartNew(ReaderLoopAsync);
         }
+
+        protected abstract ValueTask<int> Read(char[] buffer, int offset, int count, CancellationToken cancellationToken = default);
+        protected abstract ValueTask<bool> Write(string input, CancellationToken cancellationToken = default);
+        protected abstract ValueTask<bool> Write(char[] input, int offset, int count, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Send command and get command status
@@ -57,13 +59,13 @@ namespace HeboTech.ATLib.Parsers
         /// <param name="command"></param>
         /// <param name="response"></param>
         /// <returns></returns>
-        public AtError SendCommand(string command)
+        public virtual AtError SendCommand(string command)
         {
             AtError error = SendFullCommand(command, AtCommandType.NO_RESULT, null, null, TimeSpan.Zero, out _);
             return error;
         }
 
-        public AtError SendSingleLineCommand(string command, string responsePrefix, out AtResponse response)
+        public virtual AtError SendSingleLineCommand(string command, string responsePrefix, out AtResponse response)
         {
             AtError error = SendFullCommand(command, AtCommandType.SINGELLINE, responsePrefix, null, TimeSpan.Zero, out response);
 
@@ -77,14 +79,14 @@ namespace HeboTech.ATLib.Parsers
             return error;
         }
 
-        public AtError SendMultilineCommand(string command, string responsePrefix, out AtResponse response)
+        public virtual AtError SendMultilineCommand(string command, string responsePrefix, out AtResponse response)
         {
             AtCommandType commandType = responsePrefix == null ? AtCommandType.MULTILINE_NO_PREFIX : AtCommandType.MULTILINE;
             AtError error = SendFullCommand(command, commandType, responsePrefix, null, TimeSpan.Zero, out response);
             return error;
         }
 
-        public AtError SendSms(string command, string pdu, string responsePrefix, out AtResponse response)
+        public virtual AtError SendSms(string command, string pdu, string responsePrefix, out AtResponse response)
         {
             var error = SendFullCommand(command, AtCommandType.SINGELLINE, responsePrefix, pdu, TimeSpan.Zero, out response);
 
@@ -99,7 +101,7 @@ namespace HeboTech.ATLib.Parsers
         }
 
         // TODO: Ref
-        public AtError SendFullCommand(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout, out AtResponse response)
+        public virtual AtError SendFullCommand(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout, out AtResponse response)
         {
             lock (lockObject)
             {
@@ -108,7 +110,7 @@ namespace HeboTech.ATLib.Parsers
         }
 
         // TODO: Ref
-        public AtError SendFullCommandNoLock(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout, out AtResponse outResponse)
+        public virtual AtError SendFullCommandNoLock(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout, out AtResponse outResponse)
         {
             if (response != null)
             {
@@ -159,8 +161,8 @@ namespace HeboTech.ATLib.Parsers
 
         private AtError WriteLine(string command)
         {
-            comm.Write(command);
-            comm.Write("\r");
+            Write(command);
+            Write("\r");
 
             return AtError.NO_ERROR;
         }
@@ -285,8 +287,8 @@ namespace HeboTech.ATLib.Parsers
 
         private void WriteCtrlZ(string smsPdu)
         {
-            comm.Write(smsPdu);
-            comm.Write("\x1A");
+            Write(smsPdu);
+            Write("\x1A");
         }
 
         private bool IsFinalResponseError(string line)
@@ -336,24 +338,52 @@ namespace HeboTech.ATLib.Parsers
             return false;
         }
 
-        public void Start()
-        {
-
-        }
-
         public void Close()
         {
-            if (!readerClosed)
+            Dispose();
+        }
+
+        #region Dispose
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
             {
-                lock (lockObject)
+                if (disposing)
                 {
-                    lineReader.Close();
-                    readerClosed = true;
-                    Monitor.Pulse(lockObject);
+                    // Dispose managed state (managed objects)
+
+                    if (!readerClosed)
+                    {
+                        lock (lockObject)
+                        {
+                            lineReader.Close();
+                            readerClosed = true;
+                            Monitor.Pulse(lockObject);
+                        }
+
+                        var status = readerTask.Wait(TimeSpan.FromSeconds(5));
+                    }
                 }
 
-                var status = readerTask.Wait(TimeSpan.FromSeconds(5));
+                // Free unmanaged resources (unmanaged objects) and override finalizer
+                // Set large fields to null
+                disposedValue = true;
             }
         }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~AtChannel()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

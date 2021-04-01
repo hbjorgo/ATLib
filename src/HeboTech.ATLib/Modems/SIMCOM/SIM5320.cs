@@ -1,5 +1,4 @@
 ﻿using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
@@ -9,38 +8,11 @@ using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Modems.SIMCOM
 {
-    public class SIM5320 : ISIM5320
+    public class SIM5320 : ModemBase
     {
-        private readonly AtChannel channel;
-        private readonly _V_25TER _V_25TER;
-        private readonly _3GPP_TS_27_005 _3GPP_TS_27_005;
-        private readonly _3GPP_TS_27_007 _3GPP_TS_27_007;
-
-        public event EventHandler<IncomingCallEventArgs> IncomingCall;
-        public event EventHandler<MissedCallEventArgs> MissedCall;
-        public event EventHandler<SmsReceivedEventArgs> SmsReceived;
-
         public SIM5320(AtChannel channel)
+            : base(channel)
         {
-            this.channel = channel;
-
-            _V_25TER = new _V_25TER(channel);
-            _3GPP_TS_27_005 = new _3GPP_TS_27_005(channel);
-            _3GPP_TS_27_007 = new _3GPP_TS_27_007(channel);
-
-            RegisterHandlers();
-        }
-
-        protected void RegisterHandlers()
-        {
-            _V_25TER.IncomingCall += (s, e) => IncomingCall?.Invoke(this, e);
-            _V_25TER.MissedCall += (s, e) => MissedCall?.Invoke(this, e);
-            _3GPP_TS_27_005.SmsReceived += (s, e) => SmsReceived?.Invoke(this, e);
-        }
-
-        public virtual void Close()
-        {
-            channel.Close();
         }
 
         #region Custom
@@ -65,19 +37,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         }
         #endregion
 
-        #region _V_25TER
-        public CommandStatus AnswerIncomingCall() => _V_25TER.AnswerIncomingCall();
-        public CallDetails Hangup() => _V_25TER.Hangup();
-        public CommandStatus DisableEcho() => _V_25TER.DisableEcho();
-        public ProductIdentificationInformation GetProductIdentificationInformation() => _V_25TER.GetProductIdentificationInformation();
-        #endregion
-
         #region _3GPP_TS_27_005
-        public CommandStatus SetSmsMessageFormat(SmsTextFormat format) => _3GPP_TS_27_005.SetSmsMessageFormat(format);
-        public SmsReference SendSMS(PhoneNumber phoneNumber, string message) => _3GPP_TS_27_005.SendSMS(phoneNumber, message);
-        public virtual CommandStatus DeleteSMS(int index) => _3GPP_TS_27_005.DeleteSMS(index);
 
-        public virtual Sms ReadSMS(int index)
+        public override Sms ReadSms(int index)
         {
             var error = channel.SendMultilineCommand($"AT+CMGR={index}", null, out AtResponse response);
 
@@ -104,7 +66,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             return null;
         }
 
-        public IList<SmsWithIndex> ListSMSs(SmsStatus smsStatus)
+        public override IList<SmsWithIndex> ListSmss(SmsStatus smsStatus)
         {
             var error = channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null, out AtResponse response);
 
@@ -135,20 +97,6 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             }
             return smss;
         }
-        #endregion
-
-        #region _3GPP_TS_27_007
-        public SimStatus GetSimStatus() => _3GPP_TS_27_007.GetSimStatus();
-
-        public CommandStatus EnterSimPin(PersonalIdentificationNumber pin) => _3GPP_TS_27_007.EnterSimPin(pin);
-
-        public BatteryStatus GetBatteryStatus() => _3GPP_TS_27_007.GetBatteryStatus();
-
-        public SignalStrength GetSignalStrength() => _3GPP_TS_27_007.GetSignalStrength();
-
-        public CommandStatus SetDateTime(DateTimeOffset value) => _3GPP_TS_27_007.SetDateTime(value);
-
-        public DateTimeOffset? GetDateTime() => _3GPP_TS_27_007.GetDateTime();
         #endregion
     }
 }

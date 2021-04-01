@@ -16,11 +16,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Communication\ScriptCommunicator.cs" />
-    <Compile Remove="Communication\SocketCommunicator.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Cyotek.CircularBuffer" Version="1.1.0" />
     <PackageReference Include="System.IO.Ports" Version="5.0.1" />
   </ItemGroup>
