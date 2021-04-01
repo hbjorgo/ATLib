@@ -1,26 +1,31 @@
-﻿using HeboTech.ATLib.Events;
-using HeboTech.ATLib.Inputs;
-using HeboTech.ATLib.Results;
+﻿using HeboTech.ATLib.DTOs;
+using HeboTech.ATLib.Events;
 using System;
+using System.Collections.Generic;
 
 namespace HeboTech.ATLib.Modems
 {
-    public interface IModem
+    public interface IModem : IDisposable
     {
         event EventHandler<IncomingCallEventArgs> IncomingCall;
         event EventHandler<MissedCallEventArgs> MissedCall;
+        event EventHandler<SmsReceivedEventArgs> SmsReceived;
 
         CommandStatus AnswerIncomingCall();
+        void Close();
+        CommandStatus DeleteSms(int index);
         CommandStatus DisableEcho();
         CommandStatus EnterSimPin(PersonalIdentificationNumber pin);
         BatteryStatus GetBatteryStatus();
+        DateTimeOffset? GetDateTime();
         ProductIdentificationInformation GetProductIdentificationInformation();
-        RemainingPinPukAttempts GetRemainingPinPukAttempts();
         SignalStrength GetSignalStrength();
         SimStatus GetSimStatus();
         CallDetails Hangup();
-        SmsReference SendSMS(PhoneNumber phoneNumber, string message);
+        IList<SmsWithIndex> ListSmss(SmsStatus smsStatus);
+        Sms ReadSms(int index);
+        SmsReference SendSms(PhoneNumber phoneNumber, string message);
         CommandStatus SetDateTime(DateTimeOffset value);
-        DateTimeOffset? GetDateTime();
+        CommandStatus SetSmsMessageFormat(SmsTextFormat format);
     }
 }

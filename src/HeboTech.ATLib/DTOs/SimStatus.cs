@@ -1,4 +1,4 @@
-﻿namespace HeboTech.ATLib.Results
+﻿namespace HeboTech.ATLib.DTOs
 {
     public enum SimStatus
     {
