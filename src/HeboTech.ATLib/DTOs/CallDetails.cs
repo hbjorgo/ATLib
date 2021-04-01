@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HeboTech.ATLib.Results
+namespace HeboTech.ATLib.DTOs
 {
     public class CallDetails
     {

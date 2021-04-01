@@ -1,23 +1,23 @@
 ﻿using Cyotek.Collections.Generic;
-using HeboTech.ATLib.Communication;
 using System;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
     public class AtLineReader
     {
-        private readonly ICommunicator comm;
         private const int maxAtResponse = 8 * 1024;
         private bool closed;
         private readonly char[] readBuffer = new char[maxAtResponse];
         private readonly CircularBuffer<char> ringBuffer;
+        private readonly Func<char[], int, int, CancellationToken, ValueTask<int>> readFunc;
 
-        public AtLineReader(ICommunicator comm)
+        public AtLineReader(Func<char[], int, int, CancellationToken, ValueTask<int>> readFunc)
         {
-            this.comm = comm;
             ringBuffer = new CircularBuffer<char>(maxAtResponse, true);
+            this.readFunc = readFunc;
         }
 
         public async Task<string> ReadLineAsync()
@@ -31,7 +31,7 @@ namespace HeboTech.ATLib.Parsers
                 {
                     try
                     {
-                        readCount = await comm.Read(readBuffer, 0, readBuffer.Length);
+                        readCount = await readFunc(readBuffer, 0, readBuffer.Length, default);
                     }
                     catch (OperationCanceledException)
                     {

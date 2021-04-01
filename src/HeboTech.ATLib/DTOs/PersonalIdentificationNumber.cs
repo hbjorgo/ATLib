@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace HeboTech.ATLib.Inputs
+namespace HeboTech.ATLib.DTOs
 {
     public class PersonalIdentificationNumber
     {
