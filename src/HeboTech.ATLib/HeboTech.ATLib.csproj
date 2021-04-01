@@ -4,10 +4,10 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>HeboTech</Authors>
     <Product>HeboTech ATLib</Product>
-    <Version>0.0.1-alpha</Version>
+    <Version>1.0.0</Version>
     <PackageId>HeboTech.ATLib</PackageId>
-    <PackageTags>atcommand at command gsm sms hayes</PackageTags>
-    <Description>An extensible async AT command library.</Description>
+    <PackageTags>atcommand at command gsm sms hayes simcom d-link tp-link dwm-222 ma260 sim5320</PackageTags>
+    <Description>An extensible AT command library.</Description>
     <RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
