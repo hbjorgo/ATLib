@@ -11,10 +11,14 @@ ATLib is just in the beginning. Currently only a few commands are implemented, b
 
 [HeboTech.GsmApi](https://github.com/hbjorgo/GsmApi) is a REST API wrapping this library.
 
-Feedback is welcome 🙂
+Feedback is very much welcome 🙂
 
 ## Supported commands:
 - Send SMS
+- List SMSs
+- Read SMS
+- Delete SMS
+- Set SMS message format (to text)
 - Answer incoming call
 - Hang up call
 - Get SIM status
@@ -23,12 +27,21 @@ Feedback is welcome 🙂
 - Get product information
 - Get battery status
 - Get signal strength
+- Get date and time
+- Set date and time
 - Disable echo
+- Some modems may also support modem specific commands
 
 ## Supported modems:
-- SIMCOM SIM5320
-- Adafruit FONA 3G
+- Adafruit FONA 3G (based on SIMCOM SIM5320 chipset)
+- D-Link DWM-222 (based on Qualcomm MDM9225 chipset)
+- TP-LINK MA260 (based on a Qualcomm chipset)
 * Other modems may work using one of the implementations above
+
+# Events
+- Incoming call
+- Missed call
+- SmsReceived (not fully implemented)
 
 ## Usage
 Install as NuGet package
@@ -39,30 +52,26 @@ dotnet add package HeboTech.ATLib
 Using a serial port to communicate with a modem is easy:
 ```csharp
 // Set up serial port
-using (SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, StopBits.One))
+using SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, StopBits.One)
 {
-  // Open serial port
-  serialPort.Open();
-  
-  // Create a new communicator based on the serial port
-  ICommunicator comm = new SerialPortCommunicator(serialPort);
+    Handshake = Handshake.RequestToSend
+};
+// Create a new serial port based AT channel
+using AtChannel atChannel = new SerialPortChannel(serialPort);
 
-  // Create a new AT channel based on the communicator
-  AtChannel atChannel = new AtChannel(comm);
+// Create the modem
+using IModem modem = new Fona3G(atChannel);
 
-  // Create the modem
-  AdafruitFona3G modem = new AdafruitFona3G(atChannel);
+// The library doesn't support echo, so turn it off
+modem.DisableEcho();
 
-  // The library doesn't support echo, so turn it off
-  modem.DisableEcho();
+// Get SIM status
+var simStatus = modem.GetSimStatus();
+Console.WriteLine($"SIM Status: {simStatus}");
 
-  // Get SIM status
-  var simStatus = modem.GetSimStatus();
-  Console.WriteLine($"SIM Status: {simStatus}");
-  
-  // Send SMS to the specified number
-  var smsReference = modem.SendSMS(new PhoneNumber("0123456789"), "Hello ATLib!");
-  Console.WriteLine($"SMS Reference: {smsReference}");
+// Send SMS to the specified number
+var smsReference = modem.SendSMS(new PhoneNumber("0123456789"), "Hello ATLib!");
+Console.WriteLine($"SMS Reference: {smsReference}");
 }
 ```
 For more examples, check out the TestConsole project in the code.
