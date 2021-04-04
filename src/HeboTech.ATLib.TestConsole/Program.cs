@@ -9,7 +9,7 @@ namespace HeboTech.ATLib.TestConsole
 {
     class Program
     {
-        static void Main(string[] args)
+        static async System.Threading.Tasks.Task Main(string[] args)
         {
             using SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, StopBits.One)
             {
@@ -26,50 +26,50 @@ namespace HeboTech.ATLib.TestConsole
             modem.MissedCall += Modem_MissedCall;
             modem.SmsReceived += Modem_SmsReceived;
 
-            modem.DisableEcho();
+            await modem.DisableEchoAsync();
 
-            var simStatus = modem.GetSimStatus();
+            var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
 
             // SIMCOM SIM5320
-            //var remainingCodeAttemps = modem.GetRemainingPinPukAttempts();
+            //var remainingCodeAttemps = await modem.GetRemainingPinPukAttempts();
             //Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
 
             if (simStatus == SimStatus.SIM_PIN)
             {
-                var simPinStatus = modem.EnterSimPin(new PersonalIdentificationNumber(args[1]));
+                var simPinStatus = await modem.EnterSimPinAsync(new PersonalIdentificationNumber(args[1]));
                 Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 
-                simStatus = modem.GetSimStatus();
+                simStatus = await modem.GetSimStatusAsync();
                 Console.WriteLine($"SIM Status: {simStatus}");
             }
 
-            var signalStrength = modem.GetSignalStrength();
+            var signalStrength = await modem.GetSignalStrengthAsync();
             Console.WriteLine($"Signal Strength: {signalStrength}");
 
-            var batteryStatus = modem.GetBatteryStatus();
+            var batteryStatus = await modem.GetBatteryStatusAsync();
             Console.WriteLine($"Battery Status: {batteryStatus}");
 
-            var productInfo = modem.GetProductIdentificationInformation();
+            var productInfo = await modem.GetProductIdentificationInformationAsync();
             Console.WriteLine($"Product Information:{Environment.NewLine}{productInfo}");
 
-            var setDateTimeResult = modem.SetDateTime(DateTimeOffset.Now);
+            var setDateTimeResult = await modem.SetDateTimeAsync(DateTimeOffset.Now);
             Console.WriteLine($"Setting date and time: {setDateTimeResult}");
 
-            var dateTime = modem.GetDateTime();
+            var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
 
-            var smsTextFormatResult = modem.SetSmsMessageFormat(SmsTextFormat.Text);
+            var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
             Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
 
-            var singleSms = modem.ReadSms(2);
+            var singleSms = await modem.ReadSmsAsync(2);
             Console.WriteLine($"Single SMS: {singleSms}");
 
-            var smss = modem.ListSmss(SmsStatus.ALL);
+            var smss = await modem.ListSmssAsync(SmsStatus.ALL);
             foreach (var sms in smss)
             {
                 Console.WriteLine($"SMS: {sms}");
-                var smsDeleteStatus = modem.DeleteSms(sms.Index);
+                var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
                 Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
             }
 
@@ -80,16 +80,16 @@ namespace HeboTech.ATLib.TestConsole
                 switch (key)
                 {
                     case ConsoleKey.A:
-                        var answerStatus = modem.AnswerIncomingCall();
+                        var answerStatus = await modem.AnswerIncomingCallAsync();
                         Console.WriteLine($"Answer Status: {answerStatus}");
                         break;
                     case ConsoleKey.H:
-                        var callDetails = modem.Hangup();
+                        var callDetails = await modem.HangupAsync();
                         Console.WriteLine($"Call Details: {callDetails}");
                         break;
                     case ConsoleKey.S:
                         Console.WriteLine("Sending SMS...");
-                        var smsReference = modem.SendSms(new PhoneNumber(args[2]), "Hello ATLib!");
+                        var smsReference = await modem.SendSmsAsync(new PhoneNumber(args[2]), "Hello ATLib!");
                         Console.WriteLine($"SMS Reference: {smsReference}");
                         break;
                 }

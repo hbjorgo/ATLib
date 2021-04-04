@@ -41,7 +41,9 @@ namespace HeboTech.ATLib.Parsers
         private readonly Task readerTask;
         private readonly PipeReader reader;
         private readonly Stream outputStream;
-        private readonly CancellationToken cancellationToken;
+        private readonly CancellationTokenSource internalCancellationTokenSource;
+        private readonly CancellationToken internalCancellationToken;
+        private readonly SemaphoreSlim semaphore;
 
         public event EventHandler<UnsolicitedEventArgs> UnsolicitedEvent;
 
@@ -52,19 +54,22 @@ namespace HeboTech.ATLib.Parsers
         private bool disposedValue;
 
         public AtChannel(Stream stream, CancellationToken cancellationToken = default)
+            : this(stream, stream, cancellationToken)
         {
-            outputStream = stream;
-            this.cancellationToken = cancellationToken;
-            reader = PipeReader.Create(stream);
-            readerTask = Task.Factory.StartNew(ReaderLoopAsync);
         }
 
-        public AtChannel(Stream input, Stream output, CancellationToken cancellationToken = default)
+        public AtChannel(Stream inputStream, Stream outputStream, CancellationToken cancellationToken = default)
         {
-            outputStream = output;
-            this.cancellationToken = cancellationToken;
-            reader = PipeReader.Create(input);
-            readerTask = Task.Factory.StartNew(ReaderLoopAsync);
+            internalCancellationTokenSource = new CancellationTokenSource();
+            internalCancellationToken = internalCancellationTokenSource.Token;
+            cancellationToken.Register(() =>
+            {
+                internalCancellationTokenSource.Cancel();
+            });
+            semaphore = new SemaphoreSlim(0, 1);
+            this.outputStream = outputStream;
+            reader = PipeReader.Create(inputStream);
+            readerTask = Task.Factory.StartNew(ReaderLoopAsync, TaskCreationOptions.LongRunning);
         }
 
         /// <summary>
@@ -73,103 +78,83 @@ namespace HeboTech.ATLib.Parsers
         /// <param name="command"></param>
         /// <param name="response"></param>
         /// <returns></returns>
-        public virtual AtError SendCommand(string command)
+        public virtual Task<(AtError error, AtResponse response)> SendCommand(string command)
         {
-            AtError error = SendFullCommand(command, AtCommandType.NO_RESULT, null, null, TimeSpan.Zero, out _);
-            return error;
+            return SendFullCommandAsync(command, AtCommandType.NO_RESULT, null, null, TimeSpan.Zero);
         }
 
-        public virtual AtError SendSingleLineCommand(string command, string responsePrefix, out AtResponse response)
+        public virtual async Task<(AtError error, AtResponse response)> SendSingleLineCommandAsync(string command, string responsePrefix)
         {
-            AtError error = SendFullCommand(command, AtCommandType.SINGELLINE, responsePrefix, null, TimeSpan.Zero, out response);
+            (AtError error, AtResponse response) = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, null, TimeSpan.Zero);
 
             if (error == AtError.NO_ERROR && response != null && response.Success && !response.Intermediates.Any())
             {
                 // Successful command must have an intermediate response
-                response = null;
-                return AtError.INVALID_RESPONSE;
+                return (AtError.INVALID_RESPONSE, default);
             }
 
-            return error;
+            return (error, response);
         }
 
-        public virtual AtError SendMultilineCommand(string command, string responsePrefix, out AtResponse response)
+        public virtual Task<(AtError error, AtResponse response)> SendMultilineCommand(string command, string responsePrefix)
         {
             AtCommandType commandType = responsePrefix == null ? AtCommandType.MULTILINE_NO_PREFIX : AtCommandType.MULTILINE;
-            AtError error = SendFullCommand(command, commandType, responsePrefix, null, TimeSpan.Zero, out response);
-            return error;
+            return SendFullCommandAsync(command, commandType, responsePrefix, null, TimeSpan.Zero);
         }
 
-        public virtual AtError SendSms(string command, string pdu, string responsePrefix, out AtResponse response)
+        public virtual async Task<(AtError error, AtResponse response)> SendSmsAsync(string command, string pdu, string responsePrefix)
         {
-            var error = SendFullCommand(command, AtCommandType.SINGELLINE, responsePrefix, pdu, TimeSpan.Zero, out response);
+            (AtError error, AtResponse response) = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, pdu, TimeSpan.Zero);
 
             if (error == AtError.NO_ERROR && response != null && response.Success && !response.Intermediates.Any())
             {
                 // Successful command must have an intermediate response
-                response = null;
-                return AtError.INVALID_RESPONSE;
+                return (AtError.INVALID_RESPONSE, default);
             }
 
-            return error;
+            return (error, response);
         }
 
         // TODO: Ref
-        public virtual AtError SendFullCommand(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout, out AtResponse response)
+        public virtual async Task<(AtError error, AtResponse response)> SendFullCommandAsync(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout)
         {
             lock (lockObject)
             {
-                return SendFullCommandNoLock(command, commandType, responsePrefix, smsPdu, timeout, out response);
-            }
-        }
+                if (response != null)
+                {
+                    return OnError(AtError.COMMAND_PENDING);
+                }
 
-        // TODO: Ref
-        public virtual AtError SendFullCommandNoLock(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout, out AtResponse outResponse)
-        {
-            if (response != null)
-            {
-                outResponse = null;
-                return OnError(AtError.COMMAND_PENDING);
+                this.commandType = commandType;
+                this.responsePrefix = responsePrefix;
+                this.smsPdu = smsPdu;
+                this.response = new AtResponse();
             }
 
             AtError writeError = WriteLine(command);
             if (writeError != AtError.NO_ERROR)
             {
-                outResponse = null;
                 return OnError(writeError);
             }
 
-            this.commandType = commandType;
-            this.responsePrefix = responsePrefix;
-            this.smsPdu = smsPdu;
-            this.response = new AtResponse();
-
-            while (response.FinalResponse == null && !cancellationToken.IsCancellationRequested)
+            if (! await semaphore.WaitAsync(600000, internalCancellationToken))
             {
-                if (!Monitor.Wait(lockObject, TimeSpan.FromSeconds(600)))
-                {
-                    outResponse = null;
-                    return OnError(AtError.TIMEOUT);
-                }
+                return OnError(AtError.TIMEOUT);
             }
 
             // TODO: Ref
 
-            outResponse = response;
-            response = null;
+            AtResponse retVal = response;
+            this.response = default;
 
-            if (cancellationToken.IsCancellationRequested)
+            return (AtError.NO_ERROR, retVal);
+
+            (AtError, AtResponse) OnError(AtError error)
             {
-                ClearPendingCommand();
-                return AtError.CHANNEL_CLOSED;
-            }
-
-            return AtError.NO_ERROR;
-
-            AtError OnError(AtError error)
-            {
-                ClearPendingCommand();
-                return error;
+                response = default;
+                responsePrefix = default;
+                smsPdu = default;
+                return (error, default);
             }
         }
 
@@ -181,16 +166,9 @@ namespace HeboTech.ATLib.Parsers
             return AtError.NO_ERROR;
         }
 
-        private void ClearPendingCommand()
-        {
-            response = null;
-            responsePrefix = null;
-            smsPdu = null;
-        }
-
         private async Task ReaderLoopAsync()
         {
-            while (!cancellationToken.IsCancellationRequested)
+            while (!internalCancellationToken.IsCancellationRequested)
             {
                 string line1 = await ReadSingleMessageAsync();
                 if (line1 == null)
@@ -217,77 +195,74 @@ namespace HeboTech.ATLib.Parsers
 
         private void ProcessLine(string line)
         {
-            lock (lockObject)
+            if (response == null)
             {
-                if (response == null)
+                HandleUnsolicited(line);
+            }
+            else if (IsFinalResponseSuccess(line))
+            {
+                response.Success = true;
+                HandleFinalResponse(line);
+            }
+            else if (IsFinalResponseError(line))
+            {
+                response.Success = false;
+                HandleFinalResponse(line);
+            }
+            else if (smsPdu != null && line == "> ")
+            {
+                // See eg. TS 27.005 4.3
+                // Commands like AT+CMGS have a "> " prompt
+                WriteCtrlZ(smsPdu);
+                smsPdu = null;
+            }
+            else
+            {
+                switch (commandType)
                 {
-                    HandleUnsolicited(line);
-                }
-                else if (IsFinalResponseSuccess(line))
-                {
-                    response.Success = true;
-                    HandleFinalResponse(line);
-                }
-                else if (IsFinalResponseError(line))
-                {
-                    response.Success = false;
-                    HandleFinalResponse(line);
-                }
-                else if (smsPdu != null && line == "> ")
-                {
-                    // See eg. TS 27.005 4.3
-                    // Commands like AT+CMGS have a "> " prompt
-                    WriteCtrlZ(smsPdu);
-                    smsPdu = null;
-                }
-                else
-                {
-                    switch (commandType)
-                    {
-                        case AtCommandType.NO_RESULT:
-                            HandleUnsolicited(line);
-                            break;
-                        case AtCommandType.NUMERIC:
-                            if (!response.Intermediates.Any() && char.IsDigit(line[0]))
-                            {
-                                AddIntermediate(line);
-                            }
-                            else
-                            {
-                                // Either we already have an intermediate response or the line doesn't begin with a digit
-                                HandleUnsolicited(line);
-                            }
-                            break;
-                        case AtCommandType.SINGELLINE:
-                            if (!response.Intermediates.Any() && line.StartsWith(responsePrefix))
-                            {
-                                AddIntermediate(line);
-                            }
-                            else
-                            {
-                                // We already have an intermediate response
-                                HandleUnsolicited(line);
-                            }
-                            break;
-                        case AtCommandType.MULTILINE:
-                            if (line.StartsWith(responsePrefix))
-                            {
-                                AddIntermediate(line);
-                            }
-                            else
-                            {
-                                HandleUnsolicited(line);
-                            }
-                            break;
-                        case AtCommandType.MULTILINE_NO_PREFIX:
+                    case AtCommandType.NO_RESULT:
+                        HandleUnsolicited(line);
+                        break;
+                    case AtCommandType.NUMERIC:
+                        if (!response.Intermediates.Any() && char.IsDigit(line[0]))
+                        {
                             AddIntermediate(line);
-                            break;
-                        default:
-                            // This should never be reached
-                            //TODO: Log error or something
+                        }
+                        else
+                        {
+                            // Either we already have an intermediate response or the line doesn't begin with a digit
                             HandleUnsolicited(line);
-                            break;
-                    }
+                        }
+                        break;
+                    case AtCommandType.SINGELLINE:
+                        if (!response.Intermediates.Any() && line.StartsWith(responsePrefix))
+                        {
+                            AddIntermediate(line);
+                        }
+                        else
+                        {
+                            // We already have an intermediate response
+                            HandleUnsolicited(line);
+                        }
+                        break;
+                    case AtCommandType.MULTILINE:
+                        if (line.StartsWith(responsePrefix))
+                        {
+                            AddIntermediate(line);
+                        }
+                        else
+                        {
+                            HandleUnsolicited(line);
+                        }
+                        break;
+                    case AtCommandType.MULTILINE_NO_PREFIX:
+                        AddIntermediate(line);
+                        break;
+                    default:
+                        // This should never be reached
+                        //TODO: Log error or something
+                        HandleUnsolicited(line);
+                        break;
                 }
             }
         }
@@ -318,7 +293,7 @@ namespace HeboTech.ATLib.Parsers
         private void HandleFinalResponse(string line)
         {
             response.FinalResponse = line;
-            Monitor.Pulse(lockObject);
+            semaphore.Release();
         }
 
         private static bool IsFinalResponseSuccess(string line)
@@ -350,11 +325,11 @@ namespace HeboTech.ATLib.Parsers
             return false;
         }
 
-        protected async ValueTask<string> ReadSingleMessageAsync(CancellationToken cancellationToken = default)
+        protected async Task<string> ReadSingleMessageAsync()
         {
-            while (true)
+            while (!internalCancellationToken.IsCancellationRequested)
             {
-                ReadResult result = await reader.ReadAsync(cancellationToken);
+                ReadResult result = await reader.ReadAsync(internalCancellationToken);
                 ReadOnlySequence<byte> buffer = result.Buffer;
 
                 // In the event that no message is parsed successfully, mark consumed
@@ -380,16 +355,16 @@ namespace HeboTech.ATLib.Parsers
                     }
 
                     // There's no more data to be processed.
-                    if (result.IsCompleted)
-                    {
-                        if (buffer.Length > 0)
-                        {
-                            // The message is incomplete and there's no more data to process.
-                            throw new InvalidDataException("Incomplete message.");
-                        }
+                    //if (result.IsCompleted)
+                    //{
+                    //    if (buffer.Length > 0)
+                    //    {
+                    //        // The message is incomplete and there's no more data to process.
+                    //        throw new InvalidDataException("Incomplete message.");
+                    //    }
 
-                        break;
-                    }
+                    //    break;
+                    //}
                 }
                 finally
                 {
@@ -400,7 +375,7 @@ namespace HeboTech.ATLib.Parsers
             return null;
         }
 
-        private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out string line)
+        private bool TryReadLine(ref ReadOnlySequence<byte> buffer, out string line)
         {
             // Get the index of EOL and SMS prompt
             long eolIndex = FindIndexOf(buffer, eolSequence.AsSpan());
@@ -424,7 +399,7 @@ namespace HeboTech.ATLib.Parsers
         /// <param name="buffer">The buffer to search in</param>
         /// <param name="data">The segment to find</param>
         /// <returns>Returns the index of the segment, or -1 if not found</returns>
-        private static long FindIndexOf(in ReadOnlySequence<byte> buffer, ReadOnlySpan<byte> data)
+        private long FindIndexOf(in ReadOnlySequence<byte> buffer, ReadOnlySpan<byte> data)
         {
             long position = 0;
 
@@ -443,24 +418,21 @@ namespace HeboTech.ATLib.Parsers
             return -1;
         }
 
-        private static bool ReadLine(ref ReadOnlySequence<byte> buffer, out string line)
+        private bool ReadLine(ref ReadOnlySequence<byte> buffer, out string line)
         {
             SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
-            while (sequenceReader.TryReadTo(out ReadOnlySequence<byte> slice, eolSequence.AsSpan(), advancePastDelimiter: true))
+            if (sequenceReader.TryReadTo(out ReadOnlySequence<byte> slice, eolSequence.AsSpan(), advancePastDelimiter: true))
             {
                 string temp = Encoding.ASCII.GetString(slice.ToArray());
                 buffer = buffer.Slice(sequenceReader.Position);
-                if (!string.IsNullOrEmpty(temp))
-                {
-                    line = temp;
-                    return true;
-                }
+                line = temp;
+                return true;
             }
             line = default;
             return false;
         }
 
-        private static bool ReadSmsPrompt(ref ReadOnlySequence<byte> buffer, out string line)
+        private bool ReadSmsPrompt(ref ReadOnlySequence<byte> buffer, out string line)
         {
             SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
             if (sequenceReader.TryReadTo(out _, smsPromptSequence.AsSpan(), advancePastDelimiter: true))
@@ -473,10 +445,15 @@ namespace HeboTech.ATLib.Parsers
             return false;
         }
 
-        protected Task Write(string text, CancellationToken cancellationToken = default)
+        protected void Write(string text)
         {
             byte[] buffer = Encoding.UTF8.GetBytes(text);
-            return outputStream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
+            outputStream.Write(buffer, 0, buffer.Length);
+        }
+
+        public void Close()
+        {
+            Dispose();
         }
 
         #region Dispose
@@ -488,11 +465,7 @@ namespace HeboTech.ATLib.Parsers
                 {
                     // Dispose managed state (managed objects)
 
-                    lock (lockObject)
-                    {
-                        Monitor.Pulse(lockObject);
-                    }
-
+                    internalCancellationTokenSource.Cancel();
                     readerTask.Wait(TimeSpan.FromSeconds(5));
                 }
 

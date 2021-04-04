@@ -8,6 +8,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.Generic
 {
@@ -44,27 +45,27 @@ namespace HeboTech.ATLib.Modems.Generic
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
         public event EventHandler<MissedCallEventArgs> MissedCall;
 
-        public virtual CommandStatus AnswerIncomingCall()
+        public virtual async Task<CommandStatus> AnswerIncomingCallAsync()
         {
-            var error = channel.SendCommand("ATA");
+            (AtError error, _) = await channel.SendCommand("ATA");
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
 
-        public virtual CommandStatus DisableEcho()
+        public virtual async Task<CommandStatus> DisableEchoAsync()
         {
-            var error = channel.SendCommand("ATE0");
+            (AtError error, _) = await channel.SendCommand("ATE0");
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
 
-        public virtual ProductIdentificationInformation GetProductIdentificationInformation()
+        public virtual async Task<ProductIdentificationInformation> GetProductIdentificationInformationAsync()
         {
-            var error = channel.SendMultilineCommand("ATI", null, out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendMultilineCommand("ATI", null);
 
             if (error == AtError.NO_ERROR)
             {
@@ -79,9 +80,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return null;
         }
 
-        public virtual CallDetails Hangup()
+        public virtual async Task<CallDetails> HangupAsync()
         {
-            var error = channel.SendSingleLineCommand("AT+CHUP", "VOICE CALL:", out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CHUP", "VOICE CALL:");
 
             if (error == AtError.NO_ERROR)
             {
@@ -100,20 +101,20 @@ namespace HeboTech.ATLib.Modems.Generic
         #region _3GPP_TS_27_005
         public event EventHandler<SmsReceivedEventArgs> SmsReceived;
 
-        public virtual CommandStatus SetSmsMessageFormat(SmsTextFormat format)
+        public virtual async Task<CommandStatus> SetSmsMessageFormatAsync(SmsTextFormat format)
         {
-            var error = channel.SendCommand($"AT+CMGF={(int)format}");
+            (AtError error, AtResponse response) = await channel.SendCommand($"AT+CMGF={(int)format}");
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
 
-        public virtual SmsReference SendSms(PhoneNumber phoneNumber, string message)
+        public virtual async Task<SmsReference> SendSmsAsync(PhoneNumber phoneNumber, string message)
         {
             string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
             string cmd2 = message;
-            var error = channel.SendSms(cmd1, cmd2, "+CMGS:", out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
 
             if (error == AtError.NO_ERROR)
             {
@@ -128,9 +129,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return null;
         }
 
-        public virtual Sms ReadSms(int index)
+        public virtual async Task<Sms> ReadSmsAsync(int index)
         {
-            var error = channel.SendMultilineCommand($"AT+CMGR={index},0", null, out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
 
             if (error == AtError.NO_ERROR && response.Intermediates.Count > 0)
             {
@@ -155,9 +156,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return null;
         }
 
-        public virtual IList<SmsWithIndex> ListSmss(SmsStatus smsStatus)
+        public virtual async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
         {
-            var error = channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null, out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (error == AtError.NO_ERROR)
@@ -187,9 +188,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return smss;
         }
 
-        public virtual CommandStatus DeleteSms(int index)
+        public virtual async Task<CommandStatus> DeleteSmsAsync(int index)
         {
-            var error = channel.SendCommand($"AT+CMGD={index}");
+            (AtError error, _) = await channel.SendCommand($"AT+CMGD={index}");
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
@@ -197,9 +198,9 @@ namespace HeboTech.ATLib.Modems.Generic
         #endregion
 
         #region _3GPP_TS_27_007
-        public virtual SimStatus GetSimStatus()
+        public virtual async Task<SimStatus> GetSimStatusAsync()
         {
-            var error = channel.SendSingleLineCommand("AT+CPIN?", "+CPIN:", out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:");
 
             if (error != AtError.NO_ERROR)
                 return SimStatus.SIM_NOT_READY;
@@ -232,9 +233,9 @@ namespace HeboTech.ATLib.Modems.Generic
             };
         }
 
-        public virtual CommandStatus EnterSimPin(PersonalIdentificationNumber pin)
+        public virtual async Task<CommandStatus> EnterSimPinAsync(PersonalIdentificationNumber pin)
         {
-            var error = channel.SendCommand($"AT+CPIN={pin}");
+            (AtError error, _) = await channel.SendCommand($"AT+CPIN={pin}");
 
             Thread.Sleep(1500); // Without it, the reader loop crashes
 
@@ -243,9 +244,9 @@ namespace HeboTech.ATLib.Modems.Generic
             else return CommandStatus.ERROR;
         }
 
-        public virtual SignalStrength GetSignalStrength()
+        public virtual async Task<SignalStrength> GetSignalStrengthAsync()
         {
-            var error = channel.SendSingleLineCommand("AT+CSQ", "+CSQ:", out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ:");
 
             if (error == AtError.NO_ERROR)
             {
@@ -261,9 +262,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return null;
         }
 
-        public virtual BatteryStatus GetBatteryStatus()
+        public virtual async Task<BatteryStatus> GetBatteryStatusAsync()
         {
-            var error = channel.SendSingleLineCommand("AT+CBC", "+CBC:", out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CBC", "+CBC:");
 
             if (error == AtError.NO_ERROR)
             {
@@ -279,23 +280,23 @@ namespace HeboTech.ATLib.Modems.Generic
             return null;
         }
 
-        public virtual CommandStatus SetDateTime(DateTimeOffset value)
+        public virtual async Task<CommandStatus> SetDateTimeAsync(DateTimeOffset value)
         {
             var sb = new StringBuilder("AT+CCLK=\"");
             int offsetQuarters = value.Offset.Hours * 4;
             sb.Append(value.ToString(@"yy/MM/dd,HH:mm:ss", CultureInfo.InvariantCulture));
             sb.Append(offsetQuarters.ToString("+00;-#", CultureInfo.InvariantCulture));
             sb.Append("\"");
-            var error = channel.SendCommand(sb.ToString());
+            (AtError error, _) = await channel.SendCommand(sb.ToString());
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
 
-        public virtual DateTimeOffset? GetDateTime()
+        public virtual async Task<DateTimeOffset?> GetDateTimeAsync()
         {
-            var error = channel.SendSingleLineCommand("AT+CCLK?", "+CCLK:", out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CCLK?", "+CCLK:");
 
             if (error == AtError.NO_ERROR)
             {

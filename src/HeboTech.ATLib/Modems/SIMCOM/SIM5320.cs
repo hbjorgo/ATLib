@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.SIMCOM
 {
@@ -16,9 +17,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         }
 
         #region Custom
-        public virtual RemainingPinPukAttempts GetRemainingPinPukAttempts()
+        public virtual async Task<RemainingPinPukAttempts> GetRemainingPinPukAttemptsAsync()
         {
-            var error = channel.SendSingleLineCommand("AT+SPIC", "+SPIC:", out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:");
 
             if (error == AtError.NO_ERROR)
             {
@@ -39,9 +40,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public override Sms ReadSms(int index)
+        public override async Task<Sms> ReadSmsAsync(int index)
         {
-            var error = channel.SendMultilineCommand($"AT+CMGR={index}", null, out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
             if (error == AtError.NO_ERROR && response.Intermediates.Count > 0)
             {
@@ -66,9 +67,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             return null;
         }
 
-        public override IList<SmsWithIndex> ListSmss(SmsStatus smsStatus)
+        public override async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
         {
-            var error = channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null, out AtResponse response);
+            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (error == AtError.NO_ERROR)
