@@ -74,14 +74,65 @@ namespace HeboTech.ATLib.Parsers
 
         private bool TryReadLine(ref ReadOnlySequence<byte> buffer, out string line)
         {
-            SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
-            if (sequenceReader.TryReadTo(out ReadOnlySequence<byte> temp, eolSequence.AsSpan(), advancePastDelimiter: true))
+            // Get the index of EOL and SMS prompt
+            long eolIndex = FindIndexOf(buffer, eolSequence.AsSpan());
+            long smsPromptIndex = FindIndexOf(buffer, smsPromptSequence.AsSpan());
+
+            // Read the first occurence of either EOL or SMS prompt
+            if ((eolIndex >= 0 && smsPromptIndex < 0) || (eolIndex >= 0 && eolIndex < smsPromptIndex))
+                return ReadLine(ref buffer, out line);
+            else if ((smsPromptIndex >= 0 && eolIndex < 0) || (smsPromptIndex >= 0 && smsPromptIndex < eolIndex))
+                return ReadSmsPrompt(ref buffer, out line);
+            else
             {
-                line = Encoding.ASCII.GetString(temp.ToArray());
+                line = default;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Get the index of the first occurence of the segment
+        /// </summary>
+        /// <param name="buffer">The buffer to search in</param>
+        /// <param name="data">The segment to find</param>
+        /// <returns>Returns the index of the segment, or -1 if not found</returns>
+        private long FindIndexOf(in ReadOnlySequence<byte> buffer, ReadOnlySpan<byte> data)
+        {
+            long position = 0;
+
+            foreach (ReadOnlyMemory<byte> segment in buffer)
+            {
+                ReadOnlySpan<byte> span = segment.Span;
+                var index = span.IndexOf(data);
+                if (index != -1)
+                {
+                    return position + index;
+                }
+
+                position += span.Length;
+            }
+
+            return -1;
+        }
+
+        private bool ReadLine(ref ReadOnlySequence<byte> buffer, out string line)
+        {
+            SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
+            if (sequenceReader.TryReadTo(out ReadOnlySequence<byte> slice, eolSequence.AsSpan(), advancePastDelimiter: true))
+            {
+                string temp = Encoding.ASCII.GetString(slice.ToArray());
                 buffer = buffer.Slice(sequenceReader.Position);
+                line = temp;
                 return true;
             }
-            else if (sequenceReader.TryReadTo(out _, smsPromptSequence.AsSpan(), advancePastDelimiter: true))
+            line = default;
+            return false;
+        }
+
+        private bool ReadSmsPrompt(ref ReadOnlySequence<byte> buffer, out string line)
+        {
+            SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
+            if (sequenceReader.TryReadTo(out _, smsPromptSequence.AsSpan(), advancePastDelimiter: true))
             {
                 line = Encoding.ASCII.GetString(smsPromptSequence);
                 buffer = buffer.Slice(sequenceReader.Position);
