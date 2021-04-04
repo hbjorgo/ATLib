@@ -196,8 +196,6 @@ namespace HeboTech.ATLib.Parsers
                 {
                     ProcessLine(line1);
                 }
-
-                //Thread.Yield();
             }
         }
 
