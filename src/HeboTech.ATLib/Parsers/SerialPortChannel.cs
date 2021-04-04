@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.Parsers
             this.serialPort = serialPort;
         }
 
-        protected override ValueTask<int> Read(char[] buffer, int offset, int count, CancellationToken cancellationToken = default)
+        protected ValueTask<int> Read(char[] buffer, int offset, int count, CancellationToken cancellationToken = default)
         {
             if (serialPort.IsOpen && serialPort.BytesToRead > 0)
                 return new ValueTask<int>(serialPort.Read(buffer, offset, serialPort.BytesToRead));
@@ -57,6 +57,11 @@ namespace HeboTech.ATLib.Parsers
                 // Set large fields to null
                 disposedValue = true;
             }
+        }
+
+        protected override ValueTask<string> ReadSingleMessageAsync(CancellationToken cancellationToken = default)
+        {
+            throw new System.NotImplementedException();
         }
     }
 }

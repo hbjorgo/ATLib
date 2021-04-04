@@ -31,7 +31,6 @@ namespace HeboTech.ATLib.Parsers
         };
 
         private readonly object lockObject = new object();
-        private readonly AtLineReader lineReader;
         private bool readerClosed;
         private readonly Task readerTask;
 
@@ -43,14 +42,13 @@ namespace HeboTech.ATLib.Parsers
         private AtResponse response;
         private bool disposedValue;
 
-        public AtChannel()
+        public AtChannel(CancellationToken cancellationToken = default)
         {
-            lineReader = new AtLineReader((buffer, offset, count, cancellationToken) => Read(buffer, offset, count, cancellationToken));
             readerTask = Task.Factory.StartNew(ReaderLoopAsync);
         }
 
-        protected abstract ValueTask<int> Read(char[] buffer, int offset, int count, CancellationToken cancellationToken = default);
-        protected abstract ValueTask<bool> Write(string input, CancellationToken cancellationToken = default);
+        protected abstract ValueTask<string> ReadSingleMessageAsync(CancellationToken cancellationToken = default);
+        protected abstract ValueTask<bool> Write(string text, CancellationToken cancellationToken = default);
         protected abstract ValueTask<bool> Write(char[] input, int offset, int count, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -178,7 +176,7 @@ namespace HeboTech.ATLib.Parsers
         {
             while (!readerClosed)
             {
-                string line1 = await lineReader.ReadLineAsync();
+                string line1 = await ReadSingleMessageAsync();
                 if (line1 == null)
                 {
                     break;
@@ -186,7 +184,7 @@ namespace HeboTech.ATLib.Parsers
 
                 if (IsSMSUnsolicited(line1))
                 {
-                    string line2 = await lineReader.ReadLineAsync();
+                    string line2 = await ReadSingleMessageAsync();
                     if (line2 == null)
                     {
                         break;
@@ -356,7 +354,6 @@ namespace HeboTech.ATLib.Parsers
                     {
                         lock (lockObject)
                         {
-                            lineReader.Close();
                             readerClosed = true;
                             Monitor.Pulse(lockObject);
                         }

@@ -15,12 +15,13 @@ namespace HeboTech.ATLib.TestConsole
             {
                 Handshake = Handshake.RequestToSend
             };
-            using AtChannel atChannel = new SerialPortChannel(serialPort);
-            using IModem modem = new DWM222(atChannel);
-
             Console.WriteLine("Opening serial port...");
             serialPort.Open();
             Console.WriteLine("Serialport opened");
+
+            using AtChannel atChannel = new SerialPortPipeChannel(serialPort);
+            using IModem modem = new DWM222(atChannel);
+
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;
