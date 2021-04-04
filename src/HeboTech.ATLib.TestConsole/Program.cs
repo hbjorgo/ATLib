@@ -19,9 +19,8 @@ namespace HeboTech.ATLib.TestConsole
             serialPort.Open();
             Console.WriteLine("Serialport opened");
 
-            using AtChannel atChannel = new SerialPortPipeChannel(serialPort);
+            using AtChannel atChannel = new AtChannel(serialPort.BaseStream, serialPort.BaseStream);
             using IModem modem = new DWM222(atChannel);
-
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;
