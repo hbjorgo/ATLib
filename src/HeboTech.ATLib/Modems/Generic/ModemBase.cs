@@ -103,7 +103,27 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> SetSmsMessageFormatAsync(SmsTextFormat format)
         {
-            (AtError error, AtResponse response) = await channel.SendCommand($"AT+CMGF={(int)format}");
+            (AtError error, _) = await channel.SendCommand($"AT+CMGF={(int)format}");
+
+            if (error == AtError.NO_ERROR)
+                return CommandStatus.OK;
+            return CommandStatus.ERROR;
+        }
+
+        public virtual async Task<CommandStatus> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr)
+        {
+            if (mode < 0 || mode > 2)
+                throw new ArgumentOutOfRangeException(nameof(mode));
+            if (mt < 0 || mt > 3)
+                throw new ArgumentOutOfRangeException(nameof(mt));
+            if (!(bm == 0 || bm == 2))
+                throw new ArgumentOutOfRangeException(nameof(bm));
+            if (ds < 0 || ds > 2)
+                throw new ArgumentOutOfRangeException(nameof(ds));
+            if (bfr < 0 || bfr > 1)
+                throw new ArgumentOutOfRangeException(nameof(bfr));
+
+            (AtError error, _) = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}");
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;

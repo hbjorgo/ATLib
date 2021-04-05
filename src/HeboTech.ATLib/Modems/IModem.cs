@@ -27,6 +27,7 @@ namespace HeboTech.ATLib.Modems
         Task<Sms> ReadSmsAsync(int index);
         Task<SmsReference> SendSmsAsync(PhoneNumber phoneNumber, string message);
         Task<CommandStatus> SetDateTimeAsync(DateTimeOffset value);
+        Task<CommandStatus> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr);
         Task<CommandStatus> SetSmsMessageFormatAsync(SmsTextFormat format);
     }
 }
