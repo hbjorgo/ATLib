@@ -3,7 +3,7 @@ using HeboTech.ATLib.Parsers;
 
 namespace HeboTech.ATLib.Modems.Qualcomm
 {
-    public class MDM9225 : ModemBase
+    public class MDM9225 : ModemBase, IModem
     {
         public MDM9225(AtChannel channel)
             : base(channel)

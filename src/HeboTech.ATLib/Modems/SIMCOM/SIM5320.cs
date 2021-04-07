@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.SIMCOM
 {
-    public class SIM5320 : ModemBase
+    public class SIM5320 : ModemBase, IModem
     {
         public SIM5320(AtChannel channel)
             : base(channel)
