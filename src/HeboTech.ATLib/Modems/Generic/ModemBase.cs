@@ -12,10 +12,10 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.Generic
 {
-    public abstract class ModemBase : IModem
+    public abstract class ModemBase : IDisposable
     {
         protected readonly AtChannel channel;
-        private bool disposedValue;
+        private bool disposed;
 
         public ModemBase(AtChannel channel)
         {
@@ -347,16 +347,17 @@ namespace HeboTech.ATLib.Modems.Generic
         #region Dispose
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!disposed)
             {
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects)
+                    channel.Dispose();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 // TODO: set large fields to null
-                disposedValue = true;
+                disposed = true;
             }
         }
 
