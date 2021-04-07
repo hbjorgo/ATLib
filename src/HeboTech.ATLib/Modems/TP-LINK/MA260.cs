@@ -3,7 +3,7 @@ using HeboTech.ATLib.Parsers;
 
 namespace HeboTech.ATLib.Modems.TP_LINK
 {
-    public class MA260 : ModemBase
+    public class MA260 : ModemBase, IModem
     {
         /// <summary>
         /// Based on some Qualcomm chipset

@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.Generic
 {
-    public abstract class ModemBase : IModem
+    public abstract class ModemBase
     {
         protected readonly AtChannel channel;
         private bool disposedValue;
