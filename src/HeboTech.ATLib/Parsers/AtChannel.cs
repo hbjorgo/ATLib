@@ -400,16 +400,10 @@ namespace HeboTech.ATLib.Parsers
                         }
 
                         // There's no more data to be processed.
-                        //if (result.IsCompleted)
-                        //{
-                        //    if (buffer.Length > 0)
-                        //    {
-                        //        // The message is incomplete and there's no more data to process.
-                        //        throw new InvalidDataException("Incomplete message.");
-                        //    }
-
-                        //    break;
-                        //}
+                        if (result.IsCompleted)
+                        {
+                            break;
+                        }
                     }
                     finally
                     {
