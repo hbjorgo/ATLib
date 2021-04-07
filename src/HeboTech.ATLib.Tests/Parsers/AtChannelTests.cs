@@ -1,48 +1,48 @@
-﻿using HeboTech.ATLib.Parsers;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using HeboTech.ATLib.Parsers;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+using Xunit;
 
 namespace HeboTech.ATLib.Tests.Parsers
 {
-    [TestClass]
     public class AtChannelTests
     {
-        [TestMethod]
-        public async System.Threading.Tasks.Task CommandIsWrittenToOutputStreamTestAsync()
+        [Fact]
+        public async Task CommandGetsResponseTestAsync()
         {
-            using MemoryStream inputStream = new MemoryStream();
-            using MemoryStream outputStream = new MemoryStream(128);
-            using AtChannel channel = new AtChannel(inputStream, outputStream);
+            using MemoryStream inputStream = new MemoryStream(Encoding.UTF8.GetBytes("\r\n+CSQ: 25,99\r\n\r\nOK\r\n\r\n")) { Position = 0 };
+            using MemoryStream outputStream = new MemoryStream(1024);
+            using TestableAtChannel channel = new TestableAtChannel(inputStream, outputStream);
 
-            (AtError error, AtResponse response) = await channel.SendCommand("Test");
-            inputStream.Write(Encoding.UTF8.GetBytes("OK\r\n"));
+            Task<(AtError error, AtResponse response)> commandTask = channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
+            channel.StartReaderLoop();
+            (AtError error, AtResponse response) = await commandTask;
+
+            Assert.Equal(AtError.NO_ERROR, error);
+            Assert.Equal("+CSQ: 25,99", response.Intermediates.First());
+            Assert.Equal("OK", response.FinalResponse);
+        }
+
+        [Fact]
+        public async Task CommandIsWrittenToOutputStreamTestAsync()
+        {
+            using MemoryStream inputStream = new MemoryStream(Encoding.UTF8.GetBytes("\r\nOK\r\n")) { Position = 0 };
+            using MemoryStream outputStream = new MemoryStream(1024);
+            using TestableAtChannel channel = new TestableAtChannel(inputStream, outputStream);
+
+            Task<(AtError error, AtResponse response)> commandTask = channel.SendCommand("Test");
+            channel.StartReaderLoop();
+            (AtError error, AtResponse response) = await commandTask;
 
             outputStream.Position = 0;
             byte[] buffer = new byte[outputStream.Length];
             outputStream.Read(buffer, 0, buffer.Length);
             string result = Encoding.UTF8.GetString(buffer);
-            channel.Close();
 
-            Assert.AreEqual("Test\r", result);
-            Assert.AreEqual(AtError.NO_ERROR, error);
-        }
-
-        [TestMethod]
-        public async System.Threading.Tasks.Task CommandGetsResponseTestAsync()
-        {
-            using MemoryStream inputStream = new MemoryStream();
-            using MemoryStream outputStream = new MemoryStream(128);
-            using AtChannel channel = new AtChannel(inputStream, outputStream);
-
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("Test", "+ABCD");
-            inputStream.Write(Encoding.UTF8.GetBytes("+ABCD\r\nOK\r\n"));
-            channel.Close();
-
-            Assert.AreEqual(AtError.NO_ERROR, error);
-            Assert.AreEqual("+ABCD", response.Intermediates.First());
-            Assert.AreEqual("OK", response.FinalResponse);
+            Assert.Equal("Test\r", result);
+            Assert.Equal(AtError.NO_ERROR, error);
         }
     }
 }
