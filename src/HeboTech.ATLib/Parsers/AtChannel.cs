@@ -37,15 +37,17 @@ namespace HeboTech.ATLib.Parsers
         private static readonly byte[] eolSequence = new byte[] { (byte)'\r', (byte)'\n' };
         private static readonly byte[] smsPromptSequence = new byte[] { (byte)'>', (byte)' ' };
 
-        private readonly object lockObject = new object();
-        private readonly Task readerTask;
-        private readonly PipeReader reader;
-        private readonly Stream outputStream;
-        private readonly CancellationTokenSource internalCancellationTokenSource;
-        private readonly CancellationToken internalCancellationToken;
-        private readonly SemaphoreSlim semaphore;
-
         public event EventHandler<UnsolicitedEventArgs> UnsolicitedEvent;
+
+        private readonly object lockObject = new object();
+        private Task readerTask;
+        private PipeReader reader;
+        private Stream outputStream;
+        private CancellationTokenSource internalCancellationTokenSource;
+        private CancellationToken internalCancellationToken;
+        private SemaphoreSlim semaphore;
+        protected SemaphoreSlim readLoopStartSemaphore;
+        private bool running;
 
         private AtCommandType commandType;
         private string responsePrefix;
@@ -53,23 +55,42 @@ namespace HeboTech.ATLib.Parsers
         private AtResponse response;
         private bool disposedValue;
 
-        public AtChannel(Stream stream, CancellationToken cancellationToken = default)
-            : this(stream, stream, cancellationToken)
+        public AtChannel(Stream stream)
+            : this(stream, stream, null)
         {
         }
 
-        public AtChannel(Stream inputStream, Stream outputStream, CancellationToken cancellationToken = default)
+        public AtChannel(Stream inputStream, Stream outputStream)
+            : this(inputStream, outputStream, null)
         {
+        }
+
+        protected AtChannel(Stream inputStream, Stream outputStream, SemaphoreSlim readLoopStartSemaphore)
+        {
+            if (inputStream == null)
+                throw new ArgumentNullException(nameof(inputStream));
+            if (outputStream == null)
+                throw new ArgumentNullException(nameof(outputStream));
+
+            if (!inputStream.CanRead)
+                throw new ArgumentException($"{nameof(inputStream)} is closed");
+            if (!outputStream.CanWrite)
+                throw new ArgumentException($"{nameof(outputStream)} is closed");
+
             internalCancellationTokenSource = new CancellationTokenSource();
             internalCancellationToken = internalCancellationTokenSource.Token;
-            cancellationToken.Register(() =>
-            {
-                internalCancellationTokenSource.Cancel();
-            });
             semaphore = new SemaphoreSlim(0, 1);
             this.outputStream = outputStream;
             reader = PipeReader.Create(inputStream);
-            readerTask = Task.Factory.StartNew(ReaderLoopAsync, TaskCreationOptions.LongRunning);
+            this.readLoopStartSemaphore = readLoopStartSemaphore;
+
+            running = true;
+            readerTask = Task.Run(async () =>
+            {
+                if (readLoopStartSemaphore != null)
+                    await readLoopStartSemaphore.WaitAsync(internalCancellationToken).ConfigureAwait(false);
+                await ReaderLoopAsync(internalCancellationToken).ConfigureAwait(false);
+            }, internalCancellationToken);
         }
 
         /// <summary>
@@ -137,9 +158,16 @@ namespace HeboTech.ATLib.Parsers
                 return OnError(writeError);
             }
 
-            if (! await semaphore.WaitAsync(600000, internalCancellationToken))
+            try
             {
-                return OnError(AtError.TIMEOUT);
+                if (!await semaphore.WaitAsync(10_000, internalCancellationToken))
+                {
+                    return OnError(AtError.TIMEOUT);
+                }
+            }
+            catch (Exception ex) when (ex is OperationCanceledException || ex is ObjectDisposedException)
+            {
+                return OnError(AtError.CHANNEL_CLOSED);
             }
 
             // TODO: Ref
@@ -166,19 +194,26 @@ namespace HeboTech.ATLib.Parsers
             return AtError.NO_ERROR;
         }
 
-        private async Task ReaderLoopAsync()
+        private async Task ReaderLoopAsync(CancellationToken cancellationToken = default)
         {
-            while (!internalCancellationToken.IsCancellationRequested)
+            while (running)
             {
-                string line1 = await ReadSingleMessageAsync();
+                if (cancellationToken.IsCancellationRequested)
+                    cancellationToken.ThrowIfCancellationRequested();
+
+                string line1 = await ReadSingleMessageAsync(cancellationToken);
                 if (line1 == null)
                 {
                     break;
                 }
+                if (line1 == string.Empty)
+                {
+                    continue;
+                }
 
                 if (IsSMSUnsolicited(line1))
                 {
-                    string line2 = await ReadSingleMessageAsync();
+                    string line2 = await ReadSingleMessageAsync(cancellationToken);
                     if (line2 == null)
                     {
                         break;
@@ -188,12 +223,12 @@ namespace HeboTech.ATLib.Parsers
                 }
                 else
                 {
-                    ProcessLine(line1);
+                    ProcessMessage(line1);
                 }
             }
         }
 
-        private void ProcessLine(string line)
+        private void ProcessMessage(string line)
         {
             if (response == null)
             {
@@ -325,57 +360,68 @@ namespace HeboTech.ATLib.Parsers
             return false;
         }
 
-        protected async Task<string> ReadSingleMessageAsync()
+        protected async Task<string> ReadSingleMessageAsync(CancellationToken cancellationToken = default)
         {
-            while (!internalCancellationToken.IsCancellationRequested)
+            while (running)
             {
-                ReadResult result = await reader.ReadAsync(internalCancellationToken);
-                ReadOnlySequence<byte> buffer = result.Buffer;
-
-                // In the event that no message is parsed successfully, mark consumed
-                // as nothing and examined as the entire buffer.
-                SequencePosition consumed = buffer.Start;
-                SequencePosition examined = buffer.End;
-
+                ReadResult result;
                 try
                 {
-                    if (TryReadLine(ref buffer, out string message))
-                    {
-                        // A single message was successfully parsed so mark the start as the
-                        // parsed buffer as consumed. TryParseMessage trims the buffer to
-                        // point to the data after the message was parsed.
-                        consumed = buffer.Start;
-
-                        // Examined is marked the same as consumed here, so the next call
-                        // to ReadSingleMessageAsync will process the next message if there's
-                        // one.
-                        examined = consumed;
-
-                        return message;
-                    }
-
-                    // There's no more data to be processed.
-                    //if (result.IsCompleted)
-                    //{
-                    //    if (buffer.Length > 0)
-                    //    {
-                    //        // The message is incomplete and there's no more data to process.
-                    //        throw new InvalidDataException("Incomplete message.");
-                    //    }
-
-                    //    break;
-                    //}
+                    result = await reader.ReadAsync(cancellationToken);
                 }
-                finally
+                catch (OperationCanceledException)
                 {
-                    reader.AdvanceTo(consumed, examined);
+                    break;
+                }
+                if (!result.IsCanceled)
+                {
+                    ReadOnlySequence<byte> buffer = result.Buffer;
+
+                    // In the event that no message is parsed successfully, mark consumed
+                    // as nothing and examined as the entire buffer.
+                    SequencePosition consumed = buffer.Start;
+                    SequencePosition examined = buffer.End;
+
+                    try
+                    {
+                        if (TryReadMessage(ref buffer, out string message))
+                        {
+                            // A single message was successfully parsed so mark the start as the
+                            // parsed buffer as consumed. TryParseMessage trims the buffer to
+                            // point to the data after the message was parsed.
+                            consumed = buffer.Start;
+
+                            // Examined is marked the same as consumed here, so the next call
+                            // to ReadSingleMessageAsync will process the next message if there's
+                            // one.
+                            examined = consumed;
+
+                            return message;
+                        }
+
+                        // There's no more data to be processed.
+                        //if (result.IsCompleted)
+                        //{
+                        //    if (buffer.Length > 0)
+                        //    {
+                        //        // The message is incomplete and there's no more data to process.
+                        //        throw new InvalidDataException("Incomplete message.");
+                        //    }
+
+                        //    break;
+                        //}
+                    }
+                    finally
+                    {
+                        reader.AdvanceTo(consumed, examined);
+                    }
                 }
             }
 
             return null;
         }
 
-        private bool TryReadLine(ref ReadOnlySequence<byte> buffer, out string line)
+        private static bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out string line)
         {
             // Get the index of EOL and SMS prompt
             long eolIndex = FindIndexOf(buffer, eolSequence.AsSpan());
@@ -383,9 +429,9 @@ namespace HeboTech.ATLib.Parsers
 
             // Read the first occurence of either EOL or SMS prompt
             if ((eolIndex >= 0 && smsPromptIndex < 0) || (eolIndex >= 0 && eolIndex < smsPromptIndex))
-                return ReadLine(ref buffer, out line);
+                return TryReadLine(ref buffer, out line);
             else if ((smsPromptIndex >= 0 && eolIndex < 0) || (smsPromptIndex >= 0 && smsPromptIndex < eolIndex))
-                return ReadSmsPrompt(ref buffer, out line);
+                return TryReadSmsPrompt(ref buffer, out line);
             else
             {
                 line = default;
@@ -399,7 +445,7 @@ namespace HeboTech.ATLib.Parsers
         /// <param name="buffer">The buffer to search in</param>
         /// <param name="data">The segment to find</param>
         /// <returns>Returns the index of the segment, or -1 if not found</returns>
-        private long FindIndexOf(in ReadOnlySequence<byte> buffer, ReadOnlySpan<byte> data)
+        private static long FindIndexOf(in ReadOnlySequence<byte> buffer, ReadOnlySpan<byte> data)
         {
             long position = 0;
 
@@ -418,7 +464,7 @@ namespace HeboTech.ATLib.Parsers
             return -1;
         }
 
-        private bool ReadLine(ref ReadOnlySequence<byte> buffer, out string line)
+        private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out string line)
         {
             SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
             if (sequenceReader.TryReadTo(out ReadOnlySequence<byte> slice, eolSequence.AsSpan(), advancePastDelimiter: true))
@@ -432,7 +478,7 @@ namespace HeboTech.ATLib.Parsers
             return false;
         }
 
-        private bool ReadSmsPrompt(ref ReadOnlySequence<byte> buffer, out string line)
+        private static bool TryReadSmsPrompt(ref ReadOnlySequence<byte> buffer, out string line)
         {
             SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
             if (sequenceReader.TryReadTo(out _, smsPromptSequence.AsSpan(), advancePastDelimiter: true))
@@ -449,11 +495,7 @@ namespace HeboTech.ATLib.Parsers
         {
             byte[] buffer = Encoding.UTF8.GetBytes(text);
             outputStream.Write(buffer, 0, buffer.Length);
-        }
-
-        public void Close()
-        {
-            Dispose();
+            outputStream.Flush();
         }
 
         #region Dispose
@@ -464,9 +506,21 @@ namespace HeboTech.ATLib.Parsers
                 if (disposing)
                 {
                     // Dispose managed state (managed objects)
-
+                    outputStream.Flush();
+                    running = false;
+                    reader.CancelPendingRead();
+                    reader.Complete();
                     internalCancellationTokenSource.Cancel();
-                    readerTask.Wait(TimeSpan.FromSeconds(5));
+                    readerTask.Wait(TimeSpan.FromSeconds(1));
+
+                    semaphore.Dispose();
+                    readLoopStartSemaphore?.Dispose();
+                    internalCancellationTokenSource.Dispose();
+                    reader = null;
+                    outputStream = null;
+                    semaphore = null;
+                    readLoopStartSemaphore = null;
+                    internalCancellationTokenSource = null;
                 }
 
                 // Free unmanaged resources (unmanaged objects) and override finalizer
