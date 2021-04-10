@@ -80,6 +80,5 @@ if (simStatus == SimStatus.SIM_PIN)
 // Send SMS to the specified number
 var smsReference = await modem.SendSMSAsync(new PhoneNumber("0123456789"), "Hello ATLib!");
 Console.WriteLine($"SMS Reference: {smsReference}");
-}
 ```
 For more examples, check out the TestConsole project in the code.
