@@ -56,21 +56,29 @@ using SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, Stop
 {
     Handshake = Handshake.RequestToSend
 };
-// Create a new serial port based AT channel
-using AtChannel atChannel = new SerialPortChannel(serialPort);
+serialPort.Open();
+
+// Create AT channel
+using AtChannel atChannel = new AtChannel(serialPort.BaseStream);
 
 // Create the modem
 using IModem modem = new Fona3G(atChannel);
 
 // The library doesn't support echo, so turn it off
-modem.DisableEcho();
+modem.DisableEchoAsync();
 
 // Get SIM status
-var simStatus = modem.GetSimStatus();
+var simStatus = await modem.GetSimStatusAsync();
 Console.WriteLine($"SIM Status: {simStatus}");
 
+if (simStatus == SimStatus.SIM_PIN)
+{
+    var simPinStatus = await modem.EnterSimPinAsync(new PersonalIdentificationNumber("<PIN>"));
+    Console.WriteLine($"SIM PIN Status: {simPinStatus}");
+}
+
 // Send SMS to the specified number
-var smsReference = modem.SendSMS(new PhoneNumber("0123456789"), "Hello ATLib!");
+var smsReference = await modem.SendSMSAsync(new PhoneNumber("0123456789"), "Hello ATLib!");
 Console.WriteLine($"SMS Reference: {smsReference}");
 }
 ```
