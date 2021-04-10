@@ -65,7 +65,7 @@ using AtChannel atChannel = new AtChannel(serialPort.BaseStream);
 using IModem modem = new Fona3G(atChannel);
 
 // The library doesn't support echo, so turn it off
-modem.DisableEchoAsync();
+await modem.DisableEchoAsync();
 
 // Get SIM status
 var simStatus = await modem.GetSimStatusAsync();
