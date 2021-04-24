@@ -224,58 +224,6 @@ namespace HeboTech.ATLib.Modems.Generic
                 }
             }
             return smss;
-
-
-            /*
-
-
-
-
-                List<int> metaLines = new List<int>();
-            for (int i = 0; i < response.Intermediates.Count; i++)
-            {
-                string line = response.Intermediates[i];
-                var match = Regex.Match(line, metaRegEx);
-                if (match.Success)
-                {
-                    metaLines.Add(i);
-                }
-            }
-
-            for (int i = 0; i < metaLines.Count;)
-            {
-                int messagelineCount = 0;
-                if (i == metaLines.Count - 1)
-                {
-                    messagelineCount = response.Intermediates.Count;
-                }
-                else
-                    messagelineCount = metaLines[i + 1] - i;
-
-                string metaData = response.Intermediates[i];
-                var match = Regex.Match(metaData, metaRegEx);
-                if (match.Success)
-                {
-                    int index = int.Parse(match.Groups["index"].Value);
-                    SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                    PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
-                    int year = int.Parse(match.Groups["year"].Value);
-                    int month = int.Parse(match.Groups["month"].Value);
-                    int day = int.Parse(match.Groups["day"].Value);
-                    int hour = int.Parse(match.Groups["hour"].Value);
-                    int minute = int.Parse(match.Groups["minute"].Value);
-                    int second = int.Parse(match.Groups["second"].Value);
-                    int zone = int.Parse(match.Groups["zone"].Value);
-                    DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-                    string message = response.Intermediates.Skip(
-                    smss.Add(new SmsWithIndex(index, status, sender, received, message));
-                }
-
-                i = metaLines[i + 1];
-            }
-        }
-        return smss;
-            */
         }
 
         public virtual async Task<CommandStatus> DeleteSmsAsync(int index)
