@@ -81,4 +81,6 @@ if (simStatus == SimStatus.SIM_PIN)
 var smsReference = await modem.SendSMSAsync(new PhoneNumber("0123456789"), "Hello ATLib!");
 Console.WriteLine($"SMS Reference: {smsReference}");
 ```
+Because it relies on a stream, you can even control a modem over a network! Either use a network attached modem, or forward a modem serial port to a network port.
+
 For more examples, check out the TestConsole project in the code.
