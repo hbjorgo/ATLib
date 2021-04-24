@@ -183,29 +183,99 @@ namespace HeboTech.ATLib.Modems.Generic
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (error == AtError.NO_ERROR)
             {
-                for (int i = 0; i < response.Intermediates.Count; i += 2)
+                string metaRegEx = @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+*\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""";
+
+                using (var enumerator = response.Intermediates.GetEnumerator())
                 {
-                    string metaData = response.Intermediates[i];
-                    var match = Regex.Match(metaData, @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
-                    if (match.Success)
+                    string line = null;
+                    AdvanceIterator();
+                    while (line != null)
                     {
-                        int index = int.Parse(match.Groups["index"].Value);
-                        SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                        PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
-                        int year = int.Parse(match.Groups["year"].Value);
-                        int month = int.Parse(match.Groups["month"].Value);
-                        int day = int.Parse(match.Groups["day"].Value);
-                        int hour = int.Parse(match.Groups["hour"].Value);
-                        int minute = int.Parse(match.Groups["minute"].Value);
-                        int second = int.Parse(match.Groups["second"].Value);
-                        int zone = int.Parse(match.Groups["zone"].Value);
-                        DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-                        string message = response.Intermediates[i + 1];
-                        smss.Add(new SmsWithIndex(index, status, sender, received, message));
+                        var match = Regex.Match(line, metaRegEx);
+                        if (match.Success)
+                        {
+                            int index = int.Parse(match.Groups["index"].Value);
+                            SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
+                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            int year = int.Parse(match.Groups["year"].Value);
+                            int month = int.Parse(match.Groups["month"].Value);
+                            int day = int.Parse(match.Groups["day"].Value);
+                            int hour = int.Parse(match.Groups["hour"].Value);
+                            int minute = int.Parse(match.Groups["minute"].Value);
+                            int second = int.Parse(match.Groups["second"].Value);
+                            int zone = int.Parse(match.Groups["zone"].Value);
+                            DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+
+                            StringBuilder messageBuilder = new StringBuilder();
+                            AdvanceIterator();
+                            while (line != null && !Regex.Match(line, metaRegEx).Success)
+                            {
+                                messageBuilder.AppendLine(line);
+                                AdvanceIterator();
+                            }
+                            smss.Add(new SmsWithIndex(index, status, sender, received, messageBuilder.ToString()));
+                        }
+                    }
+
+                    void AdvanceIterator()
+                    {
+                        line = enumerator.MoveNext() ? enumerator.Current : null;
                     }
                 }
             }
             return smss;
+
+
+            /*
+
+
+
+
+                List<int> metaLines = new List<int>();
+            for (int i = 0; i < response.Intermediates.Count; i++)
+            {
+                string line = response.Intermediates[i];
+                var match = Regex.Match(line, metaRegEx);
+                if (match.Success)
+                {
+                    metaLines.Add(i);
+                }
+            }
+
+            for (int i = 0; i < metaLines.Count;)
+            {
+                int messagelineCount = 0;
+                if (i == metaLines.Count - 1)
+                {
+                    messagelineCount = response.Intermediates.Count;
+                }
+                else
+                    messagelineCount = metaLines[i + 1] - i;
+
+                string metaData = response.Intermediates[i];
+                var match = Regex.Match(metaData, metaRegEx);
+                if (match.Success)
+                {
+                    int index = int.Parse(match.Groups["index"].Value);
+                    SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
+                    PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                    int year = int.Parse(match.Groups["year"].Value);
+                    int month = int.Parse(match.Groups["month"].Value);
+                    int day = int.Parse(match.Groups["day"].Value);
+                    int hour = int.Parse(match.Groups["hour"].Value);
+                    int minute = int.Parse(match.Groups["minute"].Value);
+                    int second = int.Parse(match.Groups["second"].Value);
+                    int zone = int.Parse(match.Groups["zone"].Value);
+                    DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+                    string message = response.Intermediates.Skip(
+                    smss.Add(new SmsWithIndex(index, status, sender, received, message));
+                }
+
+                i = metaLines[i + 1];
+            }
+        }
+        return smss;
+            */
         }
 
         public virtual async Task<CommandStatus> DeleteSmsAsync(int index)

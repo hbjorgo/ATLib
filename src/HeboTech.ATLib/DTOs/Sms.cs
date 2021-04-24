@@ -19,7 +19,7 @@ namespace HeboTech.ATLib.DTOs
 
         public override string ToString()
         {
-            return $"Sender: {Sender}, ReceiveTime: {ReceiveTime}, Message: {Message}";
+            return $"Sender: {Sender}, ReceiveTime: {ReceiveTime}, Message:{Environment.NewLine}{Message}";
         }
     }
 }
