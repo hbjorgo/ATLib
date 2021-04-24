@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Authors>HeboTech</Authors>
     <Product>HeboTech ATLib</Product>
-    <Version>2.0.0</Version>
+    <Version>2.0.1</Version>
     <PackageId>HeboTech.ATLib</PackageId>
     <PackageTags>atcommand at command gsm sms hayes simcom d-link tp-link dwm-222 ma260 sim5320</PackageTags>
     <Description>AT command library that makes it easy to communicate with modems.</Description>
