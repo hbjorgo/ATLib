@@ -96,8 +96,8 @@ namespace HeboTech.ATLib.TestConsole
                         Console.WriteLine($"Dial Status: {dialStatus}");
                         break;
                     case ConsoleKey.H:
-                        var callStatus = await modem.HangupAsync();
-                        Console.WriteLine($"Hangup Status: {callStatus}");
+                        var hangupStatus = await modem.HangupAsync();
+                        Console.WriteLine($"Hangup Status: {hangupStatus}");
                         break;
                     case ConsoleKey.S:
                         Console.WriteLine("Sending SMS...");
