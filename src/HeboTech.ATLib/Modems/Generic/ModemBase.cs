@@ -52,9 +52,10 @@ namespace HeboTech.ATLib.Modems.Generic
             return CommandStatus.ERROR;
         }
 
-        public virtual async Task<CommandStatus> Dial(PhoneNumber phoneNumber)
+        public virtual async Task<CommandStatus> Dial(PhoneNumber phoneNumber, bool hideCallerNumber = false, bool closedUserGroup = false)
         {
-            (AtError error, AtResponse response) = await channel.SendCommand($"ATD{phoneNumber};");
+            string command = $"ATD{phoneNumber}{(hideCallerNumber ? 'I' : 'i')}{(closedUserGroup ? 'G' : 'g')};";
+            (AtError error, AtResponse response) = await channel.SendCommand(command);
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
