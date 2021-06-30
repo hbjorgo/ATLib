@@ -33,7 +33,7 @@ Feedback is very much welcome 🙂
 - Disable echo
 - Some modems may also support modem specific commands
 
-# Events
+## Events
 - Incoming call
 - Missed call
 - Call started
