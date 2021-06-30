@@ -17,7 +17,7 @@ namespace HeboTech.ATLib.Modems
         Task<CommandStatus> AnswerIncomingCallAsync();
         void Close();
         Task<CommandStatus> DeleteSmsAsync(int index);
-        Task<CommandStatus> Dial(PhoneNumber phoneNumber, bool hideCallerNumber = false, bool closedUserGroup = false);
+        Task<CommandStatus> DialAsync(PhoneNumber phoneNumber, bool hideCallerNumber = false, bool closedUserGroup = false);
         Task<CommandStatus> DisableEchoAsync();
         Task<CommandStatus> EnterSimPinAsync(PersonalIdentificationNumber pin);
         Task<BatteryStatus> GetBatteryStatusAsync();

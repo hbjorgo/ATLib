@@ -92,7 +92,7 @@ namespace HeboTech.ATLib.TestConsole
                         Console.WriteLine($"Answer Status: {answerStatus}");
                         break;
                     case ConsoleKey.D:
-                        var dialStatus = await modem.Dial(recipient);
+                        var dialStatus = await modem.DialAsync(recipient);
                         Console.WriteLine($"Dial Status: {dialStatus}");
                         break;
                     case ConsoleKey.H:
