@@ -27,27 +27,35 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             if (e.Line1 == "RING")
                 IncomingCall?.Invoke(this, new IncomingCallEventArgs());
+            else if (e.Line1.StartsWith("VOICE CALL: BEGIN"))
+                CallStarted?.Invoke(this, new CallStartedEventArgs());
+            else if (e.Line1.StartsWith("VOICE CALL: END"))
+                CallEnded?.Invoke(this, CallEndedEventArgs.CreateFromResponse(e.Line1));
             else if (e.Line1.StartsWith("MISSED_CALL: "))
                 MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(e.Line1));
             else if (e.Line1.StartsWith("+CMTI: "))
-            {
-                var match = Regex.Match(e.Line1, @"\+CMTI:\s""(?<storage>[A-Z]+)"",(?<index>\d+)");
-                if (match.Success)
-                {
-                    string storage = match.Groups["storage"].Value;
-                    int index = int.Parse(match.Groups["index"].Value);
-                    SmsReceived?.Invoke(this, new SmsReceivedEventArgs(storage, index));
-                }
-            }
+                SmsReceived?.Invoke(this, SmsReceivedEventArgs.CreateFromResponse(e.Line1));
         }
 
         #region _V_25TER
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
         public event EventHandler<MissedCallEventArgs> MissedCall;
+        public event EventHandler<CallStartedEventArgs> CallStarted;
+        public event EventHandler<CallEndedEventArgs> CallEnded;
 
         public virtual async Task<CommandStatus> AnswerIncomingCallAsync()
         {
             (AtError error, _) = await channel.SendCommand("ATA");
+
+            if (error == AtError.NO_ERROR)
+                return CommandStatus.OK;
+            return CommandStatus.ERROR;
+        }
+
+        public virtual async Task<CommandStatus> Dial(PhoneNumber phoneNumber, bool hideCallerNumber = false, bool closedUserGroup = false)
+        {
+            string command = $"ATD{phoneNumber}{(hideCallerNumber ? 'I' : 'i')}{(closedUserGroup ? 'G' : 'g')};";
+            (AtError error, AtResponse response) = await channel.SendCommand(command);
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
@@ -80,21 +88,13 @@ namespace HeboTech.ATLib.Modems.Generic
             return null;
         }
 
-        public virtual async Task<CallDetails> HangupAsync()
+        public virtual async Task<CommandStatus> HangupAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CHUP", "VOICE CALL:");
+            (AtError error, _) = await channel.SendCommand($"AT+CHUP");
 
             if (error == AtError.NO_ERROR)
-            {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"VOICE CALL: END: (?<duration>\d+)");
-                if (match.Success)
-                {
-                    int duration = int.Parse(match.Groups["duration"].Value);
-                    return new CallDetails(TimeSpan.FromSeconds(duration));
-                }
-            }
-            return null;
+                return CommandStatus.OK;
+            return CommandStatus.ERROR;
         }
         #endregion
 

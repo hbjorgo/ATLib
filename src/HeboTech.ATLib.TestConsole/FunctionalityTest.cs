@@ -20,11 +20,15 @@ namespace HeboTech.ATLib.TestConsole
             serialPort.Open();
             Console.WriteLine("Serialport opened");
 
+            PhoneNumber recipient = new PhoneNumber(phoneNumber);
+
             using AtChannel atChannel = new AtChannel(serialPort.BaseStream, serialPort.BaseStream);
             using IModem modem = new DWM222(atChannel);
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;
+            modem.CallStarted += Modem_CallStarted;
+            modem.CallEnded += Modem_CallEnded;
             modem.SmsReceived += Modem_SmsReceived;
 
             await modem.DisableEchoAsync();
@@ -77,7 +81,7 @@ namespace HeboTech.ATLib.TestConsole
                 Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
             }
 
-            Console.WriteLine("Done. Press 'a' to answer call, 'h' to hang up, 's' to send SMS and 'q' to exit...");
+            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
             {
@@ -87,17 +91,31 @@ namespace HeboTech.ATLib.TestConsole
                         var answerStatus = await modem.AnswerIncomingCallAsync();
                         Console.WriteLine($"Answer Status: {answerStatus}");
                         break;
+                    case ConsoleKey.D:
+                        var dialStatus = await modem.Dial(recipient);
+                        Console.WriteLine($"Dial Status: {dialStatus}");
+                        break;
                     case ConsoleKey.H:
-                        var callDetails = await modem.HangupAsync();
-                        Console.WriteLine($"Call Details: {callDetails}");
+                        var hangupStatus = await modem.HangupAsync();
+                        Console.WriteLine($"Hangup Status: {hangupStatus}");
                         break;
                     case ConsoleKey.S:
                         Console.WriteLine("Sending SMS...");
-                        var smsReference = await modem.SendSmsAsync(new PhoneNumber(phoneNumber), "Hello ATLib!");
+                        var smsReference = await modem.SendSmsAsync(recipient, "Hello ATLib!");
                         Console.WriteLine($"SMS Reference: {smsReference}");
                         break;
                 }
             }
+        }
+
+        private static void Modem_CallEnded(object sender, Events.CallEndedEventArgs e)
+        {
+            Console.WriteLine($"Call ended. Duration: {e.Duration}");
+        }
+
+        private static void Modem_CallStarted(object sender, Events.CallStartedEventArgs e)
+        {
+            Console.WriteLine("Call started");
         }
 
         private static void Modem_SmsReceived(object sender, Events.SmsReceivedEventArgs e)

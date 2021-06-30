@@ -19,6 +19,7 @@ Feedback is very much welcome 🙂
 - Read SMS
 - Delete SMS
 - Set SMS message format (to text)
+- Dial number
 - Answer incoming call
 - Hang up call
 - Get SIM status
@@ -32,16 +33,18 @@ Feedback is very much welcome 🙂
 - Disable echo
 - Some modems may also support modem specific commands
 
+## Events
+- Incoming call
+- Missed call
+- Call started
+- Call ended
+- SmsReceived (not fully implemented)
+
 ## Supported modems:
 - Adafruit FONA 3G (based on SIMCOM SIM5320 chipset)
 - D-Link DWM-222 (based on Qualcomm MDM9225 chipset)
 - TP-LINK MA260 (based on a Qualcomm chipset)
 * Other modems may work using one of the implementations above
-
-# Events
-- Incoming call
-- Missed call
-- SmsReceived (not fully implemented)
 
 ## Usage
 Install as NuGet package
