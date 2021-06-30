@@ -90,27 +90,11 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> HangupAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendCommand($"AT+CHUP");
+            (AtError error, _) = await channel.SendCommand($"AT+CHUP");
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
-
-
-
-            //(AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CHUP", "VOICE CALL:");
-
-            //if (error == AtError.NO_ERROR)
-            //{
-            //    string line = response.Intermediates.First();
-            //    var match = Regex.Match(line, @"VOICE CALL: END: (?<duration>\d+)");
-            //    if (match.Success)
-            //    {
-            //        int duration = int.Parse(match.Groups["duration"].Value);
-            //        return new CallDetails(TimeSpan.FromSeconds(duration));
-            //    }
-            //}
-            //return null;
         }
         #endregion
 
