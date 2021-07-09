@@ -80,6 +80,9 @@ if (simStatus == SimStatus.SIM_PIN)
     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 }
 
+// Set SMS text format. Currently Text is supported
+var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
+
 // Send SMS to the specified number
 var smsReference = await modem.SendSMSAsync(new PhoneNumber("0123456789"), "Hello ATLib!");
 Console.WriteLine($"SMS Reference: {smsReference}");
