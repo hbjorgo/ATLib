@@ -35,13 +35,38 @@ namespace HeboTech.ATLib.Modems.Generic
                 MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(e.Line1));
             else if (e.Line1.StartsWith("+CMTI: "))
                 SmsReceived?.Invoke(this, SmsReceivedEventArgs.CreateFromResponse(e.Line1));
+            else if (e.Line1.StartsWith("+CUSD: "))
+                UssdResponseReceived?.Invoke(this, UssdResponseEventArgs.CreateFromResponse(e.Line1));
+            else if (e.Line1.StartsWith("+CME ERROR:"))
+                ErrorReceived?.Invoke(this, ErrorEventArgs.CreateFromCmeResponse(e.Line1));
+            else if (e.Line1.StartsWith("+CMS ERROR:"))
+                ErrorReceived?.Invoke(this, ErrorEventArgs.CreateFromCmsResponse(e.Line1));
         }
+
+        public event EventHandler<ErrorEventArgs> ErrorReceived;
 
         #region _V_25TER
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
         public event EventHandler<MissedCallEventArgs> MissedCall;
         public event EventHandler<CallStartedEventArgs> CallStarted;
         public event EventHandler<CallEndedEventArgs> CallEnded;
+
+        public virtual async Task<Imsi> GetImsiAsync()
+        {
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CIMI", string.Empty);
+
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
+                var match = Regex.Match(line, @"(?<imsi>\d+)");
+                if (match.Success)
+                {
+                    string imsi = match.Groups["imsi"].Value;
+                    return new Imsi(imsi);
+                }
+            }
+            return default;
+        }
 
         public virtual async Task<CommandStatus> AnswerIncomingCallAsync()
         {
@@ -91,6 +116,48 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<CommandStatus> HangupAsync()
         {
             (AtError error, _) = await channel.SendCommand($"AT+CHUP");
+
+            if (error == AtError.NO_ERROR)
+                return CommandStatus.OK;
+            return CommandStatus.ERROR;
+        }
+
+        public virtual async Task<IEnumerable<string>> GetAvailableCharacterSetsAsync()
+        {
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync($"AT+CSCS=?", "+CSCS:");
+
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
+                var match = Regex.Match(line, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)");
+                if (match.Success)
+                {
+                    return match.Groups["characterSet"].Captures.Select(x => x.Value);
+                }
+            }
+            return default;
+        }
+
+        public virtual async Task<string> GetCurrentCharacterSetAsync()
+        {
+            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:");
+
+            if (error == AtError.NO_ERROR)
+            {
+                string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
+                var match = Regex.Match(line, @"""(?<characterSet>\w)""");
+                if (match.Success)
+                {
+                    string characterSet = match.Groups["characterSet"].Value;
+                    return characterSet;
+                }
+            }
+            return default;
+        }
+
+        public virtual async Task<CommandStatus> SetCharacterSetAsync(string characterSet)
+        {
+            (AtError error, _) = await channel.SendCommand($"AT+CSCS=\"{characterSet}\"");
 
             if (error == AtError.NO_ERROR)
                 return CommandStatus.OK;
@@ -236,6 +303,8 @@ namespace HeboTech.ATLib.Modems.Generic
         #endregion
 
         #region _3GPP_TS_27_007
+        public event EventHandler<UssdResponseEventArgs> UssdResponseReceived;
+
         public virtual async Task<SimStatus> GetSimStatusAsync()
         {
             (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:");
@@ -354,6 +423,15 @@ namespace HeboTech.ATLib.Modems.Generic
                 }
             }
             return null;
+        }
+
+        public virtual async Task<CommandStatus> SendUssdAsync(string code, int codingScheme = 15)
+        {
+            (AtError error, _) = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}");
+
+            if (error == AtError.NO_ERROR)
+                return CommandStatus.OK;
+            else return CommandStatus.ERROR;
         }
         #endregion
 
