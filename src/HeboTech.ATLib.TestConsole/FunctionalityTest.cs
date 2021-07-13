@@ -1,4 +1,5 @@
 ﻿using HeboTech.ATLib.DTOs;
+using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
@@ -12,7 +13,7 @@ namespace HeboTech.ATLib.TestConsole
     {
         public static async Task Run(string port, string pin, string phoneNumber)
         {
-            using SerialPort serialPort = new SerialPort(port, 9600, Parity.None, 8, StopBits.One)
+            using SerialPort serialPort = new(port, 9600, Parity.None, 8, StopBits.One)
             {
                 Handshake = Handshake.RequestToSend
             };
@@ -20,9 +21,9 @@ namespace HeboTech.ATLib.TestConsole
             serialPort.Open();
             Console.WriteLine("Serialport opened");
 
-            PhoneNumber recipient = new PhoneNumber(phoneNumber);
+            PhoneNumber recipient = new(phoneNumber);
 
-            using AtChannel atChannel = new AtChannel(serialPort.BaseStream, serialPort.BaseStream);
+            using AtChannel atChannel = new(serialPort.BaseStream, serialPort.BaseStream);
             using IModem modem = new DWM222(atChannel);
 
             modem.IncomingCall += Modem_IncomingCall;
@@ -30,6 +31,8 @@ namespace HeboTech.ATLib.TestConsole
             modem.CallStarted += Modem_CallStarted;
             modem.CallEnded += Modem_CallEnded;
             modem.SmsReceived += Modem_SmsReceived;
+            modem.UssdResponseReceived += Modem_UssdResponseReceived;
+            modem.ErrorReceived += Modem_ErrorReceived;
 
             await modem.DisableEchoAsync();
 
@@ -48,6 +51,9 @@ namespace HeboTech.ATLib.TestConsole
                 simStatus = await modem.GetSimStatusAsync();
                 Console.WriteLine($"SIM Status: {simStatus}");
             }
+
+            var imsi = await modem.GetImsiAsync();
+            Console.WriteLine($"IMSI: {imsi}");
 
             var signalStrength = await modem.GetSignalStrengthAsync();
             Console.WriteLine($"Signal Strength: {signalStrength}");
@@ -81,7 +87,7 @@ namespace HeboTech.ATLib.TestConsole
                 Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
             }
 
-            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS and 'q' to exit...");
+            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'u' to send USSD code and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
             {
@@ -104,31 +110,47 @@ namespace HeboTech.ATLib.TestConsole
                         var smsReference = await modem.SendSmsAsync(recipient, "Hello ATLib!");
                         Console.WriteLine($"SMS Reference: {smsReference}");
                         break;
+                    case ConsoleKey.U:
+                        Console.WriteLine("Enter USSD Code:");
+                        var ussd = Console.ReadLine();
+                        var ussdResult = await modem.SendUssdAsync(ussd);
+                        Console.WriteLine($"USSD Status: {ussdResult}");
+                        break;
                 }
             }
         }
 
-        private static void Modem_CallEnded(object sender, Events.CallEndedEventArgs e)
+        private static void Modem_ErrorReceived(object sender, ErrorEventArgs e)
+        {
+            Console.WriteLine($"ERROR: {e.Error}");
+        }
+
+        private static void Modem_UssdResponseReceived(object sender, UssdResponseEventArgs e)
+        {
+            Console.WriteLine($"USSD Response: {e.Status} - {e.Response} - ({e.CodingScheme})");
+        }
+
+        private static void Modem_CallEnded(object sender, CallEndedEventArgs e)
         {
             Console.WriteLine($"Call ended. Duration: {e.Duration}");
         }
 
-        private static void Modem_CallStarted(object sender, Events.CallStartedEventArgs e)
+        private static void Modem_CallStarted(object sender, CallStartedEventArgs e)
         {
             Console.WriteLine("Call started");
         }
 
-        private static void Modem_SmsReceived(object sender, Events.SmsReceivedEventArgs e)
+        private static void Modem_SmsReceived(object sender, SmsReceivedEventArgs e)
         {
             Console.WriteLine($"SMS received. Index {e.Index} at storage location {e.Storage}");
         }
 
-        private static void Modem_MissedCall(object sender, Events.MissedCallEventArgs e)
+        private static void Modem_MissedCall(object sender, MissedCallEventArgs e)
         {
             Console.WriteLine($"Missed call at {e.Time} from {e.PhoneNumber}");
         }
 
-        private static void Modem_IncomingCall(object sender, Events.IncomingCallEventArgs e)
+        private static void Modem_IncomingCall(object sender, IncomingCallEventArgs e)
         {
             Console.WriteLine("Incoming call...");
         }

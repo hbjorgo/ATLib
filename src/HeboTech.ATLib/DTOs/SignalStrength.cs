@@ -8,7 +8,14 @@
             Ber = ber;
         }
 
+        /// <summary>
+        /// Received Signal Strength Indicator. (99 - not known or not detectable)
+        /// </summary>
         public int Rssi { get; }
+
+        /// <summary>
+        /// Bit Error Rate. (99 - not known or not detectable)
+        /// </summary>
         public int Ber { get; }
 
         public override string ToString()
