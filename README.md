@@ -7,7 +7,7 @@ ATLib is a C# AT command library that abstracts away the commands and makes it e
 
 Hayes command set (commonly known as AT commands) is a command set frequently used in modems. Read more about it at [Wikipedia](https://en.wikipedia.org/wiki/Hayes_command_set).
 
-ATLib is just in the beginning. Currently only a few commands are implemented, but more will come.
+ATLib is just in the beginning, more will come. Request features 👍
 
 [HeboTech.GsmApi](https://github.com/hbjorgo/GsmApi) is a REST API wrapping this library.
 
@@ -28,9 +28,11 @@ Feedback is very much welcome 🙂
 - Get product information
 - Get battery status
 - Get signal strength
-- Get date and time
-- Set date and time
+- Get / set date and time
 - Disable echo
+- Send USSD code
+- Get / set character set
+- Get IMSI
 - Some modems may also support modem specific commands
 
 ## Events
@@ -38,7 +40,9 @@ Feedback is very much welcome 🙂
 - Missed call
 - Call started
 - Call ended
-- SmsReceived (not fully implemented)
+- SMS received (not fully implemented)
+- Error received
+- USSD response received
 
 ## Supported modems:
 - Adafruit FONA 3G (based on SIMCOM SIM5320 chipset)
