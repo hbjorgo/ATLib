@@ -9,11 +9,12 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtReader : IAtReader
+    public class AtReader : IAtReader, IDisposable
     {
         private static readonly byte[] eolSequence = new byte[] { (byte)'\r', (byte)'\n' };
         private static readonly byte[] smsPromptSequence = new byte[] { (byte)'>', (byte)' ' };
 
+        private bool isDisposed;
         private readonly PipeReader pipe;
         private Channel<string> channel;
         private Task reader;
@@ -34,7 +35,7 @@ namespace HeboTech.ATLib.Parsers
         public void Stop()
         {
             cancellationTokenSource.Cancel();
-            Task.WhenAll(reader);
+            reader?.Wait();
         }
 
         public ValueTask<string> ReadAsync(CancellationToken cancellationToken = default)
@@ -103,5 +104,38 @@ namespace HeboTech.ATLib.Parsers
             line = default;
             return false;
         }
+
+        #region Dispose
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!isDisposed)
+            {
+                if (disposing)
+                {
+                    // TODO: dispose managed state (managed objects)
+                    cancellationTokenSource.Dispose();
+                }
+
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                Stop();
+                isDisposed = true;
+            }
+        }
+
+        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
+        // ~AtReader()
+        // {
+        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+        //     Dispose(disposing: false);
+        // }
+
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
     }
 }

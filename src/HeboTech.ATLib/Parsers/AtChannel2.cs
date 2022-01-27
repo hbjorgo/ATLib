@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtChannel2
+    public class AtChannel2 : IDisposable
     {
         private static readonly string[] FinalResponseErrors = new string[]
         {
@@ -37,7 +37,8 @@ namespace HeboTech.ATLib.Parsers
         private readonly IAtWriter atWriter;
         private readonly CancellationTokenSource cancellationTokenSource;
         private Task readerTask;
-        private AutoResetEvent commandInProgress;
+        private SemaphoreSlim commandInProgress;
+        private TimeSpan defaultCommandTimeout = TimeSpan.FromSeconds(60);
 
         private TimeSpan currentCommandTimeout;
         private AtCommandType commandType;
@@ -50,7 +51,7 @@ namespace HeboTech.ATLib.Parsers
             this.atReader = atReader;
             this.atWriter = atWriter;
             cancellationTokenSource = new CancellationTokenSource();
-            commandInProgress = new AutoResetEvent(false);
+            commandInProgress = new SemaphoreSlim(0, 1);
         }
 
         public void Start()
@@ -61,12 +62,10 @@ namespace HeboTech.ATLib.Parsers
 
         public void Stop()
         {
-            cancellationTokenSource.Cancel();
             atReader.Stop();
-            Task.WaitAll(readerTask);
+            cancellationTokenSource.Cancel();
+            readerTask?.Wait();
         }
-
-        public bool IsBusy { get; private set; }
 
         /// <summary>
         /// Send command and get command status
@@ -76,12 +75,12 @@ namespace HeboTech.ATLib.Parsers
         /// <returns></returns>
         public virtual Task<AtResponse> SendCommand(string command)
         {
-            return SendFullCommandAsync(command, AtCommandType.NO_RESULT, null, null, TimeSpan.FromSeconds(5));
+            return SendFullCommandAsync(command, AtCommandType.NO_RESULT, null, null, defaultCommandTimeout);
         }
 
         public virtual async Task<AtResponse> SendSingleLineCommandAsync(string command, string responsePrefix)
         {
-            AtResponse response = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, null, TimeSpan.FromSeconds(10));
+            AtResponse response = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, null, defaultCommandTimeout);
 
             if (response != null && response.Success && !response.Intermediates.Any())
             {
@@ -95,12 +94,12 @@ namespace HeboTech.ATLib.Parsers
         public virtual Task<AtResponse> SendMultilineCommand(string command, string responsePrefix)
         {
             AtCommandType commandType = responsePrefix == null ? AtCommandType.MULTILINE_NO_PREFIX : AtCommandType.MULTILINE;
-            return SendFullCommandAsync(command, commandType, responsePrefix, null, TimeSpan.FromSeconds(5));
+            return SendFullCommandAsync(command, commandType, responsePrefix, null, defaultCommandTimeout);
         }
 
         public virtual async Task<AtResponse> SendSmsAsync(string command, string pdu, string responsePrefix)
         {
-            AtResponse response = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, pdu, TimeSpan.FromSeconds(5));
+            AtResponse response = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, pdu, defaultCommandTimeout);
 
             if (response != null && response.Success && !response.Intermediates.Any())
             {
@@ -123,8 +122,6 @@ namespace HeboTech.ATLib.Parsers
         /// <returns></returns>
         private async Task<AtResponse> SendFullCommandAsync(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout, CancellationToken cancellationToken = default)
         {
-            IsBusy = true;
-
             this.currentCommandTimeout = timeout;
             this.commandType = commandType;
             this.responsePrefix = responsePrefix;
@@ -132,13 +129,12 @@ namespace HeboTech.ATLib.Parsers
             this.response = new AtResponse();
 
             await atWriter.WriteLineAsync(command);
-
-            if (!commandInProgress.WaitOne(currentCommandTimeout))
+            
+            if (!await commandInProgress.WaitAsync(currentCommandTimeout, cancellationToken))
                 throw new TimeoutException("Timed out while waiting for command response");
 
             AtResponse retVal = response;
             this.response = default;
-            IsBusy = false;
             return retVal;
         }
 
@@ -267,7 +263,7 @@ namespace HeboTech.ATLib.Parsers
         private void HandleFinalResponse(string line)
         {
             response.FinalResponse = line;
-            commandInProgress.Set();
+            commandInProgress.Release();
         }
 
         private static bool IsFinalResponseSuccess(string line)
@@ -306,21 +302,20 @@ namespace HeboTech.ATLib.Parsers
             {
                 if (disposing)
                 {
-                    // Dispose managed state (managed objects)
+                    // TODO: dispose managed state (managed objects)
                     Stop();
                     cancellationTokenSource.Dispose();
                     commandInProgress.Dispose();
                 }
 
-                // Free unmanaged resources (unmanaged objects) and override finalizer
-                // Set large fields to null
-
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
                 isDisposed = true;
             }
         }
 
         // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~AtChannel()
+        // ~AtChannel2()
         // {
         //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         //     Dispose(disposing: false);
