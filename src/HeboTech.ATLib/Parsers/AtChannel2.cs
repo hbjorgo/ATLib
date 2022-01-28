@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtChannel2 : IDisposable
+    public class AtChannel2 : IAtChannel2, IDisposable
     {
         private static readonly string[] FinalResponseErrors = new string[]
         {
@@ -37,22 +37,20 @@ namespace HeboTech.ATLib.Parsers
         private readonly IAtWriter atWriter;
         private readonly CancellationTokenSource cancellationTokenSource;
         private Task readerTask;
-        private SemaphoreSlim commandInProgress;
-        private TimeSpan defaultCommandTimeout = TimeSpan.FromSeconds(60);
+        private SemaphoreSlim waitingForCommandResponse;
 
-        private TimeSpan currentCommandTimeout;
-        private AtCommandType commandType;
-        private string responsePrefix;
-        private string smsPdu;
-        private AtResponse response;
+        private AtCommand currentCommand;
+        private AtResponse currentResponse;
 
         public AtChannel2(IAtReader atReader, IAtWriter atWriter)
         {
             this.atReader = atReader;
             this.atWriter = atWriter;
             cancellationTokenSource = new CancellationTokenSource();
-            commandInProgress = new SemaphoreSlim(0, 1);
+            waitingForCommandResponse = new SemaphoreSlim(0, 1);
         }
+
+        public TimeSpan DefaultCommandTimeout { get; set; } = TimeSpan.FromSeconds(5);
 
         public void Start()
         {
@@ -73,14 +71,14 @@ namespace HeboTech.ATLib.Parsers
         /// <param name="command"></param>
         /// <param name="response"></param>
         /// <returns></returns>
-        public virtual Task<AtResponse> SendCommand(string command)
+        public virtual Task<AtResponse> SendCommand(string command, TimeSpan? timeout = null)
         {
-            return SendFullCommandAsync(command, AtCommandType.NO_RESULT, null, null, defaultCommandTimeout);
+            return SendFullCommandAsync(new AtCommand(AtCommandType.NO_RESULT, command, null, null, timeout ?? DefaultCommandTimeout));
         }
 
-        public virtual async Task<AtResponse> SendSingleLineCommandAsync(string command, string responsePrefix)
+        public virtual async Task<AtResponse> SendSingleLineCommandAsync(string command, string responsePrefix, TimeSpan? timeout = null)
         {
-            AtResponse response = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, null, defaultCommandTimeout);
+            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
 
             if (response != null && response.Success && !response.Intermediates.Any())
             {
@@ -91,15 +89,15 @@ namespace HeboTech.ATLib.Parsers
             return response;
         }
 
-        public virtual Task<AtResponse> SendMultilineCommand(string command, string responsePrefix)
+        public virtual Task<AtResponse> SendMultilineCommand(string command, string responsePrefix, TimeSpan? timeout = null)
         {
             AtCommandType commandType = responsePrefix == null ? AtCommandType.MULTILINE_NO_PREFIX : AtCommandType.MULTILINE;
-            return SendFullCommandAsync(command, commandType, responsePrefix, null, defaultCommandTimeout);
+            return SendFullCommandAsync(new AtCommand(commandType, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
         }
 
-        public virtual async Task<AtResponse> SendSmsAsync(string command, string pdu, string responsePrefix)
+        public virtual async Task<AtResponse> SendSmsAsync(string command, string pdu, string responsePrefix, TimeSpan? timeout = null)
         {
-            AtResponse response = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, pdu, defaultCommandTimeout);
+            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, pdu, timeout ?? DefaultCommandTimeout));
 
             if (response != null && response.Success && !response.Intermediates.Any())
             {
@@ -111,7 +109,7 @@ namespace HeboTech.ATLib.Parsers
         }
 
         /// <summary>
-        /// Not thread-safe.
+        /// Not re-entrant
         /// </summary>
         /// <param name="command"></param>
         /// <param name="commandType"></param>
@@ -120,22 +118,25 @@ namespace HeboTech.ATLib.Parsers
         /// <param name="timeout"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        private async Task<AtResponse> SendFullCommandAsync(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout, CancellationToken cancellationToken = default)
+        private async Task<AtResponse> SendFullCommandAsync(AtCommand command, CancellationToken cancellationToken = default)
         {
-            this.currentCommandTimeout = timeout;
-            this.commandType = commandType;
-            this.responsePrefix = responsePrefix;
-            this.smsPdu = smsPdu;
-            this.response = new AtResponse();
+            try
+            {
+                this.currentCommand = command;
+                this.currentResponse = new AtResponse();
 
-            await atWriter.WriteLineAsync(command);
-            
-            if (!await commandInProgress.WaitAsync(currentCommandTimeout, cancellationToken))
-                throw new TimeoutException("Timed out while waiting for command response");
+                await atWriter.WriteLineAsync(command.Command);
 
-            AtResponse retVal = response;
-            this.response = default;
-            return retVal;
+                if (!await waitingForCommandResponse.WaitAsync(command.Timeout, cancellationToken))
+                    throw new TimeoutException("Timed out while waiting for command response");
+
+                return currentResponse;
+            }
+            finally
+            {
+                this.currentCommand = default;
+                this.currentResponse = default;
+            }
         }
 
         private async Task ReaderLoopAsync(CancellationToken cancellationToken = default)
@@ -144,63 +145,53 @@ namespace HeboTech.ATLib.Parsers
             {
                 string line1 = await atReader.ReadAsync(cancellationToken);
                 if (line1 == null)
-                {
                     break;
-                }
                 if (line1 == string.Empty)
-                {
                     continue;
-                }
-
                 if (IsSMSUnsolicited(line1))
                 {
                     string line2 = await atReader.ReadAsync(cancellationToken);
                     if (line2 == null)
-                    {
                         break;
-                    }
-
                     HandleUnsolicited(line1, line2);
                 }
                 else
-                {
                     ProcessMessage(line1);
-                }
             }
         }
 
         private void ProcessMessage(string line)
         {
-            if (response == null)
+            if (currentResponse == null)
             {
                 HandleUnsolicited(line);
             }
             else if (IsFinalResponseSuccess(line))
             {
-                response.Success = true;
+                currentResponse.Success = true;
                 HandleFinalResponse(line);
             }
             else if (IsFinalResponseError(line))
             {
-                response.Success = false;
+                currentResponse.Success = false;
                 HandleFinalResponse(line);
             }
-            else if (smsPdu != null && line == "> ")
+            else if (currentCommand.SmsPdu != null && line == "> ")
             {
                 // See eg. TS 27.005 4.3
                 // Commands like AT+CMGS have a "> " prompt
-                atWriter.WriteSmsPduAndCtrlZAsync(smsPdu);
-                smsPdu = null;
+                atWriter.WriteSmsPduAndCtrlZAsync(currentCommand.SmsPdu);
+                currentCommand.SmsPdu = null;
             }
             else
             {
-                switch (commandType)
+                switch (currentCommand.CommandType)
                 {
                     case AtCommandType.NO_RESULT:
                         HandleUnsolicited(line);
                         break;
                     case AtCommandType.NUMERIC:
-                        if (!response.Intermediates.Any() && char.IsDigit(line[0]))
+                        if (!currentResponse.Intermediates.Any() && char.IsDigit(line[0]))
                         {
                             AddIntermediate(line);
                         }
@@ -211,7 +202,7 @@ namespace HeboTech.ATLib.Parsers
                         }
                         break;
                     case AtCommandType.SINGELLINE:
-                        if (!response.Intermediates.Any() && line.StartsWith(responsePrefix))
+                        if (!currentResponse.Intermediates.Any() && line.StartsWith(currentCommand.ResponsePrefix))
                         {
                             AddIntermediate(line);
                         }
@@ -222,7 +213,7 @@ namespace HeboTech.ATLib.Parsers
                         }
                         break;
                     case AtCommandType.MULTILINE:
-                        if (line.StartsWith(responsePrefix))
+                        if (line.StartsWith(currentCommand.ResponsePrefix))
                         {
                             AddIntermediate(line);
                         }
@@ -245,37 +236,13 @@ namespace HeboTech.ATLib.Parsers
 
         private void AddIntermediate(string line)
         {
-            response.Intermediates.Add(line);
-        }
-
-        private static bool IsFinalResponseError(string line)
-        {
-            foreach (string response in FinalResponseErrors)
-            {
-                if (line.StartsWith(response))
-                {
-                    return true;
-                }
-            }
-            return false;
+            currentResponse.Intermediates.Add(line);
         }
 
         private void HandleFinalResponse(string line)
         {
-            response.FinalResponse = line;
-            commandInProgress.Release();
-        }
-
-        private static bool IsFinalResponseSuccess(string line)
-        {
-            foreach (string response in FinalResponseSuccesses)
-            {
-                if (line.StartsWith(response))
-                {
-                    return true;
-                }
-            }
-            return false;
+            currentResponse.FinalResponse = line;
+            waitingForCommandResponse.Release();
         }
 
         private void HandleUnsolicited(string line1, string line2 = null)
@@ -283,16 +250,19 @@ namespace HeboTech.ATLib.Parsers
             UnsolicitedEvent?.Invoke(this, new UnsolicitedEventArgs(line1, line2));
         }
 
+        private static bool IsFinalResponseSuccess(string line)
+        {
+            return FinalResponseSuccesses.Any(response => line.StartsWith(response));
+        }
+
+        private static bool IsFinalResponseError(string line)
+        {
+            return FinalResponseErrors.Any(response => line.StartsWith(response));
+        }
+
         private static bool IsSMSUnsolicited(string line)
         {
-            foreach (var response in SmsUnsoliciteds)
-            {
-                if (line.StartsWith(response))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return SmsUnsoliciteds.Any(response => line.StartsWith(response));
         }
 
         #region Dispose
@@ -305,7 +275,7 @@ namespace HeboTech.ATLib.Parsers
                     // TODO: dispose managed state (managed objects)
                     Stop();
                     cancellationTokenSource.Dispose();
-                    commandInProgress.Dispose();
+                    waitingForCommandResponse.Dispose();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
