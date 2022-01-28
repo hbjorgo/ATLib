@@ -19,12 +19,11 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         #region Custom
         public virtual async Task<RemainingPinPukAttempts> GetRemainingPinPukAttemptsAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:");
+            AtSingleLineResponse response = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:");
 
             if (response.Success)
             {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+SPIC:\s(?<pin1>\d+),(?<pin2>\d+),(?<puk1>\d+),(?<puk2>\d+)");
+                var match = Regex.Match(response.Intermediate, @"\+SPIC:\s(?<pin1>\d+),(?<pin2>\d+),(?<puk1>\d+),(?<puk2>\d+)");
                 if (match.Success)
                 {
                     int pin1 = int.Parse(match.Groups["pin1"].Value);
@@ -42,7 +41,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         public override async Task<Sms> ReadSmsAsync(int index)
         {
-            AtResponse response = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
+            AtMultiLineResponse response = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
             if (response.Success && response.Intermediates.Count > 0)
             {
@@ -69,14 +68,14 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         public override async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
         {
-            AtResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
+            AtMultiLineResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
             {
                 for (int i = 0; i < response.Intermediates.Count; i += 2)
                 {
-                    string metaData = response.Intermediates[i];
+                    string metaData = response.Intermediates.ElementAt(i);
                     var match = Regex.Match(metaData, @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+?\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
                     if (match.Success)
                     {
@@ -91,7 +90,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                         int second = int.Parse(match.Groups["second"].Value);
                         int zone = int.Parse(match.Groups["zone"].Value);
                         DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-                        string message = response.Intermediates[i + 1];
+                        string message = response.Intermediates.ElementAt(i + 1);
                         smss.Add(new SmsWithIndex(index, status, sender, received, message));
                     }
                 }

@@ -53,12 +53,11 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<Imsi> GetImsiAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CIMI", string.Empty);
+            AtSingleLineResponse response = await channel.SendSingleLineCommandAsync("AT+CIMI", string.Empty);
 
             if (response.Success)
             {
-                string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"(?<imsi>\d+)");
+                var match = Regex.Match(response.Intermediate, @"(?<imsi>\d+)");
                 if (match.Success)
                 {
                     string imsi = match.Groups["imsi"].Value;
@@ -98,7 +97,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ProductIdentificationInformation> GetProductIdentificationInformationAsync()
         {
-            AtResponse response = await channel.SendMultilineCommand("ATI", null);
+            AtMultiLineResponse response = await channel.SendMultilineCommand("ATI", null);
 
             if (response.Success)
             {
@@ -124,12 +123,11 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<IEnumerable<string>> GetAvailableCharacterSetsAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS=?", "+CSCS:");
+            AtSingleLineResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS=?", "+CSCS:");
 
             if (response.Success)
             {
-                string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)");
+                var match = Regex.Match(response.Intermediate, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)");
                 if (match.Success)
                 {
                     return match.Groups["characterSet"].Captures.Select(x => x.Value);
@@ -140,12 +138,11 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<string> GetCurrentCharacterSetAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:");
+            AtSingleLineResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:");
 
             if (response.Success)
             {
-                string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"""(?<characterSet>\w)""");
+                var match = Regex.Match(response.Intermediate, @"""(?<characterSet>\w)""");
                 if (match.Success)
                 {
                     string characterSet = match.Groups["characterSet"].Value;
@@ -201,7 +198,7 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
             string cmd2 = message;
-            AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
+            AtMultiLineResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
 
             if (response.Success)
             {
@@ -218,7 +215,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<Sms> ReadSmsAsync(int index)
         {
-            AtResponse response = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
+            AtMultiLineResponse response = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
 
             if (response.Success && response.Intermediates.Count > 0)
             {
@@ -245,7 +242,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
         {
-            AtResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null);
+            AtMultiLineResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
@@ -307,7 +304,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<SimStatus> GetSimStatusAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:");
+            AtSingleLineResponse response = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:");
 
             if (!response.Success)
                 return SimStatus.SIM_NOT_READY;
@@ -323,7 +320,7 @@ namespace HeboTech.ATLib.Modems.Generic
             }
 
             // CPIN? has succeeded, now look at the result
-            string cpinLine = response.Intermediates.First();
+            string cpinLine = response.Intermediate;
             if (!AtTokenizer.TokenizeStart(cpinLine, out cpinLine))
                 return SimStatus.SIM_NOT_READY;
 
@@ -353,12 +350,11 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<SignalStrength> GetSignalStrengthAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ:");
+            AtSingleLineResponse response = await channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ:");
 
             if (response.Success)
             {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)");
+                var match = Regex.Match(response.Intermediate, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)");
                 if (match.Success)
                 {
                     int rssi = int.Parse(match.Groups["rssi"].Value);
@@ -371,12 +367,11 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<BatteryStatus> GetBatteryStatusAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CBC", "+CBC:");
+            AtSingleLineResponse response = await channel.SendSingleLineCommandAsync("AT+CBC", "+CBC:");
 
             if (response.Success)
             {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+)");
+                var match = Regex.Match(response.Intermediate, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+)");
                 if (match.Success)
                 {
                     int bcs = int.Parse(match.Groups["bcs"].Value);
@@ -403,12 +398,11 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<DateTimeOffset?> GetDateTimeAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CCLK?", "+CCLK:");
+            AtSingleLineResponse response = await channel.SendSingleLineCommandAsync("AT+CCLK?", "+CCLK:");
 
             if (response.Success)
             {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CCLK:\s""(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d)""");
+                var match = Regex.Match(response.Intermediate, @"\+CCLK:\s""(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d)""");
                 if (match.Success)
                 {
                     int year = int.Parse(match.Groups["year"].Value);
