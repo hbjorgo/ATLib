@@ -23,8 +23,9 @@ namespace HeboTech.ATLib.TestConsole
 
             PhoneNumber recipient = new(phoneNumber);
 
-            using AtChannel atChannel = new(serialPort.BaseStream, serialPort.BaseStream);
+            using AtChannel atChannel = AtChannel.Create(serialPort.BaseStream);
             using IModem modem = new DWM222(atChannel);
+            atChannel.Open();
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;

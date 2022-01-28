@@ -19,11 +19,11 @@ namespace HeboTech.ATLib.Tests.Parsers
             return channel.Writer.TryWrite(line);
         }
 
-        public void Start()
+        public void Open()
         {
         }
 
-        public void Stop()
+        public void Close()
         {
         }
     }

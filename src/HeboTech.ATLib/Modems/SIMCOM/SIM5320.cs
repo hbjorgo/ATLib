@@ -19,9 +19,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         #region Custom
         public virtual async Task<RemainingPinPukAttempts> GetRemainingPinPukAttemptsAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+SPIC:\s(?<pin1>\d+),(?<pin2>\d+),(?<puk1>\d+),(?<puk2>\d+)");
@@ -42,9 +42,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         public override async Task<Sms> ReadSmsAsync(int index)
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
+            AtResponse response = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
-            if (error == AtError.NO_ERROR && response.Intermediates.Count > 0)
+            if (response.Success && response.Intermediates.Count > 0)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+?\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
@@ -69,10 +69,10 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         public override async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
+            AtResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 for (int i = 0; i < response.Intermediates.Count; i += 2)
                 {

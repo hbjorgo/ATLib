@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public interface IAtChannel2
+    public interface IAtChannel
     {
         TimeSpan DefaultCommandTimeout { get; set; }
 
@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.Parsers
         Task<AtResponse> SendMultilineCommand(string command, string responsePrefix, TimeSpan? timeout = null);
         Task<AtResponse> SendSingleLineCommandAsync(string command, string responsePrefix, TimeSpan? timeout = null);
         Task<AtResponse> SendSmsAsync(string command, string pdu, string responsePrefix, TimeSpan? timeout = null);
-        void Start();
-        void Stop();
+        void Open();
+        void Close();
     }
 }

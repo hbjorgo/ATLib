@@ -15,10 +15,10 @@ namespace HeboTech.ATLib.Parsers
         private static readonly byte[] smsPromptSequence = new byte[] { (byte)'>', (byte)' ' };
 
         private bool isDisposed;
-        private readonly PipeReader pipe;
+        private PipeReader pipe;
         private Channel<string> channel;
         private Task reader;
-        private readonly CancellationTokenSource cancellationTokenSource;
+        private CancellationTokenSource cancellationTokenSource;
 
         public AtReader(Stream inputStream)
         {
@@ -27,15 +27,14 @@ namespace HeboTech.ATLib.Parsers
             channel = Channel.CreateUnbounded<string>();
         }
 
-        public void Start()
+        public void Open()
         {
             reader = Task.Factory.StartNew(() => ReadPipeAsync(pipe, cancellationTokenSource.Token), TaskCreationOptions.LongRunning);
         }
 
-        public void Stop()
+        public void Close()
         {
-            cancellationTokenSource.Cancel();
-            reader?.Wait();
+            Dispose();
         }
 
         public ValueTask<string> ReadAsync(CancellationToken cancellationToken = default)
@@ -47,13 +46,28 @@ namespace HeboTech.ATLib.Parsers
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                ReadResult result = await reader.ReadAsync(cancellationToken);
+                ReadResult result;
+                try
+                {
+                    result = await reader.ReadAsync(cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
                 ReadOnlySequence<byte> buffer = result.Buffer;
 
                 string line;
                 while (TryReadLine(ref buffer, out line))
                 {
-                    await channel.Writer.WriteAsync(line, cancellationToken);
+                    try
+                    {
+                        await channel.Writer.WriteAsync(line, cancellationToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        break;
+                    }
                 }
 
                 // Tell the PipeReader how much of the buffer has been consumed.
@@ -113,12 +127,17 @@ namespace HeboTech.ATLib.Parsers
                 if (disposing)
                 {
                     // TODO: dispose managed state (managed objects)
+                    cancellationTokenSource.Cancel();
+                    reader?.Wait();
+                    reader.Dispose();
+                    reader = null;
+                    channel = null;
+                    pipe = null;
                     cancellationTokenSource.Dispose();
                 }
 
                 // TODO: free unmanaged resources (unmanaged objects) and override finalizer
                 // TODO: set large fields to null
-                Stop();
                 isDisposed = true;
             }
         }

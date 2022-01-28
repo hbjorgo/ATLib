@@ -8,12 +8,12 @@ using Xunit;
 
 namespace HeboTech.ATLib.Tests.Parsers
 {
-    public class AtChannel2Tests
+    public class AtChannelTests
     {
         private readonly Mock<IAtWriter> atWriter;
         private readonly DummyAtReader atReader;
 
-        public AtChannel2Tests()
+        public AtChannelTests()
         {
             atWriter = new Mock<IAtWriter>();
             atReader = new();
@@ -22,15 +22,15 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Default_command_timeout()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
+            using AtChannel dut = new(atReader, atWriter.Object);
             Assert.Equal(TimeSpan.FromSeconds(5), dut.DefaultCommandTimeout);
         }
 
             [Fact]
         public void Final_success_response_ok()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("TestCommand");
 
@@ -43,8 +43,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Final_success_response_connect()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("TestCommand");
 
@@ -57,8 +57,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Final_error_response_error()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("TestCommand");
 
@@ -72,8 +72,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Final_error_response_cms()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("TestCommand");
 
@@ -87,8 +87,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Final_error_response_cme()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("TestCommand");
 
@@ -102,8 +102,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Final_error_response_no_carrier()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("TestCommand");
 
@@ -117,8 +117,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Final_error_response_no_answer()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("TestCommand");
 
@@ -132,8 +132,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Final_error_response_no_dialtone()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("TestCommand");
 
@@ -147,9 +147,9 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public async Task Command_timeout_throws()
         {
-            AtChannel2 dut = new(atReader, atWriter.Object);
+            AtChannel dut = new(atReader, atWriter.Object);
             dut.DefaultCommandTimeout = TimeSpan.FromMilliseconds(50);
-            dut.Start();
+            dut.Open();
 
             await Assert.ThrowsAsync<TimeoutException>(() => dut.SendCommand("TestCommand"));
         }
@@ -157,8 +157,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Command_gets_response()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
 
@@ -181,8 +181,8 @@ namespace HeboTech.ATLib.Tests.Parsers
             atWriter
                 .Setup(x => x.WriteLineAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()));
 
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask = dut.SendCommand("Test");
 
@@ -195,8 +195,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Two_singlelinecommands_get_responses()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask1 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
 
@@ -230,8 +230,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public void Two_singlelinecommands_and_command_get_responses()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             Task<AtResponse> commandTask1 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
 
@@ -280,13 +280,13 @@ namespace HeboTech.ATLib.Tests.Parsers
             UnsolicitedEventArgs unsolicitedEventArgs = null;
             SemaphoreSlim semaphore = new SemaphoreSlim(0, 1);
 
-            using AtChannel2 dut = new(atReader, atWriter.Object);
+            using AtChannel dut = new(atReader, atWriter.Object);
             dut.UnsolicitedEvent += (s, e) =>
             {
                 unsolicitedEventArgs = e;
                 semaphore.Release();
             };
-            dut.Start();
+            dut.Open();
 
             atReader.QueueLine("Unsolicited");
 
@@ -304,7 +304,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             UnsolicitedEventArgs unsolicitedEventArgs2 = null;
             SemaphoreSlim semaphore = new SemaphoreSlim(0, 1);
 
-            using AtChannel2 dut = new(atReader, atWriter.Object);
+            using AtChannel dut = new(atReader, atWriter.Object);
             dut.UnsolicitedEvent += (s, e) =>
             {
                 if (unsolicitedEventArgs1 == null)
@@ -313,7 +313,7 @@ namespace HeboTech.ATLib.Tests.Parsers
                     unsolicitedEventArgs2 = e;
                 semaphore.Release();
             };
-            dut.Start();
+            dut.Open();
 
             atReader.QueueLine("Unsolicited1");
             atReader.QueueLine("Unsolicited2");
@@ -334,13 +334,13 @@ namespace HeboTech.ATLib.Tests.Parsers
             UnsolicitedEventArgs unsolicitedEventArgs = null;
             SemaphoreSlim semaphore = new SemaphoreSlim(0, 1);
 
-            using AtChannel2 dut = new(atReader, atWriter.Object);
+            using AtChannel dut = new(atReader, atWriter.Object);
             dut.UnsolicitedEvent += (s, e) =>
             {
                 unsolicitedEventArgs = e;
                 semaphore.Release();
             };
-            dut.Start();
+            dut.Open();
 
             atReader.QueueLine("+CMT:Line1");
             atReader.QueueLine("Line2");
@@ -358,13 +358,13 @@ namespace HeboTech.ATLib.Tests.Parsers
             UnsolicitedEventArgs unsolicitedEventArgs = null;
             SemaphoreSlim semaphore = new SemaphoreSlim(0, 1);
 
-            using AtChannel2 dut = new(atReader, atWriter.Object);
+            using AtChannel dut = new(atReader, atWriter.Object);
             dut.UnsolicitedEvent += (s, e) =>
             {
                 unsolicitedEventArgs = e;
                 semaphore.Release();
             };
-            dut.Start();
+            dut.Open();
 
             atReader.QueueLine("+CDS:Line1");
             atReader.QueueLine("Line2");
@@ -382,13 +382,13 @@ namespace HeboTech.ATLib.Tests.Parsers
             UnsolicitedEventArgs unsolicitedEventArgs = null;
             SemaphoreSlim semaphore = new SemaphoreSlim(0, 1);
 
-            using AtChannel2 dut = new(atReader, atWriter.Object);
+            using AtChannel dut = new(atReader, atWriter.Object);
             dut.UnsolicitedEvent += (s, e) =>
             {
                 unsolicitedEventArgs = e;
                 semaphore.Release();
             };
-            dut.Start();
+            dut.Open();
 
             atReader.QueueLine("+CBM:Line1");
             atReader.QueueLine("Line2");
@@ -403,8 +403,8 @@ namespace HeboTech.ATLib.Tests.Parsers
         [Fact]
         public async Task Command_succeeds_after_previous_command_times_out()
         {
-            using AtChannel2 dut = new(atReader, atWriter.Object);
-            dut.Start();
+            using AtChannel dut = new(atReader, atWriter.Object);
+            dut.Open();
 
             await Assert.ThrowsAsync<TimeoutException>(() =>
                 dut.SendCommand("Command1", TimeSpan.FromMilliseconds(1)));

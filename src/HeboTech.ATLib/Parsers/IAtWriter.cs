@@ -7,5 +7,6 @@ namespace HeboTech.ATLib.Parsers
     {
         Task WriteLineAsync(string command, CancellationToken cancellationToken = default);
         Task WriteSmsPduAndCtrlZAsync(string smsPdu, CancellationToken cancellationToken = default);
+        void Close();
     }
 }

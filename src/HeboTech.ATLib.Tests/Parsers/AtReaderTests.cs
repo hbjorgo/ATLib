@@ -19,13 +19,13 @@ namespace HeboTech.ATLib.Tests.Parsers
             stream.Write(buffer);
             stream.Position = 0;
 
-            dut.Start();
+            dut.Open();
 
             string line1 = await dut.ReadAsync();
             string line2 = await dut.ReadAsync();
             string line3 = await dut.ReadAsync();
 
-            dut.Stop();
+            dut.Close();
 
             Assert.Equal("Line1", line1);
             Assert.Equal("Line2", line2);
@@ -43,14 +43,14 @@ namespace HeboTech.ATLib.Tests.Parsers
             stream.Write(buffer);
             stream.Position = 0;
 
-            dut.Start();
+            dut.Open();
 
             string line1 = await dut.ReadAsync();
             string line2 = await dut.ReadAsync();
             string smsPrompt = await dut.ReadAsync();
             string line3 = await dut.ReadAsync();
 
-            dut.Stop();
+            dut.Close();
 
             Assert.Equal("Line1", line1);
             Assert.Equal("Line2", line2);

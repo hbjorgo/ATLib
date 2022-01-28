@@ -6,7 +6,7 @@ namespace HeboTech.ATLib.Parsers
     public interface IAtReader
     {
         ValueTask<string> ReadAsync(CancellationToken cancellationToken = default);
-        void Start();
-        void Stop();
+        void Open();
+        void Close();
     }
 }

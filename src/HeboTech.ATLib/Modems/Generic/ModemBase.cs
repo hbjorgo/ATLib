@@ -53,9 +53,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<Imsi> GetImsiAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CIMI", string.Empty);
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CIMI", string.Empty);
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
                 var match = Regex.Match(line, @"(?<imsi>\d+)");
@@ -70,9 +70,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> AnswerIncomingCallAsync()
         {
-            (AtError error, _) = await channel.SendCommand("ATA");
+            AtResponse response = await channel.SendCommand("ATA");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
@@ -80,27 +80,27 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<CommandStatus> DialAsync(PhoneNumber phoneNumber, bool hideCallerNumber = false, bool closedUserGroup = false)
         {
             string command = $"ATD{phoneNumber}{(hideCallerNumber ? 'I' : 'i')}{(closedUserGroup ? 'G' : 'g')};";
-            (AtError error, AtResponse _) = await channel.SendCommand(command);
+            AtResponse response = await channel.SendCommand(command);
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
 
         public virtual async Task<CommandStatus> DisableEchoAsync()
         {
-            (AtError error, _) = await channel.SendCommand("ATE0");
+            AtResponse response = await channel.SendCommand("ATE0");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
 
         public virtual async Task<ProductIdentificationInformation> GetProductIdentificationInformationAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand("ATI", null);
+            AtResponse response = await channel.SendMultilineCommand("ATI", null);
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 StringBuilder builder = new StringBuilder();
                 foreach (string line in response.Intermediates)
@@ -115,18 +115,18 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> HangupAsync()
         {
-            (AtError error, _) = await channel.SendCommand($"AT+CHUP");
+            AtResponse response = await channel.SendCommand($"AT+CHUP");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
 
         public virtual async Task<IEnumerable<string>> GetAvailableCharacterSetsAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync($"AT+CSCS=?", "+CSCS:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS=?", "+CSCS:");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
                 var match = Regex.Match(line, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)");
@@ -140,9 +140,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<string> GetCurrentCharacterSetAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
                 var match = Regex.Match(line, @"""(?<characterSet>\w)""");
@@ -157,9 +157,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> SetCharacterSetAsync(string characterSet)
         {
-            (AtError error, _) = await channel.SendCommand($"AT+CSCS=\"{characterSet}\"");
+            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{characterSet}\"");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
@@ -170,9 +170,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> SetSmsMessageFormatAsync(SmsTextFormat format)
         {
-            (AtError error, _) = await channel.SendCommand($"AT+CMGF={(int)format}");
+            AtResponse response = await channel.SendCommand($"AT+CMGF={(int)format}");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
@@ -190,9 +190,9 @@ namespace HeboTech.ATLib.Modems.Generic
             if (bfr < 0 || bfr > 1)
                 throw new ArgumentOutOfRangeException(nameof(bfr));
 
-            (AtError error, _) = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}");
+            AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
@@ -201,9 +201,9 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
             string cmd2 = message;
-            (AtError error, AtResponse response) = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
+            AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
@@ -218,9 +218,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<Sms> ReadSmsAsync(int index)
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
+            AtResponse response = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
 
-            if (error == AtError.NO_ERROR && response.Intermediates.Count > 0)
+            if (response.Success && response.Intermediates.Count > 0)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
@@ -245,10 +245,10 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null);
+            AtResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string metaRegEx = @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+*\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""";
 
@@ -295,8 +295,8 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> DeleteSmsAsync(int index)
         {
-            (AtError error, _) = await channel.SendCommand($"AT+CMGD={index}");
-            if (error == AtError.NO_ERROR)
+            AtResponse response = await channel.SendCommand($"AT+CMGD={index}");
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
@@ -307,9 +307,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<SimStatus> GetSimStatusAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:");
 
-            if (error != AtError.NO_ERROR)
+            if (!response.Success)
                 return SimStatus.SIM_NOT_READY;
 
             switch (AtErrorParsers.GetCmeError(response))
@@ -342,20 +342,20 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> EnterSimPinAsync(PersonalIdentificationNumber pin)
         {
-            (AtError error, _) = await channel.SendCommand($"AT+CPIN={pin}");
+            AtResponse response = await channel.SendCommand($"AT+CPIN={pin}");
 
             Thread.Sleep(1500); // Without it, the reader loop crashes
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             else return CommandStatus.ERROR;
         }
 
         public virtual async Task<SignalStrength> GetSignalStrengthAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ:");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)");
@@ -371,9 +371,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<BatteryStatus> GetBatteryStatusAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CBC", "+CBC:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CBC", "+CBC:");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+)");
@@ -394,18 +394,18 @@ namespace HeboTech.ATLib.Modems.Generic
             sb.Append(value.ToString(@"yy/MM/dd,HH:mm:ss", CultureInfo.InvariantCulture));
             sb.Append(offsetQuarters.ToString("+00;-#", CultureInfo.InvariantCulture));
             sb.Append("\"");
-            (AtError error, _) = await channel.SendCommand(sb.ToString());
+            AtResponse response = await channel.SendCommand(sb.ToString());
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             return CommandStatus.ERROR;
         }
 
         public virtual async Task<DateTimeOffset?> GetDateTimeAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+CCLK?", "+CCLK:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CCLK?", "+CCLK:");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+CCLK:\s""(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d)""");
@@ -427,9 +427,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<CommandStatus> SendUssdAsync(string code, int codingScheme = 15)
         {
-            (AtError error, _) = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}");
+            AtResponse response = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
                 return CommandStatus.OK;
             else return CommandStatus.ERROR;
         }

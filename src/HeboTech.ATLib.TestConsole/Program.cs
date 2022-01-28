@@ -11,7 +11,7 @@ namespace HeboTech.ATLib.TestConsole
             string phoneNumber = args[2];
 
             await FunctionalityTest.Run(port, pin, phoneNumber);
-            //await StressTest.Test(port, pin, phoneNumber);
+            //await StressTest.Run(port, pin, phoneNumber);
         }
     }
 }
