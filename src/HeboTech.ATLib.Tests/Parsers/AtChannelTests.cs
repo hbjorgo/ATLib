@@ -257,7 +257,6 @@ namespace HeboTech.ATLib.Tests.Parsers
             AtSingleLineResponse response3 = commandTask3.Result;
 
             Assert.True(response1.Success);
-            Assert.Single(response1.Intermediate);
             Assert.Equal("+CSQ: 25,99", response1.Intermediate);
             Assert.Equal("OK", response1.FinalResponse);
 
