@@ -3,7 +3,6 @@ using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
-using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,19 +10,11 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class StressTest
     {
-        public static async Task Run(string port, string pin, string phoneNumber)
+        public static async Task Run(System.IO.Stream stream, string pin, string phoneNumber)
         {
             Console.WriteLine($"Test started ({DateTime.Now})");
 
-            using SerialPort serialPort = new SerialPort(port, 9600, Parity.None, 8, StopBits.One)
-            {
-                Handshake = Handshake.RequestToSend
-            };
-            Console.WriteLine("Opening serial port...");
-            serialPort.Open();
-            Console.WriteLine("Serialport opened");
-
-            using AtChannel atChannel = AtChannel.Create(serialPort.BaseStream);
+            using AtChannel atChannel = AtChannel.Create(stream);
             using IModem modem = new DWM222(atChannel);
             atChannel.Open();
 
@@ -76,7 +67,7 @@ namespace HeboTech.ATLib.TestConsole
                     Console.WriteLine($"SMS: {sms}");
                 }
 
-                Thread.Sleep(2500);
+                Thread.Sleep(500);
             }
             Console.WriteLine($"Test complete ({DateTime.Now})");
             Console.ReadKey();

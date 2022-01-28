@@ -4,26 +4,17 @@ using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
-using System.IO.Ports;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
 {
     public static class FunctionalityTest
     {
-        public static async Task Run(string port, string pin, string phoneNumber)
+        public static async Task Run(System.IO.Stream stream, string pin, string phoneNumber)
         {
-            using SerialPort serialPort = new(port, 9600, Parity.None, 8, StopBits.One)
-            {
-                Handshake = Handshake.RequestToSend
-            };
-            Console.WriteLine("Opening serial port...");
-            serialPort.Open();
-            Console.WriteLine("Serialport opened");
-
             PhoneNumber recipient = new(phoneNumber);
 
-            using AtChannel atChannel = AtChannel.Create(serialPort.BaseStream);
+            using AtChannel atChannel = AtChannel.Create(stream);
             using IModem modem = new DWM222(atChannel);
             atChannel.Open();
 
