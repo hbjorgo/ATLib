@@ -74,6 +74,13 @@ namespace HeboTech.ATLib.Parsers
         public virtual async Task<AtSingleLineResponse> SendSingleLineCommandAsync(string command, string responsePrefix, TimeSpan? timeout = null)
         {
             InternalResponse internalResponse = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
+
+            if (internalResponse != null && internalResponse.Success && !internalResponse.Intermediates.Any())
+            {
+                // Successful command must have an intermediate response
+                throw new InvalidResponseException("Did not get an intermediate response");
+            }
+
             return new AtSingleLineResponse(internalResponse.Success, internalResponse.FinalResponse, internalResponse.Intermediates.First());
         }
 
@@ -87,6 +94,13 @@ namespace HeboTech.ATLib.Parsers
         public virtual async Task<AtMultiLineResponse> SendSmsAsync(string command, string pdu, string responsePrefix, TimeSpan? timeout = null)
         {
             InternalResponse internalResponse = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, pdu, timeout ?? DefaultCommandTimeout));
+
+            if (internalResponse != null && internalResponse.Success && !internalResponse.Intermediates.Any())
+            {
+                // Successful command must have an intermediate response
+                throw new InvalidResponseException("Did not get an intermediate response");
+            }
+
             return new AtMultiLineResponse(internalResponse.Success, internalResponse.FinalResponse, internalResponse.Intermediates);
         }
 
@@ -101,14 +115,6 @@ namespace HeboTech.ATLib.Parsers
 
                 if (!await waitingForCommandResponse.WaitAsync(command.Timeout, cancellationToken))
                     throw new TimeoutException("Timed out while waiting for command response");
-
-                if ((command.CommandType == AtCommandType.SINGELLINE || command.CommandType == AtCommandType.MULTILINE || command.CommandType == AtCommandType.MULTILINE_NO_PREFIX)
-                    && currentResponse.Success
-                    && !currentResponse.Intermediates.Any())
-                {
-                    // Successful command must have an intermediate response
-                    throw new InvalidResponseException("Did not get an intermediate response");
-                }
 
                 return currentResponse;
             }
