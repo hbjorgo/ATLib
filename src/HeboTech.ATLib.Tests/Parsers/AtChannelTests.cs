@@ -160,7 +160,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             using AtChannel dut = new(atReader, atWriter.Object);
             dut.Open();
 
-            Task<AtSingleLineResponse> commandTask = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
+            Task<AtResponse> commandTask = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
 
             atReader.QueueLine("");
             atReader.QueueLine("+CSQ: 25,99");
@@ -168,9 +168,10 @@ namespace HeboTech.ATLib.Tests.Parsers
             atReader.QueueLine("OK");
             atReader.QueueLine("");
 
-            AtSingleLineResponse response = commandTask.Result;
+            AtResponse response = commandTask.Result;
 
-            Assert.Equal("+CSQ: 25,99", response.Intermediate);
+            Assert.Single(response.Intermediates);
+            Assert.Equal("+CSQ: 25,99", response.Intermediates.First());
             Assert.Equal("OK", response.FinalResponse);
         }
 
@@ -197,7 +198,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             using AtChannel dut = new(atReader, atWriter.Object);
             dut.Open();
 
-            Task<AtSingleLineResponse> commandTask1 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
+            Task<AtResponse> commandTask1 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
 
             atReader.QueueLine("");
             atReader.QueueLine("+CSQ: 25,99");
@@ -205,9 +206,9 @@ namespace HeboTech.ATLib.Tests.Parsers
             atReader.QueueLine("OK");
             atReader.QueueLine("");
 
-            AtSingleLineResponse response1 = commandTask1.Result;
+            AtResponse response1 = commandTask1.Result;
 
-            Task<AtSingleLineResponse> commandTask2 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
+            Task<AtResponse> commandTask2 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
 
             atReader.QueueLine("");
             atReader.QueueLine("+CSQ: 50,80");
@@ -215,12 +216,14 @@ namespace HeboTech.ATLib.Tests.Parsers
             atReader.QueueLine("OK");
             atReader.QueueLine("");
 
-            AtSingleLineResponse response2 = commandTask2.Result;
+            AtResponse response2 = commandTask2.Result;
 
-            Assert.Equal("+CSQ: 25,99", response1.Intermediate);
+            Assert.Single(response1.Intermediates);
+            Assert.Equal("+CSQ: 25,99", response1.Intermediates.First());
             Assert.Equal("OK", response1.FinalResponse);
 
-            Assert.Equal("+CSQ: 50,80", response2.Intermediate);
+            Assert.Single(response2.Intermediates);
+            Assert.Equal("+CSQ: 50,80", response2.Intermediates.First());
             Assert.Equal("OK", response2.FinalResponse);
         }
 
@@ -230,7 +233,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             using AtChannel dut = new(atReader, atWriter.Object);
             dut.Open();
 
-            Task<AtSingleLineResponse> commandTask1 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
+            Task<AtResponse> commandTask1 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
 
             atReader.QueueLine("");
             atReader.QueueLine("+CSQ: 25,99");
@@ -238,7 +241,7 @@ namespace HeboTech.ATLib.Tests.Parsers
             atReader.QueueLine("OK");
             atReader.QueueLine("");
 
-            AtSingleLineResponse response1 = commandTask1.Result;
+            AtResponse response1 = commandTask1.Result;
 
             Task<AtResponse> commandTask2 = dut.SendCommand("ATA");
 
@@ -246,7 +249,7 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             AtResponse response2 = commandTask2.Result;
 
-            Task<AtSingleLineResponse> commandTask3 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
+            Task<AtResponse> commandTask3 = dut.SendSingleLineCommandAsync("AT+CSQ", "+CSQ");
 
             atReader.QueueLine("");
             atReader.QueueLine("+CSQ: 50,80");
@@ -254,17 +257,20 @@ namespace HeboTech.ATLib.Tests.Parsers
             atReader.QueueLine("OK");
             atReader.QueueLine("");
 
-            AtSingleLineResponse response3 = commandTask3.Result;
+            AtResponse response3 = commandTask3.Result;
 
             Assert.True(response1.Success);
-            Assert.Equal("+CSQ: 25,99", response1.Intermediate);
+            Assert.Single(response1.Intermediates);
+            Assert.Equal("+CSQ: 25,99", response1.Intermediates.First());
             Assert.Equal("OK", response1.FinalResponse);
 
             Assert.True(response2.Success);
+            Assert.Empty(response2.Intermediates);
             Assert.Equal("OK", response2.FinalResponse);
 
             Assert.True(response3.Success);
-            Assert.Equal("+CSQ: 50,80", response3.Intermediate);
+            Assert.Single(response3.Intermediates);
+            Assert.Equal("+CSQ: 50,80", response3.Intermediates.First());
             Assert.Equal("OK", response3.FinalResponse);
         }
 

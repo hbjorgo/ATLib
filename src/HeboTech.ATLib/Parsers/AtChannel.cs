@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -42,7 +41,7 @@ namespace HeboTech.ATLib.Parsers
         private SemaphoreSlim waitingForCommandResponse;
 
         private AtCommand currentCommand;
-        private InternalResponse currentResponse;
+        private AtResponse currentResponse;
 
         public AtChannel(IAtReader atReader, IAtWriter atWriter)
         {
@@ -65,51 +64,65 @@ namespace HeboTech.ATLib.Parsers
             Dispose();
         }
 
-        public virtual async Task<AtResponse> SendCommand(string command, TimeSpan? timeout = null)
+        /// <summary>
+        /// Send command and get command status
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="response"></param>
+        /// <returns></returns>
+        public virtual Task<AtResponse> SendCommand(string command, TimeSpan? timeout = null)
         {
-            InternalResponse internalResponse = await SendFullCommandAsync(new AtCommand(AtCommandType.NO_RESULT, command, null, null, timeout ?? DefaultCommandTimeout));
-            return new AtResponse(internalResponse.Success, internalResponse.FinalResponse);
+            return SendFullCommandAsync(new AtCommand(AtCommandType.NO_RESULT, command, null, null, timeout ?? DefaultCommandTimeout));
         }
 
-        public virtual async Task<AtSingleLineResponse> SendSingleLineCommandAsync(string command, string responsePrefix, TimeSpan? timeout = null)
+        public virtual async Task<AtResponse> SendSingleLineCommandAsync(string command, string responsePrefix, TimeSpan? timeout = null)
         {
-            InternalResponse internalResponse = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
+            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
 
-            if (internalResponse != null && internalResponse.Success && !internalResponse.Intermediates.Any())
+            if (response != null && response.Success && !response.Intermediates.Any())
             {
                 // Successful command must have an intermediate response
                 throw new InvalidResponseException("Did not get an intermediate response");
             }
 
-            return new AtSingleLineResponse(internalResponse.Success, internalResponse.FinalResponse, internalResponse.Intermediates.First());
+            return response;
         }
 
-        public virtual async Task<AtMultiLineResponse> SendMultilineCommand(string command, string responsePrefix, TimeSpan? timeout = null)
+        public virtual Task<AtResponse> SendMultilineCommand(string command, string responsePrefix, TimeSpan? timeout = null)
         {
             AtCommandType commandType = responsePrefix == null ? AtCommandType.MULTILINE_NO_PREFIX : AtCommandType.MULTILINE;
-            InternalResponse internalResponse = await SendFullCommandAsync(new AtCommand(commandType, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
-            return new AtMultiLineResponse(internalResponse.Success, internalResponse.FinalResponse, internalResponse.Intermediates);
+            return SendFullCommandAsync(new AtCommand(commandType, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
         }
 
-        public virtual async Task<AtMultiLineResponse> SendSmsAsync(string command, string pdu, string responsePrefix, TimeSpan? timeout = null)
+        public virtual async Task<AtResponse> SendSmsAsync(string command, string pdu, string responsePrefix, TimeSpan? timeout = null)
         {
-            InternalResponse internalResponse = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, pdu, timeout ?? DefaultCommandTimeout));
+            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, pdu, timeout ?? DefaultCommandTimeout));
 
-            if (internalResponse != null && internalResponse.Success && !internalResponse.Intermediates.Any())
+            if (response != null && response.Success && !response.Intermediates.Any())
             {
                 // Successful command must have an intermediate response
                 throw new InvalidResponseException("Did not get an intermediate response");
             }
 
-            return new AtMultiLineResponse(internalResponse.Success, internalResponse.FinalResponse, internalResponse.Intermediates);
+            return response;
         }
 
-        private async Task<InternalResponse> SendFullCommandAsync(AtCommand command, CancellationToken cancellationToken = default)
+        /// <summary>
+        /// Not re-entrant
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="commandType"></param>
+        /// <param name="responsePrefix"></param>
+        /// <param name="smsPdu"></param>
+        /// <param name="timeout"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        private async Task<AtResponse> SendFullCommandAsync(AtCommand command, CancellationToken cancellationToken = default)
         {
             try
             {
                 this.currentCommand = command;
-                this.currentResponse = new InternalResponse();
+                this.currentResponse = new AtResponse();
 
                 await atWriter.WriteLineAsync(command.Command);
 
@@ -315,17 +328,5 @@ namespace HeboTech.ATLib.Parsers
             GC.SuppressFinalize(this);
         }
         #endregion
-
-        private class InternalResponse
-        {
-            public bool Success { get; set; }
-            public string FinalResponse { get; set; }
-            public List<string> Intermediates { get; set; } = new List<string>();
-
-            public override string ToString()
-            {
-                return $"Success: {Success}, FinalResponse: {FinalResponse}, Intermediates: {Intermediates.Count}";
-            }
-        }
     }
 }
