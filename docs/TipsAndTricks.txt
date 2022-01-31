@@ -1,0 +1,22 @@
+#D-Link DWM222:
+/dev/ttyUSB1 (115200)
+
+#TP-LINK MA260:
+/dev/ttyUSB2 (9600)
+
+#Adafruit Fona 3G (SIM5320E)
+/dev/ttyUSB3 (any baudrate)
+
+Linux
+Use ser2net to forward serial port over tcp.
+sudo nano /etc/ser2net.conf
+Uncomment examples and add
+
+#D-Link DWM222:
+7000:telnet:0:/dev/ttyUSB1:115200 8DATABITS NONE 1STOPBIT
+
+#TP-LINK MA260:
+7000:telnet:0:/dev/ttyUSB2:9600 8DATABITS NONE 1STOPBIT
+
+Run ser2net -n to attach to console
+Run ser2net to run as daemon
