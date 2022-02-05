@@ -144,6 +144,8 @@ namespace HeboTech.ATLib.Modems
         /// <returns>A list of SMSs</returns>
         Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus);
 
+        Task SetPreferredMessageStorageAsync(string storage1, string storage2, string storage3);
+
         /// <summary>
         /// Reads an SMS from the preferred storage
         /// </summary>

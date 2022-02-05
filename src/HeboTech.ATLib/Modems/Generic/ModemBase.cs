@@ -1,5 +1,6 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
+using HeboTech.ATLib.Exceptions;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
@@ -110,7 +111,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
                 return new ProductIdentificationInformation(builder.ToString());
             }
-            return null;
+            return default;
         }
 
         public virtual async Task<CommandStatus> HangupAsync()
@@ -213,7 +214,27 @@ namespace HeboTech.ATLib.Modems.Generic
                     return new SmsReference(mr);
                 }
             }
-            return null;
+            return default;
+        }
+
+        public virtual async Task SetPreferredMessageStorageAsync(string storage1, string storage2, string storage3)
+        {
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=\"{storage1}\",\"{storage2}\",\"{storage3}\"", "+CPMS:");
+
+            if (response.Success && response.Intermediates.Count > 0)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CPMS:\s(?<s1Used>\d+),(?<s1Total>\d+),(?<s2Used>\d+),(?<s2Total>\d+),(?<s3Used>\d+),(?<s3Total>\d+)");
+                if (match.Success)
+                {
+                    int s1Used = int.Parse(match.Groups["s1Used"].Value);
+                    int s1Total = int.Parse(match.Groups["s1Total"].Value);
+                    int s2Used = int.Parse(match.Groups["s2Used"].Value);
+                    int s2Total = int.Parse(match.Groups["s2Total"].Value);
+                    int s3Used = int.Parse(match.Groups["s3Used"].Value);
+                    int s3Total = int.Parse(match.Groups["s3Total"].Value);
+                }
+            }
         }
 
         public virtual async Task<Sms> ReadSmsAsync(int index)
@@ -240,7 +261,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     return new Sms(status, sender, received, message);
                 }
             }
-            return null;
+            return default;
         }
 
         public virtual async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
@@ -310,34 +331,29 @@ namespace HeboTech.ATLib.Modems.Generic
             AtResponse response = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:");
 
             if (!response.Success)
-                return SimStatus.SIM_NOT_READY;
-
-            switch (AtErrorParsers.GetCmeError(response))
             {
-                case AtErrorParsers.AtCmeError.CME_SUCCESS:
-                    break;
-                case AtErrorParsers.AtCmeError.CME_SIM_NOT_INSERTED:
-                    return SimStatus.SIM_ABSENT;
-                default:
-                    return SimStatus.SIM_NOT_READY;
+                CmeError cmeError = AtErrorParsers.GetCmeError(response);
+                if (cmeError != null)
+                    throw new CmeException(cmeError.ToString());
             }
 
             // CPIN? has succeeded, now look at the result
             string cpinLine = response.Intermediates.First();
-            if (!AtTokenizer.TokenizeStart(cpinLine, out cpinLine))
-                return SimStatus.SIM_NOT_READY;
-
-            if (!AtTokenizer.TokenizeNextString(cpinLine, out _, out string cpinResult))
-                return SimStatus.SIM_NOT_READY;
-
-            return cpinResult switch
+            var match = Regex.Match(cpinLine, @"\+CPIN:\s(?<pinresult>.*)");
+            if (match.Success)
             {
-                "SIM PIN" => SimStatus.SIM_PIN,
-                "SIM PUK" => SimStatus.SIM_PUK,
-                "PH-NET PIN" => SimStatus.SIM_NETWORK_PERSONALIZATION,
-                "READY" => SimStatus.SIM_READY,
-                _ => SimStatus.SIM_ABSENT,// Treat unsupported lock types as "sim absent"
-            };
+                string cpinResult = match.Groups["pinresult"].Value;
+                return cpinResult switch
+                {
+                    "SIM PIN" => SimStatus.SIM_PIN,
+                    "SIM PUK" => SimStatus.SIM_PUK,
+                    "PH-NET PIN" => SimStatus.SIM_NETWORK_PERSONALIZATION,
+                    "READY" => SimStatus.SIM_READY,
+                    _ => SimStatus.SIM_ABSENT,// Treat unsupported lock types as "sim absent"
+                };
+            }
+
+            return SimStatus.SIM_NOT_READY;
         }
 
         public virtual async Task<CommandStatus> EnterSimPinAsync(PersonalIdentificationNumber pin)
@@ -366,7 +382,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     return new SignalStrength(rssi, ber);
                 }
             }
-            return null;
+            return default;
         }
 
         public virtual async Task<BatteryStatus> GetBatteryStatusAsync()
@@ -384,7 +400,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     return new BatteryStatus((BatteryChargeStatus)bcs, bcl);
                 }
             }
-            return null;
+            return default;
         }
 
         public virtual async Task<CommandStatus> SetDateTimeAsync(DateTimeOffset value)
@@ -422,7 +438,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     return time;
                 }
             }
-            return null;
+            return default;
         }
 
         public virtual async Task<CommandStatus> SendUssdAsync(string code, int codingScheme = 15)

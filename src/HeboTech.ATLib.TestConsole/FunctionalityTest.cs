@@ -2,6 +2,7 @@
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
+using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Threading.Tasks;
@@ -15,7 +16,7 @@ namespace HeboTech.ATLib.TestConsole
             PhoneNumber recipient = new(phoneNumber);
 
             using AtChannel atChannel = AtChannel.Create(stream);
-            using IModem modem = new DWM222(atChannel);
+            using IModem modem = new SIM5320(atChannel);
             atChannel.Open();
 
             modem.IncomingCall += Modem_IncomingCall;
@@ -68,6 +69,8 @@ namespace HeboTech.ATLib.TestConsole
             var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 0);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
+            await modem.SetPreferredMessageStorageAsync("ME", "ME", "ME");
+
             var singleSms = await modem.ReadSmsAsync(2);
             Console.WriteLine($"Single SMS: {singleSms}");
 
@@ -79,7 +82,7 @@ namespace HeboTech.ATLib.TestConsole
                 Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
             }
 
-            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'u' to send USSD code and 'q' to exit...");
+            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'u' to send USSD code and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
             {
@@ -101,6 +104,16 @@ namespace HeboTech.ATLib.TestConsole
                         Console.WriteLine("Sending SMS...");
                         var smsReference = await modem.SendSmsAsync(recipient, "Hello ATLib!");
                         Console.WriteLine($"SMS Reference: {smsReference}");
+                        break;
+                    case ConsoleKey.R:
+                        Console.WriteLine("Enter SMS index:");
+                        if (int.TryParse(Console.ReadLine(), out int smsIndex))
+                        {
+                            var sms = await modem.ReadSmsAsync(smsIndex);
+                            Console.WriteLine(sms);
+                        }
+                        else
+                            Console.WriteLine("Invalid SMS index");
                         break;
                     case ConsoleKey.U:
                         Console.WriteLine("Enter USSD Code:");
