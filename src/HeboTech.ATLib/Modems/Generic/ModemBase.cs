@@ -378,7 +378,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
             if (!response.Success)
             {
-                CmeError cmeError = AtErrorParsers.GetCmeError(response);
+                Error cmeError = AtErrorParsers.GetError(response.FinalResponse);
                 if (cmeError != null)
                     return ModemResponse.ResultError<SimStatus>(cmeError.ToString());
             }

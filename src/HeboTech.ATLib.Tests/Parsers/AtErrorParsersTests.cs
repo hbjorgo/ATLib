@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.Tests.Parsers
                 Success = false
             };
 
-            CmeError error = AtErrorParsers.GetCmeError(response);
+            Error error = AtErrorParsers.GetError(response.FinalResponse);
 
             Assert.Equal(14, error.ErrorCode);
             Assert.Equal("SIM busy", error.ErrorMessage);
