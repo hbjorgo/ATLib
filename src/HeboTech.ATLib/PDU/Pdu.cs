@@ -61,7 +61,7 @@ namespace HeboTech.ATLib.PDU
                 int.Parse(tpScts[6..8]),
                 int.Parse(tpScts[8..10]),
                 int.Parse(tpScts[10..12]),
-                TimeSpan.FromHours(int.Parse(tpScts[12..14])));
+                TimeSpan.FromMinutes(int.Parse(tpScts[12..14]) * 15)); // Offset in quarter of hours
             int tpUdl = Convert.ToInt32(data[offset..(offset += 2)], 16);
             string tpUd = data[offset..];
             string message = Gsm7.Decode(tpUd);

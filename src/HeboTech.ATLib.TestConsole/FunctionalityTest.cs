@@ -13,7 +13,7 @@ namespace HeboTech.ATLib.TestConsole
         public static async Task Run(System.IO.Stream stream, string pin, string phoneNumber)
         {
             PhoneNumber recipient = new(phoneNumber);
-            SmsTextFormat smsTextFormat = SmsTextFormat.Text;
+            SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
@@ -31,6 +31,8 @@ namespace HeboTech.ATLib.TestConsole
 
             // Configure modem with required settings
             await modem.SetRequiredSettingsAsync();
+
+            await modem.SetSmsMessageFormatAsync(smsTextFormat);
 
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
