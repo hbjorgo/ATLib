@@ -14,6 +14,7 @@ namespace HeboTech.ATLib.TestConsole
         public static async Task Run(System.IO.Stream stream, string pin, string phoneNumber)
         {
             PhoneNumber recipient = new(phoneNumber);
+            SmsTextFormat smsTextFormat = SmsTextFormat.Text;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             using IModem modem = new SIM5320(atChannel);
@@ -63,16 +64,21 @@ namespace HeboTech.ATLib.TestConsole
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
 
-            var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
+            var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(smsTextFormat);
             Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
 
             var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 0);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
-            await modem.SetPreferredMessageStorageAsync("ME", "ME", "ME");
+            var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();
+            Console.WriteLine($"Supported storages:{Environment.NewLine}{supportedStorages}");
+            var currentStorages = await modem.GetPreferredMessageStoragesAsync();
+            Console.WriteLine($"Current storages:{Environment.NewLine}{currentStorages}");
+            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync("ME", "ME", "ME");
+            Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
-            var singleSms = await modem.ReadSmsAsync(2);
-            Console.WriteLine($"Single SMS: {singleSms}");
+            //var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
+            //Console.WriteLine($"Single SMS: {singleSms}");
 
             var smss = await modem.ListSmssAsync(SmsStatus.ALL);
             foreach (var sms in smss)
@@ -109,7 +115,7 @@ namespace HeboTech.ATLib.TestConsole
                         Console.WriteLine("Enter SMS index:");
                         if (int.TryParse(Console.ReadLine(), out int smsIndex))
                         {
-                            var sms = await modem.ReadSmsAsync(smsIndex);
+                            var sms = await modem.ReadSmsAsync(smsIndex, smsTextFormat);
                             Console.WriteLine(sms);
                         }
                         else

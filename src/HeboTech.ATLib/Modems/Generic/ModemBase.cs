@@ -217,9 +217,52 @@ namespace HeboTech.ATLib.Modems.Generic
             return default;
         }
 
-        public virtual async Task SetPreferredMessageStorageAsync(string storage1, string storage2, string storage3)
+        public virtual async Task<SupportedPreferredMessageStorages> GetSupportedPreferredMessageStoragesAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=\"{storage1}\",\"{storage2}\",\"{storage3}\"", "+CPMS:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=?", "+CPMS:");
+
+            if (response.Success && response.Intermediates.Count > 0)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CPMS:\s\((?<s1Storages>(""\w+"",?)+)\),\((?<s2Storages>(""\w+"",?)+)\),\((?<s3Storages>(""\w+"",?)+)\)");
+                if (match.Success)
+                {
+                    IEnumerable<string> s1Storages = match.Groups["s1Storages"].Value.Split(',').Select(x => x.Trim('"'));
+                    IEnumerable<string> s2Storages = match.Groups["s2Storages"].Value.Split(',').Select(x => x.Trim('"'));
+                    IEnumerable<string> s3Storages = match.Groups["s3Storages"].Value.Split(',').Select(x => x.Trim('"'));
+
+                    return new SupportedPreferredMessageStorages(s1Storages, s2Storages, s3Storages);
+                }
+            }
+            return default;
+        }
+
+        public virtual async Task<PreferredMessageStorages> GetPreferredMessageStoragesAsync()
+        {
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS?", "+CPMS:");
+
+            if (response.Success && response.Intermediates.Count > 0)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CPMS:\s(?<storage1>""\w+"",\d+,\d+),(?<storage2>""\w+"",\d+,\d+),(?<storage3>""\w+"",\d+,\d+)");
+                if (match.Success)
+                {
+                    string[] s1Split = match.Groups["storage1"].Value.Split(',');
+                    string[] s2Split = match.Groups["storage2"].Value.Split(',');
+                    string[] s3Split = match.Groups["storage3"].Value.Split(',');
+
+                    return new PreferredMessageStorages(
+                        new PreferredMessageStorage(s1Split[0].Trim('"'), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
+                        new PreferredMessageStorage(s2Split[0].Trim('"'), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
+                        new PreferredMessageStorage(s3Split[0].Trim('"'), int.Parse(s3Split[1]), int.Parse(s3Split[2])));
+                }
+            }
+            return default;
+        }
+
+        public virtual async Task<PreferredMessageStorages> SetPreferredMessageStorageAsync(string storage1Name, string storage2Name, string storage3Name)
+        {
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=\"{storage1Name}\",\"{storage2Name}\",\"{storage3Name}\"", "+CPMS:");
 
             if (response.Success && response.Intermediates.Count > 0)
             {
@@ -233,33 +276,61 @@ namespace HeboTech.ATLib.Modems.Generic
                     int s2Total = int.Parse(match.Groups["s2Total"].Value);
                     int s3Used = int.Parse(match.Groups["s3Used"].Value);
                     int s3Total = int.Parse(match.Groups["s3Total"].Value);
+
+                    return new PreferredMessageStorages(
+                        new PreferredMessageStorage(storage1Name, s1Used, s1Total),
+                        new PreferredMessageStorage(storage2Name, s2Used, s2Total),
+                        new PreferredMessageStorage(storage3Name, s3Used, s3Total));
                 }
             }
+            return default;
         }
 
-        public virtual async Task<Sms> ReadSmsAsync(int index)
+        public virtual async Task<Sms> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)
         {
-            AtResponse response = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
-
-            if (response.Success && response.Intermediates.Count > 0)
+            switch (smsTextFormat)
             {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
-                if (match.Success)
-                {
-                    SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                    PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
-                    int year = int.Parse(match.Groups["year"].Value);
-                    int month = int.Parse(match.Groups["month"].Value);
-                    int day = int.Parse(match.Groups["day"].Value);
-                    int hour = int.Parse(match.Groups["hour"].Value);
-                    int minute = int.Parse(match.Groups["minute"].Value);
-                    int second = int.Parse(match.Groups["second"].Value);
-                    int zone = int.Parse(match.Groups["zone"].Value);
-                    DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-                    string message = response.Intermediates.Last();
-                    return new Sms(status, sender, received, message);
-                }
+                //case SmsTextFormat.PDU:
+                //    AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
+
+                //    if (pduResponse.Success)
+                //    {
+                //        string statusLine = pduResponse.Intermediates.First();
+                //        var statusLineMatch = Regex.Match(statusLine, @"\+CMGR:\s(?<status>\d),""(?<alpha>\w*)"",(?<length>\d+)");
+                //        string pduLine = pduResponse.Intermediates.ElementAt(1);
+                //        var pduLineMatch = Regex.Match(statusLine, @"(?<status>\d*)");
+                //        if (statusLineMatch.Success && pduLineMatch.Success)
+                //        {
+                //            return default;
+                //        }
+                //    }
+                //    break;
+                case SmsTextFormat.Text:
+                    AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
+
+                    if (textResponse.Success && textResponse.Intermediates.Count > 0)
+                    {
+                        string line = textResponse.Intermediates.First();
+                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
+                        if (match.Success)
+                        {
+                            SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
+                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            int year = int.Parse(match.Groups["year"].Value);
+                            int month = int.Parse(match.Groups["month"].Value);
+                            int day = int.Parse(match.Groups["day"].Value);
+                            int hour = int.Parse(match.Groups["hour"].Value);
+                            int minute = int.Parse(match.Groups["minute"].Value);
+                            int second = int.Parse(match.Groups["second"].Value);
+                            int zone = int.Parse(match.Groups["zone"].Value);
+                            DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+                            string message = textResponse.Intermediates.Last();
+                            return new Sms(status, sender, received, message);
+                        }
+                    }
+                    break;
+                default:
+                    throw new NotSupportedException("The format is not supported");
             }
             return default;
         }

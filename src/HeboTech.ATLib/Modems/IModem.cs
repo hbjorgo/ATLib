@@ -144,14 +144,16 @@ namespace HeboTech.ATLib.Modems
         /// <returns>A list of SMSs</returns>
         Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus);
 
-        Task SetPreferredMessageStorageAsync(string storage1, string storage2, string storage3);
+        Task<PreferredMessageStorages> SetPreferredMessageStorageAsync(string storage1Name, string storage2Name, string storage3Name);
+        Task<SupportedPreferredMessageStorages> GetSupportedPreferredMessageStoragesAsync();
+        Task<PreferredMessageStorages> GetPreferredMessageStoragesAsync();
 
         /// <summary>
         /// Reads an SMS from the preferred storage
         /// </summary>
         /// <param name="index"></param>
         /// <returns>SMS</returns>
-        Task<Sms> ReadSmsAsync(int index);
+        Task<Sms> ReadSmsAsync(int index, SmsTextFormat smsTextFormat);
 
         /// <summary>
         /// Sends an SMS. Note: Only text format is supported. Make sure to set the message format to text during initialization

@@ -10,6 +10,8 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class StressTest
     {
+        private static SmsTextFormat smsTextFormat = SmsTextFormat.Text;
+
         public static async Task Run(System.IO.Stream stream, string pin, string phoneNumber)
         {
             Console.WriteLine($"Test started ({DateTime.Now})");
@@ -58,7 +60,7 @@ namespace HeboTech.ATLib.TestConsole
                 var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
                 Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
 
-                var singleSms = await modem.ReadSmsAsync(5);
+                var singleSms = await modem.ReadSmsAsync(5, smsTextFormat);
                 Console.WriteLine($"Single SMS: {singleSms}");
 
                 var smss = await modem.ListSmssAsync(SmsStatus.ALL);
