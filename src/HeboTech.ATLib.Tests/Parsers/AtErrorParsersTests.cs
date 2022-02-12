@@ -1,5 +1,4 @@
 ﻿using HeboTech.ATLib.Parsers;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace HeboTech.ATLib.Tests.Parsers
@@ -7,7 +6,7 @@ namespace HeboTech.ATLib.Tests.Parsers
     public class AtErrorParsersTests
     {
         [Fact]
-        public async Task Cme_error_code_is_parsed()
+        public void CME_error_code_is_parsed()
         {
             AtResponse response = new()
             {
@@ -19,6 +18,49 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             Assert.Equal(14, error.ErrorCode);
             Assert.Equal("SIM busy", error.ErrorMessage);
+        }
+
+        [Fact]
+        public void CMS_error_code_is_parsed()
+        {
+            AtResponse response = new()
+            {
+                FinalResponse = "+CMS ERROR: 500",
+                Success = false
+            };
+
+            Error error = AtErrorParsers.GetError(response.FinalResponse);
+
+            Assert.Equal(500, error.ErrorCode);
+            Assert.Equal("unknown error", error.ErrorMessage);
+        }
+
+        [Fact]
+        public void Unknown_error_code_returns_null()
+        {
+            AtResponse response = new()
+            {
+                FinalResponse = "+CME ERROR: 1337",
+                Success = false
+            };
+
+            Error error = AtErrorParsers.GetError(response.FinalResponse);
+
+            Assert.Null(error);
+        }
+
+        [Fact]
+        public void Unknown_error_prefix_returns_null()
+        {
+            AtResponse response = new()
+            {
+                FinalResponse = "+AAA ERROR: 500",
+                Success = false
+            };
+
+            Error error = AtErrorParsers.GetError(response.FinalResponse);
+
+            Assert.Null(error);
         }
     }
 }
