@@ -13,7 +13,7 @@ namespace HeboTech.ATLib.TestConsole
         public static async Task Run(System.IO.Stream stream, string pin, string phoneNumber)
         {
             PhoneNumber recipient = new(phoneNumber);
-            SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
+            SmsTextFormat smsTextFormat = SmsTextFormat.Text;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
@@ -102,7 +102,7 @@ namespace HeboTech.ATLib.TestConsole
                 }
             }
 
-            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'u' to send USSD code and 'q' to exit...");
+            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'u' to send USSD code, '+' to enable debug, '-' to disable debug and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
             {
@@ -121,8 +121,10 @@ namespace HeboTech.ATLib.TestConsole
                         Console.WriteLine($"Hangup Status: {hangupStatus}");
                         break;
                     case ConsoleKey.S:
+                        Console.WriteLine("Please enter SMS message:");
+                        string smsMessage = Console.ReadLine();
                         Console.WriteLine("Sending SMS...");
-                        var smsReference = await modem.SendSmsAsync(recipient, "Hello ATLib!");
+                        var smsReference = await modem.SendSmsAsync(recipient, smsMessage);
                         Console.WriteLine($"SMS Reference: {smsReference}");
                         break;
                     case ConsoleKey.R:
@@ -140,6 +142,14 @@ namespace HeboTech.ATLib.TestConsole
                         var ussd = Console.ReadLine();
                         var ussdResult = await modem.SendUssdAsync(ussd);
                         Console.WriteLine($"USSD Status: {ussdResult}");
+                        break;
+                    case ConsoleKey.OemPlus:
+                        atChannel.EnableDebug((string line) => Console.WriteLine(line));
+                        Console.WriteLine("Debug enabled");
+                        break;
+                    case ConsoleKey.OemMinus:
+                        atChannel.DisableDebug();
+                        Console.WriteLine("Debug disabled");
                         break;
                 }
             }
