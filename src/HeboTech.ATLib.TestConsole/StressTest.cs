@@ -33,7 +33,7 @@ namespace HeboTech.ATLib.TestConsole
                 var simStatus = await modem.GetSimStatusAsync();
                 Console.WriteLine($"SIM Status: {simStatus}");
 
-                if (simStatus == SimStatus.SIM_PIN)
+                if (simStatus.Result == SimStatus.SIM_PIN)
                 {
                     var simPinStatus = await modem.EnterSimPinAsync(new PersonalIdentificationNumber(pin));
                     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
@@ -64,9 +64,12 @@ namespace HeboTech.ATLib.TestConsole
                 Console.WriteLine($"Single SMS: {singleSms}");
 
                 var smss = await modem.ListSmssAsync(SmsStatus.ALL);
-                foreach (var sms in smss)
+                if (smss.IsSuccess)
                 {
-                    Console.WriteLine($"SMS: {sms}");
+                    foreach (var sms in smss.Result)
+                    {
+                        Console.WriteLine($"SMS: {sms}");
+                    }
                 }
 
                 Thread.Sleep(500);

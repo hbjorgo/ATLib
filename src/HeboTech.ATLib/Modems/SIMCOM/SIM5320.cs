@@ -40,7 +40,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public override async Task<Sms> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)
+        public override async Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)
         {
             switch (smsTextFormat)
             {
@@ -64,16 +64,16 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                             int zone = int.Parse(match.Groups["zone"].Value);
                             DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
                             string message = response.Intermediates.Last();
-                            return new Sms(status, sender, received, message);
+                            return ModemResponse.ResultSuccess(new Sms(status, sender, received, message));
                         }
                     }
-                    return null;
+                    return ModemResponse.ResultError<Sms>();
                 default:
                     throw new NotSupportedException("The format is not supported");
             }
         }
 
-        public override async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
+        public override async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
         {
             AtResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
 
@@ -102,7 +102,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                     }
                 }
             }
-            return smss;
+            return ModemResponse.ResultSuccess(smss);
         }
         #endregion
     }

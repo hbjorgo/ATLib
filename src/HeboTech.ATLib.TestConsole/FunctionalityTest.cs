@@ -1,7 +1,6 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
-using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
 using System;
@@ -17,8 +16,10 @@ namespace HeboTech.ATLib.TestConsole
             SmsTextFormat smsTextFormat = SmsTextFormat.Text;
 
             using AtChannel atChannel = AtChannel.Create(stream);
+            //atChannel.EnableDebug((string line) => Console.WriteLine(line));
             using IModem modem = new SIM5320(atChannel);
             atChannel.Open();
+            await atChannel.ClearAsync();
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;
@@ -28,22 +29,32 @@ namespace HeboTech.ATLib.TestConsole
             modem.UssdResponseReceived += Modem_UssdResponseReceived;
             modem.ErrorReceived += Modem_ErrorReceived;
 
-            await modem.DisableEchoAsync();
+            await modem.SetRequiredSettingsAsync();
 
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
 
-            // SIMCOM SIM5320
-            //var remainingCodeAttemps = await modem.GetRemainingPinPukAttempts();
-            //Console.WriteLine($"Remaining attempts: {remainingCodeAttemps}");
-
-            if (simStatus == SimStatus.SIM_PIN)
+            if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_READY)
+            {
+            }
+            else if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_PIN)
             {
                 var simPinStatus = await modem.EnterSimPinAsync(new PersonalIdentificationNumber(pin));
                 Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 
-                simStatus = await modem.GetSimStatusAsync();
-                Console.WriteLine($"SIM Status: {simStatus}");
+                for (int i = 0; i < 10; i++)
+                {
+                    simStatus = await modem.GetSimStatusAsync();
+                    Console.WriteLine($"SIM Status: {simStatus}");
+                    if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_READY)
+                        break;
+                    await Task.Delay(TimeSpan.FromMilliseconds(200));
+                }
+            }
+            else
+            {
+                Console.Write(simStatus);
+                return;
             }
 
             var imsi = await modem.GetImsiAsync();
@@ -81,11 +92,14 @@ namespace HeboTech.ATLib.TestConsole
             //Console.WriteLine($"Single SMS: {singleSms}");
 
             var smss = await modem.ListSmssAsync(SmsStatus.ALL);
-            foreach (var sms in smss)
+            if (smss.IsSuccess)
             {
-                Console.WriteLine($"SMS: {sms}");
-                var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
-                Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
+                foreach (var sms in smss.Result)
+                {
+                    Console.WriteLine($"SMS: {sms}");
+                    var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
+                    Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
+                }
             }
 
             Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'u' to send USSD code and 'q' to exit...");

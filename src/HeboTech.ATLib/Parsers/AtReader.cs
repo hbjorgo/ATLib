@@ -37,6 +37,15 @@ namespace HeboTech.ATLib.Parsers
             Dispose();
         }
 
+        /// <summary>
+        /// Gets the current number of items available
+        /// </summary>
+        /// <returns></returns>
+        public int AvailableItems()
+        {
+            return channel.Reader.Count;
+        }
+
         public ValueTask<string> ReadAsync(CancellationToken cancellationToken = default)
         {
             return channel.Reader.ReadAsync(cancellationToken);

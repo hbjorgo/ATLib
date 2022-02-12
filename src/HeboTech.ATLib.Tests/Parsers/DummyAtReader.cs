@@ -26,5 +26,10 @@ namespace HeboTech.ATLib.Tests.Parsers
         public void Close()
         {
         }
+
+        public int AvailableItems()
+        {
+            return channel.Reader.Count;
+        }
     }
 }
