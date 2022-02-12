@@ -1,7 +1,7 @@
-﻿using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.PDU;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.Parsers
+namespace HeboTech.ATLib.Tests.PDU
 {
     public class PduTests
     {

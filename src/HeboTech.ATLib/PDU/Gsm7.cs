@@ -1,30 +1,38 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 
-namespace HeboTech.ATLib.Parsers
+namespace HeboTech.ATLib.PDU
 {
     public static class Gsm7
     {
+        public static string Encode(string text)
+        {
+            byte[] octets = Encoding.ASCII.GetBytes(text);
+
+            int septetCount = (int)Math.Floor((octets.Length * 8.0) / 7);
+
+            byte[] septets = new byte[septetCount];
+            for (int i = 0; i < septets.Length; i++)
+            {
+                septets[i] = GetSeptet(octets, i * 7);
+            }
+
+            return Encoding.ASCII.GetString(septets.ToArray());
+        }
+
         public static string Decode(string strGsm7bit)
         {
             if (strGsm7bit.Length % 2 != 0)
-                strGsm7bit = $"0{strGsm7bit}";
+                throw new ArgumentException("Input length must be an even number");
 
-            byte[] octets = new byte[(int)Math.Ceiling(strGsm7bit.Length / 2f)];
-            int octetIndex = 0;
+            byte[] octets = ConvertToBytes(strGsm7bit).Reverse().ToArray();
 
-            for (int i = 0; i < strGsm7bit.Length; i += 2)
-            {
-                if (i < strGsm7bit.Length - 1)
-                    octets[octetIndex++] = Convert.ToByte(strGsm7bit.Substring(i, 2), 16);
-                else
-                    octets[octetIndex++] = Convert.ToByte(strGsm7bit.Substring(i, 1), 16);
-            }
+            int septetCount = (int)Math.Floor((octets.Length * 8.0) / 7);
 
-            octets = octets.Reverse().ToArray();
-
-            byte[] septets = new byte[octets.Length % 2 == 0 ? octets.Length : octets.Length + 1];
+            byte[] septets = new byte[septetCount];
             for (int i = 0; i < septets.Length; i++)
             {
                 septets[i] = GetSeptet(octets, i * 7);
@@ -97,6 +105,17 @@ namespace HeboTech.ATLib.Parsers
             }
 
             return result;
+        }
+
+        private static IEnumerable<byte> ConvertToBytes(string input)
+        {
+            if (input.Length % 2 != 0)
+                yield break;
+
+            for (int i = 0; i < input.Length / 2; i++)
+            {
+                yield return byte.Parse(input.Substring(i * 2, 2), NumberStyles.HexNumber);
+            }
         }
     }
 }
