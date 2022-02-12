@@ -29,6 +29,7 @@ namespace HeboTech.ATLib.TestConsole
             modem.UssdResponseReceived += Modem_UssdResponseReceived;
             modem.ErrorReceived += Modem_ErrorReceived;
 
+            // Configure modem with required settings
             await modem.SetRequiredSettingsAsync();
 
             var simStatus = await modem.GetSimStatusAsync();
@@ -48,7 +49,7 @@ namespace HeboTech.ATLib.TestConsole
                     Console.WriteLine($"SIM Status: {simStatus}");
                     if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_READY)
                         break;
-                    await Task.Delay(TimeSpan.FromMilliseconds(200));
+                    await Task.Delay(TimeSpan.FromMilliseconds(500));
                 }
             }
             else
@@ -74,9 +75,6 @@ namespace HeboTech.ATLib.TestConsole
 
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
-
-            var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(smsTextFormat);
-            Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
 
             var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 0);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
@@ -147,7 +145,7 @@ namespace HeboTech.ATLib.TestConsole
 
         private static void Modem_ErrorReceived(object sender, ErrorEventArgs e)
         {
-            Console.WriteLine($"ERROR: {e.Error}");
+            Console.WriteLine($"ERROR EVENT: {e.Error}");
         }
 
         private static void Modem_UssdResponseReceived(object sender, UssdResponseEventArgs e)

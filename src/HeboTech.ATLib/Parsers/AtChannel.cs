@@ -197,6 +197,8 @@ namespace HeboTech.ATLib.Parsers
                     try
                     {
                         line2 = await atReader.ReadAsync(cancellationToken);
+                        if (debugEnabled)
+                            debugAction($"In: {line2}");
                     }
                     catch (OperationCanceledException)
                     {
@@ -204,8 +206,6 @@ namespace HeboTech.ATLib.Parsers
                     }
                     if (line2 == null)
                         break;
-                    if (debugEnabled)
-                        debugAction($"In: {line2}");
                     HandleUnsolicited(line1, line2);
                 }
                 else
