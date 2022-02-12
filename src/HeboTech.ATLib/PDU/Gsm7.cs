@@ -10,17 +10,67 @@ namespace HeboTech.ATLib.PDU
     {
         public static string Encode(string text)
         {
-            byte[] octets = Encoding.ASCII.GetBytes(text);
-
-            int septetCount = (int)Math.Floor((octets.Length * 8.0) / 7);
-
-            byte[] septets = new byte[septetCount];
-            for (int i = 0; i < septets.Length; i++)
+            byte[] textBytes = Encoding.ASCII.GetBytes(text).Reverse().ToArray();
+            bool[] bits = new bool[textBytes.Length * 7];
+            for (int i = 0; i < textBytes.Length; i++)
             {
-                septets[i] = GetSeptet(octets, i * 7);
+                for (int j = 0; j < 7; j++)
+                {
+                    bits[i * 7 + j] = (textBytes[i] & (0x40 >> j)) != 0;
+                }
             }
 
-            return Encoding.ASCII.GetString(septets.ToArray());
+            byte[] octets = new byte[(int)Math.Ceiling(bits.Length / 8.0)];
+            int offset = octets.Length * 8 - bits.Length;
+            int bitShift = 0;
+            for (int i = bits.Length - 1; i >= 0; i--)
+            {
+                octets[(i + offset) / 8] |= (byte)(bits[i] ? 0x01 << bitShift : 0x00);
+                bitShift++;
+                bitShift %= 8;
+            }
+            octets = octets.Reverse().ToArray();
+
+            string str = BitConverter.ToString(octets).Replace("-", "");
+            return str;
+        }
+
+        private static byte ToByte(IEnumerable<bool> value)
+        {
+            if (value.Count() != 8)
+                throw new ArgumentException(nameof(value));
+            byte retVal = 0x00;
+            for (int i = 0; i < value.Count(); i++)
+            {
+                retVal |= (byte)(value.ElementAt(i) ? 0x80 >> i : 0x00);
+            }
+            return retVal;
+        }
+
+        public static string Encode2(string text)
+        {
+            byte[] octets = Encoding.ASCII.GetBytes(text).Reverse().ToArray();
+            bool[] bits = new bool[octets.Length * 7];
+            for (int i = 0; i < octets.Length; i++)
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    bits[i * 7 + j] = (octets[i] & (0x40 >> j)) != 0;
+                }
+            }
+
+            byte[] septets = new byte[bits.Length / 8];
+            for (int i = 0; i < septets.Length; i++)
+            {
+                for (int j = 0; j < 8; j++)
+                {
+                    septets[i] |= (byte)(bits[i * 8 + j] ? 0x80 >> j : 0x00);
+                }
+            }
+            septets = septets.Reverse().ToArray();
+
+            string str = BitConverter.ToString(septets).Replace("-", "");
+            return str;
         }
 
         public static string Decode(string strGsm7bit)
