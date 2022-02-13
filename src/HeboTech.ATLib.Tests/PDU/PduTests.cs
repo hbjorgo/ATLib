@@ -6,7 +6,7 @@ namespace HeboTech.ATLib.Tests.PDU
     public class PduTests
     {
         [Theory]
-        [InlineData("07917238010010F5040BC87238880900F10000993092516195800AE8329BFD4697D9EC37", "+27831000015", "+27838890001", "99-03-29-15-16-59-+08", "hellohello")]
+        [InlineData("07917238010010F5040BC87238880900F10000993092516195800AE8329BFD4697D9EC37", "+27831000015", "+27838890001", "99-03-29-15-16-59-+02", "hellohello")]
         public void OkTest(string data, string serviceCenterNumber, string senderNumber, string timestamp, string message)
         {
             PduMessage pduMessage = Pdu.Decode(data);

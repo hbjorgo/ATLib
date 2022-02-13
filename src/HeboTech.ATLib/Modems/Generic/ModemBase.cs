@@ -1,6 +1,8 @@
-﻿using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.PDU;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -182,7 +184,7 @@ namespace HeboTech.ATLib.Modems.Generic
             {
                 case SmsTextFormat.PDU:
                     {
-                        string pdu = PDU.Pdu.Encode(phoneNumber, message);
+                        string pdu = Pdu.Encode(phoneNumber, Gsm7.Encode(message), Gsm7.DataCodingSchemeCode);
                         string cmd1 = $"AT+CMGS={(pdu.Length - 2 )/ 2}";
                         string cmd2 = pdu;
                         AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
@@ -300,21 +302,27 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             switch (smsTextFormat)
             {
-                //case SmsTextFormat.PDU:
-                //    AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
+                case SmsTextFormat.PDU:
+                    AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
 
-                //    if (pduResponse.Success)
-                //    {
-                //        string statusLine = pduResponse.Intermediates.First();
-                //        var statusLineMatch = Regex.Match(statusLine, @"\+CMGR:\s(?<status>\d),""(?<alpha>\w*)"",(?<length>\d+)");
-                //        string pduLine = pduResponse.Intermediates.ElementAt(1);
-                //        var pduLineMatch = Regex.Match(statusLine, @"(?<status>\d*)");
-                //        if (statusLineMatch.Success && pduLineMatch.Success)
-                //        {
-                //            return default;
-                //        }
-                //    }
-                //    break;
+                    if (pduResponse.Success)
+                    {
+                        string line1 = pduResponse.Intermediates[0];
+                        var line1Match = Regex.Match(line1, @"\+CMGR:\s(?<status>\d),(""(?<alpha>\w*)"")*,(?<length>\d+)");
+                        string line2 = pduResponse.Intermediates[1];
+                        var line2Match = Regex.Match(line2, @"(?<status>[0-9A-Z]*)");
+                        if (line1Match.Success && line2Match.Success)
+                        {
+                            int statusCode = int.Parse(line1Match.Groups["status"].Value);
+                            SmsStatus status = SmsStatusHelpers.ToSmsStatus(statusCode);
+
+                            string pdu = line2Match.Groups["status"].Value;
+                            PduMessage pduMessage = Pdu.Decode(pdu);
+
+                            return ModemResponse.ResultSuccess(new Sms(status, new PhoneNumber(pduMessage.SenderNumber), pduMessage.Timestamp, pduMessage.Message));
+                        }
+                    }
+                    break;
                 case SmsTextFormat.Text:
                     AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
 

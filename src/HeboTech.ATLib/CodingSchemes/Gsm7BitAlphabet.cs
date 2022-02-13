@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace HeboTech.ATLib.PDU
+namespace HeboTech.ATLib.CodingSchemes
 {
     public class Gsm7BitAlphabet
     {

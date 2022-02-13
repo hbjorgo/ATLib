@@ -1,4 +1,5 @@
-﻿using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.DTOs;
 using System;
 using System.Text;
 
@@ -6,10 +7,8 @@ namespace HeboTech.ATLib.PDU
 {
     public class Pdu
     {
-        public static string Encode(PhoneNumber phoneNumber, string message)
+        public static string Encode(PhoneNumber phoneNumber, string encodedMessage, byte dataCodingScheme)
         {
-            string encodedMessage = Gsm7.Encode(message);
-
             StringBuilder sb = new StringBuilder();
             // Length of SMSC information
             sb.Append("00");
@@ -26,7 +25,7 @@ namespace HeboTech.ATLib.PDU
             // TP-PID Protocol identifier
             sb.Append("00");
             // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
-            sb.Append("00");
+            sb.Append(dataCodingScheme.ToString("X2"));
             // TP-Validity-Period. 'AA'-4 days
             sb.Append("AA");
             // TP-User-Data-Length. If TP-DCS field indicates 7-bit data, the length is the number of septets.
@@ -109,9 +108,21 @@ namespace HeboTech.ATLib.PDU
                 TimeSpan.FromMinutes(int.Parse(tpScts[12..14]) * 15)); // Offset in quarter of hours
             int tpUdl = Convert.ToInt32(data[offset..(offset += 2)], 16);
             string tpUd = data[offset..];
-            string message = Gsm7.Decode(tpUd);
 
-            return new PduMessage(serviceCenterNumber, senderNumber, message, timeStamp);
+            string decodedMessage = tpUd;
+            switch (tpDcs)
+            {
+                case Gsm7.DataCodingSchemeCode:
+                    decodedMessage = Gsm7.Decode(tpUd);
+                    break;
+                case UCS2.DataCodingSchemeCode:
+                    decodedMessage = UCS2.Decode(tpUd);
+                    break;
+                default:
+                    break;
+            }
+
+            return new PduMessage(serviceCenterNumber, senderNumber, decodedMessage, timeStamp);
         }
     }
 
