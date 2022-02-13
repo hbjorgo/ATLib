@@ -176,23 +176,55 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.Success(response.Success);
         }
 
-        public virtual async Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message)
+        public virtual async Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat)
         {
-            string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
-            string cmd2 = message;
-            AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
-
-            if (response.Success)
+            switch (smsTextFormat)
             {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                if (match.Success)
-                {
-                    int mr = int.Parse(match.Groups["mr"].Value);
-                    return ModemResponse.ResultSuccess(new SmsReference(mr));
-                }
+                case SmsTextFormat.PDU:
+                    {
+                        string pdu = PDU.Pdu.Encode(phoneNumber, message);
+                        string cmd1 = $"AT+CMGS={(pdu.Length - 2 )/ 2}";
+                        string cmd2 = pdu;
+                        AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
+
+                        if (response.Success)
+                        {
+                            string line = response.Intermediates.First();
+                            var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                            if (match.Success)
+                            {
+                                int mr = int.Parse(match.Groups["mr"].Value);
+                                return ModemResponse.ResultSuccess(new SmsReference(mr));
+                            }
+                        }
+                        else
+                        {
+                            if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
+                                return ModemResponse.ResultError<SmsReference>(error.ToString());
+                        }
+                        return ModemResponse.ResultError<SmsReference>();
+                    }
+                case SmsTextFormat.Text:
+                    {
+                        string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
+                        string cmd2 = message;
+                        AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
+
+                        if (response.Success)
+                        {
+                            string line = response.Intermediates.First();
+                            var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                            if (match.Success)
+                            {
+                                int mr = int.Parse(match.Groups["mr"].Value);
+                                return ModemResponse.ResultSuccess(new SmsReference(mr));
+                            }
+                        }
+                        return ModemResponse.ResultError<SmsReference>();
+                    }
+                default:
+                    throw new NotSupportedException($"Text format {smsTextFormat} is not supported");
             }
-            return ModemResponse.ResultError<SmsReference>();
         }
 
         public virtual async Task<ModemResponse<SupportedPreferredMessageStorages>> GetSupportedPreferredMessageStoragesAsync()

@@ -10,10 +10,9 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class FunctionalityTest
     {
-        public static async Task Run(System.IO.Stream stream, string pin, string phoneNumber)
+        public static async Task Run(System.IO.Stream stream, string pin)
         {
-            PhoneNumber recipient = new(phoneNumber);
-            SmsTextFormat smsTextFormat = SmsTextFormat.Text;
+            SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
@@ -119,19 +118,32 @@ namespace HeboTech.ATLib.TestConsole
                         Console.WriteLine($"Answer Status: {answerStatus}");
                         break;
                     case ConsoleKey.D:
-                        var dialStatus = await modem.DialAsync(recipient);
-                        Console.WriteLine($"Dial Status: {dialStatus}");
+                        {
+                            Console.WriteLine("Please enter phone number:");
+                            string phoneNumberString = Console.ReadLine();
+                            PhoneNumber phoneNumber = new(phoneNumberString);
+
+                            var dialStatus = await modem.DialAsync(phoneNumber);
+                            Console.WriteLine($"Dial Status: {dialStatus}");
+                        }
                         break;
                     case ConsoleKey.H:
                         var hangupStatus = await modem.HangupAsync();
                         Console.WriteLine($"Hangup Status: {hangupStatus}");
                         break;
                     case ConsoleKey.S:
-                        Console.WriteLine("Please enter SMS message:");
-                        string smsMessage = Console.ReadLine();
-                        Console.WriteLine("Sending SMS...");
-                        var smsReference = await modem.SendSmsAsync(recipient, smsMessage);
-                        Console.WriteLine($"SMS Reference: {smsReference}");
+                        {
+                            Console.WriteLine("Please enter phone number:");
+                            string phoneNumberString = Console.ReadLine();
+                            PhoneNumber phoneNumber = new(phoneNumberString);
+
+                            Console.WriteLine("Please enter SMS message:");
+                            string smsMessage = Console.ReadLine();
+
+                            Console.WriteLine("Sending SMS...");
+                            var smsReference = await modem.SendSmsAsync(phoneNumber, smsMessage, smsTextFormat);
+                            Console.WriteLine($"SMS Reference: {smsReference}");
+                        }
                         break;
                     case ConsoleKey.R:
                         Console.WriteLine("Enter SMS index:");

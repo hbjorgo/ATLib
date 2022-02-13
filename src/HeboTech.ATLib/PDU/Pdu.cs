@@ -1,9 +1,54 @@
-﻿using System;
+﻿using HeboTech.ATLib.DTOs;
+using System;
+using System.Text;
 
 namespace HeboTech.ATLib.PDU
 {
     public class Pdu
     {
+        public static string Encode(PhoneNumber phoneNumber, string message)
+        {
+            string encodedMessage = Gsm7.Encode(message);
+
+            StringBuilder sb = new StringBuilder();
+            // Length of SMSC information
+            sb.Append("00");
+            // First octed of the SMS-SUBMIT message
+            sb.Append("11");
+            // TP-Message-Reference. '00' lets the phone set the message reference number itself
+            sb.Append("00");
+            // Address length. Length of phone number (number of digits)
+            sb.Append((phoneNumber.ToString().Length).ToString("X2"));
+            // Type-of-Address (91 - international format, 81 - national format)
+            sb.Append(((int)phoneNumber.Format).ToString("X2"));
+            // Phone number in semi octets. 12345678 is represented as 21436587
+            sb.Append(SwapDigits(phoneNumber.ToString()));
+            // TP-PID Protocol identifier
+            sb.Append("00");
+            // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
+            sb.Append("00");
+            // TP-Validity-Period. 'AA'-4 days
+            sb.Append("AA");
+            // TP-User-Data-Length. If TP-DCS field indicates 7-bit data, the length is the number of septets.
+            // If TP-DCS indicates 8-bit data or Unicode, the length is the number of octets.
+            sb.Append((encodedMessage.Length / 2 * 8 / 7).ToString("X2"));
+            sb.Append(encodedMessage);
+
+            return sb.ToString();
+        }
+
+        private static string SwapDigits(string value)
+        {
+            char[] split = value.ToCharArray();
+            for (int i = 0; i < split.Length; i += 2)
+            {
+                char temp = split[i];
+                split[i] = split[i + 1];
+                split[i + 1] = temp;
+            }
+            return new string(split);
+        }
+
         public static PduMessage Decode(string data, int timestampYearOffset = 2000)
         {
             int offset = 0;

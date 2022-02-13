@@ -172,7 +172,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="phoneNumber">The number to send to</param>
         /// <param name="message">The message body</param>
         /// <returns></returns>
-        Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message);
+        Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event

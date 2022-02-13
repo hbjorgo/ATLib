@@ -36,7 +36,7 @@ namespace HeboTech.ATLib.TestConsole
 
 
             // ### Choose what to run
-            await FunctionalityTest.Run(stream, pin, phoneNumber);
+            await FunctionalityTest.Run(stream, pin);
             //await StressTest.Run(stream, pin, phoneNumber);
         }
     }
