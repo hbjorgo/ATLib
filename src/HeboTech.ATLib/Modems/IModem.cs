@@ -44,6 +44,8 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         event EventHandler<UssdResponseEventArgs> UssdResponseReceived;
 
+        event EventHandler<GenericEventArgs> GenericEvent;
+
         /// <summary>
         /// Answers incoming call
         /// </summary>

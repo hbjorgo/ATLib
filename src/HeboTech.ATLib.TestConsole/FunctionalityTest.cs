@@ -1,7 +1,7 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
-using HeboTech.ATLib.Modems.SIMCOM;
+using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Threading.Tasks;
@@ -17,7 +17,7 @@ namespace HeboTech.ATLib.TestConsole
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IModem modem = new SIM5320(atChannel);
+            using IModem modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -28,6 +28,7 @@ namespace HeboTech.ATLib.TestConsole
             modem.SmsReceived += Modem_SmsReceived;
             modem.UssdResponseReceived += Modem_UssdResponseReceived;
             modem.ErrorReceived += Modem_ErrorReceived;
+            modem.GenericEvent += Modem_GenericEvent;
 
             // Configure modem with required settings
             await modem.SetRequiredSettingsAsync();
@@ -35,6 +36,11 @@ namespace HeboTech.ATLib.TestConsole
             await modem.SetSmsMessageFormatAsync(smsTextFormat);
 
             var simStatus = await modem.GetSimStatusAsync();
+            Console.WriteLine($"SIM Status: {simStatus}");
+
+            await modem.ReInitializeSimAsync();
+
+            simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
 
             if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_READY)
@@ -153,6 +159,11 @@ namespace HeboTech.ATLib.TestConsole
                         break;
                 }
             }
+        }
+
+        private static void Modem_GenericEvent(object sender, GenericEventArgs e)
+        {
+            Console.WriteLine($"Generic event: {e.Message}");
         }
 
         private static void Modem_ErrorReceived(object sender, ErrorEventArgs e)

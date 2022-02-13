@@ -9,7 +9,7 @@ namespace HeboTech.ATLib.Parsers
         * Returns error code from response
         * Assumes AT+CMEE=1 (numeric) mode
         */
-        public static Error GetError(string response)
+        public static bool TryGetError(string response, out Error error)
         {
             Match errorMatch = Regex.Match(response, @"\+(?<errorType>[A-Z]{3})\sERROR:\s(?<errorCode>\d+)");
             if (errorMatch.Success)
@@ -19,14 +19,15 @@ namespace HeboTech.ATLib.Parsers
                 switch (errorType)
                 {
                     case "CME":
-                        return CmeErrors.GetError(errorCode);
+                        return CmeErrors.TryGetError(errorCode, out error);
                     case "CMS":
-                        return CmsErrors.GetError(errorCode);
+                        return CmsErrors.TryGetError(errorCode, out error);
                     default:
                         break;
                 }
             }
-            return default;
+            error = default;
+            return false;
         }
     }
 
@@ -137,11 +138,15 @@ namespace HeboTech.ATLib.Parsers
             { 214, "Network error" }
         };
 
-        public static Error GetError(int errorCode)
+        public static bool TryGetError(int errorCode, out Error error)
         {
             if (mapping.TryGetValue(errorCode, out string errorMessage))
-                return new Error(errorCode, errorMessage);
-            return default;
+            {
+                error = new Error(errorCode, errorMessage);
+                return true;
+            }
+            error = default;
+            return false;
         }
     }
 
@@ -176,11 +181,15 @@ namespace HeboTech.ATLib.Parsers
             { 500, "unknown error" }
         };
 
-        public static Error GetError(int errorCode)
+        public static bool TryGetError(int errorCode, out Error error)
         {
             if (mapping.TryGetValue(errorCode, out string errorMessage))
-                return new Error(errorCode, errorMessage);
-            return default;
+            {
+                error = new Error(errorCode, errorMessage);
+                return true;
+            }
+            error = default;
+            return false;
         }
     }
 

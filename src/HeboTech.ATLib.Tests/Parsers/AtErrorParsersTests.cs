@@ -14,8 +14,9 @@ namespace HeboTech.ATLib.Tests.Parsers
                 Success = false
             };
 
-            Error error = AtErrorParsers.GetError(response.FinalResponse);
+            bool success = AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
 
+            Assert.True(success);
             Assert.Equal(14, error.ErrorCode);
             Assert.Equal("SIM busy", error.ErrorMessage);
         }
@@ -29,8 +30,9 @@ namespace HeboTech.ATLib.Tests.Parsers
                 Success = false
             };
 
-            Error error = AtErrorParsers.GetError(response.FinalResponse);
+            bool success = AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
 
+            Assert.True(success);
             Assert.Equal(500, error.ErrorCode);
             Assert.Equal("unknown error", error.ErrorMessage);
         }
@@ -44,8 +46,9 @@ namespace HeboTech.ATLib.Tests.Parsers
                 Success = false
             };
 
-            Error error = AtErrorParsers.GetError(response.FinalResponse);
+            bool success = AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
 
+            Assert.False(success);
             Assert.Null(error);
         }
 
@@ -58,8 +61,9 @@ namespace HeboTech.ATLib.Tests.Parsers
                 Success = false
             };
 
-            Error error = AtErrorParsers.GetError(response.FinalResponse);
+            bool success = AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
 
+            Assert.False(success);
             Assert.Null(error);
         }
     }

@@ -36,13 +36,14 @@ namespace HeboTech.ATLib.Modems.Generic
                 SmsReceived?.Invoke(this, SmsReceivedEventArgs.CreateFromResponse(e.Line1));
             else if (e.Line1.StartsWith("+CUSD: "))
                 UssdResponseReceived?.Invoke(this, UssdResponseEventArgs.CreateFromResponse(e.Line1));
-            else if (e.Line1.StartsWith("+CME ERROR:"))
-                ErrorReceived?.Invoke(this, ErrorEventArgs.CreateFromCmeResponse(e.Line1));
-            else if (e.Line1.StartsWith("+CMS ERROR:"))
-                ErrorReceived?.Invoke(this, ErrorEventArgs.CreateFromCmsResponse(e.Line1));
+            else if (AtErrorParsers.TryGetError(e.Line1, out Error error))
+                ErrorReceived?.Invoke(this, new ErrorEventArgs(error.ToString()));
+            else
+                GenericEvent?.Invoke(this, new GenericEventArgs(e.Line1));
         }
 
         public event EventHandler<ErrorEventArgs> ErrorReceived;
+        public event EventHandler<GenericEventArgs> GenericEvent;
 
         #region _V_25TER
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
@@ -378,8 +379,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
             if (!response.Success)
             {
-                Error cmeError = AtErrorParsers.GetError(response.FinalResponse);
-                if (cmeError != null)
+                if (AtErrorParsers.TryGetError(response.FinalResponse, out Error cmeError))
                     return ModemResponse.ResultError<SimStatus>(cmeError.ToString());
             }
 
