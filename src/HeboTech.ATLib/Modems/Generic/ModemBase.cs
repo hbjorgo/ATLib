@@ -492,7 +492,7 @@ namespace HeboTech.ATLib.Modems.Generic
         }
         #endregion
 
-        public async Task<ModemResponse> SetErrorFormat(int errorFormat)
+        public virtual async Task<ModemResponse> SetErrorFormat(int errorFormat)
         {
             AtResponse response = await channel.SendCommand($"AT+CMEE={errorFormat}");
             return ModemResponse.Success(response.Success);
