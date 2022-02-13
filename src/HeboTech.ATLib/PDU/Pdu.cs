@@ -21,7 +21,7 @@ namespace HeboTech.ATLib.PDU
             // Type-of-Address (91 - international format, 81 - national format)
             sb.Append(((int)phoneNumber.Format).ToString("X2"));
             // Phone number in semi octets. 12345678 is represented as 21436587
-            sb.Append(SwapDigits(phoneNumber.ToString()));
+            sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString()));
             // TP-PID Protocol identifier
             sb.Append("00");
             // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
@@ -36,7 +36,7 @@ namespace HeboTech.ATLib.PDU
             return sb.ToString();
         }
 
-        private static string SwapDigits(string value)
+        private static string SwapPhoneNumberDigits(string value)
         {
             char[] split = value.ToCharArray();
             for (int i = 0; i < split.Length; i += 2)
@@ -55,12 +55,18 @@ namespace HeboTech.ATLib.PDU
             int smscAddressType = Convert.ToInt32(data[offset..(offset += 2)], 16);
             string serviceCenterNumber = null;
             // National
-            if (smscAddressType == 0x81)
+            if (smscAddressType == (int)PhoneNumberFormat.National)
             {
-
+                for (int i = 0; i < smscLength - 1; i++)
+                {
+                    string temp = data[offset..(offset += 2)];
+                    serviceCenterNumber += temp[1];
+                    if (temp[0] != 'F')
+                        serviceCenterNumber += temp[0];
+                }
             }
             // International
-            else if (smscAddressType == 0x91)
+            else if (smscAddressType == (int)PhoneNumberFormat.International)
             {
                 serviceCenterNumber += '+';
                 for (int i = 0; i < smscLength - 1; i++)
