@@ -10,6 +10,8 @@ namespace HeboTech.ATLib.TestConsole
     {
         static async Task Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
             string pin = args[0];
             string phoneNumber = args[1];
 

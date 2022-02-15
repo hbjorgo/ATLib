@@ -13,7 +13,12 @@ namespace HeboTech.ATLib.CodingSchemes
 
         public static string Encode(string text)
         {
-            byte[] textBytes = Encoding.ASCII.GetBytes(text).Reverse().ToArray();
+            return Encode(Encoding.ASCII.GetBytes(text));
+        }
+
+        public static string Encode(byte[] data)
+        {
+            byte[] textBytes = data.Reverse().ToArray();
             bool[] bits = new bool[textBytes.Length * 7];
             for (int i = 0; i < textBytes.Length; i++)
             {
@@ -40,10 +45,12 @@ namespace HeboTech.ATLib.CodingSchemes
 
         public static string Decode(string strGsm7bit)
         {
-            if (strGsm7bit.Length % 2 != 0)
-                throw new ArgumentException("Input length must be an even number");
+            return Decode(CodingHelpers.StringToByteArray(strGsm7bit));
+        }
 
-            byte[] octets = CodingHelpers.StringToByteArray(strGsm7bit).Reverse().ToArray();
+        public static string Decode(byte[] data)
+        {
+            byte[] octets = data.Reverse().ToArray();
 
             bool[] bits = new bool[octets.Length * 8];
             for (int i = 0; i < octets.Length; i++)

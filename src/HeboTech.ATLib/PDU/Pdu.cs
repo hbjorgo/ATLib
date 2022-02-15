@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
 using System;
+using System.Linq;
 using System.Text;
 
 namespace HeboTech.ATLib.PDU
@@ -49,6 +50,76 @@ namespace HeboTech.ATLib.PDU
         }
 
         public static PduMessage Decode(string data, int timestampYearOffset = 2000)
+        {
+            int offset = 0;
+            int smscLength = Convert.ToInt32(data[offset..(offset += 2)], 16);
+            int smscAddressType = Convert.ToInt32(data[offset..(offset += 2)], 16);
+            string serviceCenterNumber = data[offset..(offset += (smscLength - 1) * 2)];
+            serviceCenterNumber = SwapPhoneNumberDigits(serviceCenterNumber);
+            serviceCenterNumber = serviceCenterNumber.TrimEnd('F');
+            switch (smscAddressType)
+            {
+                case (int)PhoneNumberFormat.National:
+                    break;
+                case (int)PhoneNumberFormat.International:
+                    serviceCenterNumber = '+' + serviceCenterNumber;
+                    break;
+                default:
+                    break;
+            }
+
+            int tp_mti = Convert.ToInt32(data[offset..(offset + 2)], 16);
+            int tpdu_type = tp_mti & 0b0000_0011;
+            switch (tpdu_type)
+            {
+                case (byte)PduType.SMS_DELIVER:
+                    return DecodeSmsDeliver(data[offset..], timestampYearOffset);
+                default:
+                    break;
+            }
+
+            throw new ArgumentException("Invalid data or not supported");
+        }
+
+        private static PduMessage DecodeSmsDeliver(string text, int timestampYearOffset = 2000)
+        {
+            char[] data = text.ToCharArray();
+
+            byte temp = Convert.ToByte(text[0..2], 16);
+
+            int tp_mti = temp & 0b0000_0011;
+            if (tp_mti != (byte)PduType.SMS_DELIVER)
+                throw new ArgumentException("Invalid SMS-DELIVER data");
+
+            int tp_mms = temp & 0b0000_0100;
+            int tp_rp = temp & 0b1000_0000;
+
+            temp = Convert.ToByte(text[2..4], 16);
+            int tp_oa_length = temp % 2 == 0 ? temp : temp + 1;
+            byte tp_oa_ton = Convert.ToByte(text[4..6], 16);
+
+            int offset = 6 + tp_oa_length;
+            char[] oa = data[6..offset];
+            byte tp_pid = Convert.ToByte(text[offset..(offset += 2)], 16);
+            byte tp_dcs = Convert.ToByte(text[offset..(offset += 2)], 16);
+            char[] tp_scts = text[offset..(offset += 14)].ToCharArray();
+            byte tp_udl = Convert.ToByte(text[offset..(offset += 2)], 16);
+            char[] tp_ud = text[offset..(offset += ((tp_udl - 1) * 2))].ToCharArray();
+            string message = null;
+            switch (tp_dcs)
+            {
+                case 0x00:
+                    message = Gsm7.Decode(new string(tp_ud));
+                    break;
+                default:
+                    break;
+            }
+            string scts = "";
+            string oa2 = "";
+            return new PduMessage(scts, oa2, message, default);
+        }
+
+        private static PduMessage DecodeSmsDeliver2(string data, int timestampYearOffset = 2000)
         {
             int offset = 0;
             int smscLength = Convert.ToInt32(data[offset..(offset += 2)], 16);
