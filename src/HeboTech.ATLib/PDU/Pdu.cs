@@ -37,35 +37,27 @@ namespace HeboTech.ATLib.PDU
             return sb.ToString();
         }
 
-        private static string SwapPhoneNumberDigits(string value)
-        {
-            char[] split = value.ToCharArray();
-            for (int i = 0; i < split.Length; i += 2)
-            {
-                char temp = split[i];
-                split[i] = split[i + 1];
-                split[i + 1] = temp;
-            }
-            return new string(split);
-        }
-
         public static PduMessage Decode(string data, int timestampYearOffset = 2000)
         {
             int offset = 0;
             int smscLength = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            int smscAddressType = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            string serviceCenterNumber = data[offset..(offset += (smscLength - 1) * 2)];
-            serviceCenterNumber = SwapPhoneNumberDigits(serviceCenterNumber);
-            serviceCenterNumber = serviceCenterNumber.TrimEnd('F');
-            switch (smscAddressType)
+            PhoneNumber serviceCenterNumber = null;
+            if (smscLength > 0)
             {
-                case (int)PhoneNumberFormat.National:
-                    break;
-                case (int)PhoneNumberFormat.International:
-                    serviceCenterNumber = '+' + serviceCenterNumber;
-                    break;
-                default:
-                    break;
+                int smscAddressType = Convert.ToInt32(data[offset..(offset += 2)], 16);
+                string serviceCenterNumberString = data[offset..(offset += (smscLength - 1) * 2)];
+                serviceCenterNumberString = SwapPhoneNumberDigits(serviceCenterNumberString);
+                switch (smscAddressType)
+                {
+                    case (int)PhoneNumberFormat.National:
+                        break;
+                    case (int)PhoneNumberFormat.International:
+                        serviceCenterNumberString = '+' + serviceCenterNumberString;
+                        break;
+                    default:
+                        break;
+                }
+                serviceCenterNumber = new PhoneNumber(serviceCenterNumberString);
             }
 
             int tp_mti = Convert.ToInt32(data[offset..(offset + 2)], 16);
@@ -73,7 +65,9 @@ namespace HeboTech.ATLib.PDU
             switch (tpdu_type)
             {
                 case (byte)PduType.SMS_DELIVER:
-                    return DecodeSmsDeliver(data[offset..], timestampYearOffset);
+                    return DecodeSmsDeliver(serviceCenterNumber, data[offset..], timestampYearOffset);
+                case (byte)PduType.SMS_SUBMIT:
+                    return DecodeSmsSubmit(serviceCenterNumber, data[offset..], timestampYearOffset);
                 default:
                     break;
             }
@@ -81,7 +75,7 @@ namespace HeboTech.ATLib.PDU
             throw new ArgumentException("Invalid data or not supported");
         }
 
-        private static PduMessage DecodeSmsDeliver(string text, int timestampYearOffset = 2000)
+        private static PduMessage DecodeSmsDeliver(PhoneNumber serviceCenterNumber, string text, int timestampYearOffset = 2000)
         {
             char[] data = text.ToCharArray();
 
@@ -104,6 +98,7 @@ namespace HeboTech.ATLib.PDU
             byte tp_dcs = Convert.ToByte(text[offset..(offset += 2)], 16);
             char[] tp_scts = text[offset..(offset += 14)].ToCharArray();
             byte tp_udl = Convert.ToByte(text[offset..(offset += 2)], 16);
+            
             char[] tp_ud = text[offset..(offset += ((tp_udl - 1) * 2))].ToCharArray();
             string message = null;
             switch (tp_dcs)
@@ -114,98 +109,100 @@ namespace HeboTech.ATLib.PDU
                 default:
                     break;
             }
-            string scts = "";
-            string oa2 = "";
-            return new PduMessage(scts, oa2, message, default);
+            string oa2 = SwapPhoneNumberDigits(oa);
+            DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
+            return new PduMessage(serviceCenterNumber, oa2, message, scts);
         }
 
-        private static PduMessage DecodeSmsDeliver2(string data, int timestampYearOffset = 2000)
+        private static PduMessage DecodeSmsSubmit(PhoneNumber serviceCenterNumber, string text, int timestampYearOffset = 2000)
         {
-            int offset = 0;
-            int smscLength = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            int smscAddressType = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            string serviceCenterNumber = null;
-            // National
-            if (smscAddressType == (int)PhoneNumberFormat.National)
-            {
-                for (int i = 0; i < smscLength - 1; i++)
-                {
-                    string temp = data[offset..(offset += 2)];
-                    serviceCenterNumber += temp[1];
-                    if (temp[0] != 'F')
-                        serviceCenterNumber += temp[0];
-                }
-            }
-            // International
-            else if (smscAddressType == (int)PhoneNumberFormat.International)
-            {
-                serviceCenterNumber += '+';
-                for (int i = 0; i < smscLength - 1; i++)
-                {
-                    string temp = data[offset..(offset += 2)];
-                    serviceCenterNumber += temp[1];
-                    if (temp[0] != 'F')
-                        serviceCenterNumber += temp[0];
-                }
-            }
+            char[] data = text.ToCharArray();
 
-            int firstSmsDeliverOctet = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            int senderAddressLength = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            int senderAddressType = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            string senderNumber = null;
-            // TODO: What types are there here?
-            if (senderAddressType == 0xC8 || senderAddressType == 0x91)
-            {
-                senderNumber += '+';
-                for (int i = 0; i < (int)Math.Ceiling(senderAddressLength / 2f); i++)
-                {
-                    string temp = data[offset..(offset += 2)];
-                    senderNumber += temp[1];
-                    if (temp[0] != 'F')
-                        senderNumber += temp[0];
-                }
-            }
+            byte temp = Convert.ToByte(text[0..2], 16);
 
-            int tpPid = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            int tpDcs = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            string tpScts = null;
-            for (int i = 0; i < 7; i++)
-            {
-                string temp = data[offset..(offset += 2)];
-                tpScts += temp[1];
-                tpScts += temp[0];
-            }
-            DateTimeOffset timeStamp = new DateTimeOffset(
-                int.Parse(tpScts[..2]) + timestampYearOffset,
-                int.Parse(tpScts[2..4]),
-                int.Parse(tpScts[4..6]),
-                int.Parse(tpScts[6..8]),
-                int.Parse(tpScts[8..10]),
-                int.Parse(tpScts[10..12]),
-                TimeSpan.FromMinutes(int.Parse(tpScts[12..14]) * 15)); // Offset in quarter of hours
-            int tpUdl = Convert.ToInt32(data[offset..(offset += 2)], 16);
-            string tpUd = data[offset..];
+            int tp_mti = temp & 0b0000_0011;
+            if (tp_mti != (byte)PduType.SMS_SUBMIT)
+                throw new ArgumentException("Invalid SMS-SUBMIT data");
 
-            string decodedMessage = tpUd;
-            switch (tpDcs)
+            int tp_rd = temp & 0b0000_0100;
+            int tp_vpf = temp & 0b0001_1000;
+            int tp_rp = temp & 0b1000_0000;
+
+            byte tp_mr = Convert.ToByte(text[2..4], 16);
+            byte tp_oa_length = Convert.ToByte(text[4..6], 16);
+            byte tp_toa = Convert.ToByte(text[6..8], 16);
+
+            temp = Convert.ToByte(text[6..8], 16);
+            int tp_oa_byteLength = tp_oa_length % 2 == 0 ? tp_oa_length : tp_oa_length + 1;
+
+            int offset = 8;
+            char[] oa = data[offset..(offset += tp_oa_length + 1)];
+            byte tp_pid = Convert.ToByte(text[offset..(offset += 2)], 16);
+            byte tp_dcs = Convert.ToByte(text[offset..(offset += 2)], 16);
+            byte tp_vp = 0;
+            if (tp_vpf == 0x00)
+                tp_vp = Convert.ToByte(text[offset..(offset += 0)], 16);
+            else if (tp_vpf == 0x01)
+                tp_vp = Convert.ToByte(text[offset..(offset += 14)], 16);
+            else if (tp_vpf == 0x10)
+                tp_vp = Convert.ToByte(text[offset..(offset += 2)], 16);
+            else if (tp_vpf == 0x11)
+                tp_vp = Convert.ToByte(text[offset..(offset += 14)], 16);
+            byte tp_udl = Convert.ToByte(text[offset..(offset += 2)], 16);
+            
+            char[] tp_ud = text[offset..(offset += ((tp_udl - 1) * 2))].ToCharArray();
+            string message = null;
+            switch (tp_dcs)
             {
-                case Gsm7.DataCodingSchemeCode:
-                    decodedMessage = Gsm7.Decode(tpUd);
-                    break;
-                case UCS2.DataCodingSchemeCode:
-                    decodedMessage = UCS2.Decode(tpUd);
+                case 0x00:
+                    message = Gsm7.Decode(new string(tp_ud));
                     break;
                 default:
                     break;
             }
+            string oa2 = SwapPhoneNumberDigits(oa);
+            return new PduMessage(serviceCenterNumber, oa2, message, DateTimeOffset.MinValue);
+        }
 
-            return new PduMessage(serviceCenterNumber, senderNumber, decodedMessage, timeStamp);
+        private static string SwapPhoneNumberDigits(string value)
+        {
+            return SwapPhoneNumberDigits(value.ToCharArray());
+        }
+
+        private static string SwapPhoneNumberDigits(char[] data)
+        {
+            for (int i = 0; i < data.Length; i += 2)
+            {
+                char temp = data[i];
+                data[i] = data[i + 1];
+                data[i + 1] = temp;
+            }
+            if (data[^1] == 'F')
+                return new string(data[..^1]);
+            return new string(data);
+        }
+
+        private static DateTimeOffset DecodeTimestamp(char[] data, int timestampYearOffset = 2000)
+        {
+            byte offset = (byte)int.Parse(data[12..14].Reverse().ToArray());
+            bool positive = (offset & (1 << 7)) == 0;
+            byte offsetQuarters = (byte)(offset & 0b0111_1111);
+
+            DateTimeOffset timestamp = new DateTimeOffset(
+                int.Parse(data[..2].Reverse().ToArray()) + timestampYearOffset,
+                int.Parse(data[2..4].Reverse().ToArray()),
+                int.Parse(data[4..6].Reverse().ToArray()),
+                int.Parse(data[6..8].Reverse().ToArray()),
+                int.Parse(data[8..10].Reverse().ToArray()),
+                int.Parse(data[10..12].Reverse().ToArray()),
+                TimeSpan.FromMinutes(offsetQuarters * 15)); // Offset in quarter of hours
+            return timestamp;
         }
     }
-
+        
     public class PduMessage
     {
-        public PduMessage(string serviceCenterNumber, string senderNumber, string message, DateTimeOffset timestamp)
+        public PduMessage(PhoneNumber serviceCenterNumber, string senderNumber, string message, DateTimeOffset timestamp)
         {
             ServiceCenterNumber = serviceCenterNumber;
             SenderNumber = senderNumber;
@@ -213,7 +210,7 @@ namespace HeboTech.ATLib.PDU
             Timestamp = timestamp;
         }
 
-        public string ServiceCenterNumber { get; }
+        public PhoneNumber ServiceCenterNumber { get; }
         public string SenderNumber { get; }
         public string Message { get; }
         public DateTimeOffset Timestamp { get; }
