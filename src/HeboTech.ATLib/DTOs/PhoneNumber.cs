@@ -4,7 +4,6 @@
     {
         public PhoneNumber(string number)
         {
-            Number = number;
             if (number.StartsWith('+'))
             {
                 Ton = TypeOfNumber.International;
@@ -15,6 +14,7 @@
                 Ton = TypeOfNumber.National;
                 Npi = NumberPlanIdentification.Unknown;
             }
+            Number = number.TrimStart('+');
         }
 
         public PhoneNumber(string number, TypeOfNumber ton, NumberPlanIdentification npi)
