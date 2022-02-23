@@ -37,15 +37,6 @@ namespace HeboTech.ATLib.PDU
             return sb.ToString();
         }
 
-        private static PhoneNumber DecodePhoneNumber(ReadOnlySpan<char> data)
-        {
-            if (data.Length < 4)
-                return default;
-            byte ton = (byte)((HexToByte(data[0..2]) & 0b0111_0000) >> 4);
-            string number = new String(SwapPhoneNumberDigits(data[2..]));
-            return new PhoneNumber(number, (PhoneNumberFormat)ton);
-        }
-
         public static SmsDeliver DecodeSmsDeliver(ReadOnlySpan<char> text, int timestampYearOffset = 2000)
         {
             int offset = 0;
@@ -171,6 +162,15 @@ namespace HeboTech.ATLib.PDU
             if (swappedData[^1] == 'F')
                 return swappedData[..^1];
             return swappedData;
+        }
+
+        private static PhoneNumber DecodePhoneNumber(ReadOnlySpan<char> data)
+        {
+            if (data.Length < 4)
+                return default;
+            byte ton = (byte)((HexToByte(data[0..2]) & 0b0111_0000) >> 4);
+            string number = new String(SwapPhoneNumberDigits(data[2..]));
+            return new PhoneNumber(number, (PhoneNumberFormat)ton);
         }
 
         private static DateTimeOffset DecodeTimestamp(ReadOnlySpan<char> data, int timestampYearOffset = 2000)
