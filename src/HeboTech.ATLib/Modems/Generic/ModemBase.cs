@@ -317,9 +317,9 @@ namespace HeboTech.ATLib.Modems.Generic
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(statusCode);
 
                             string pdu = line2Match.Groups["status"].Value;
-                            PduMessage pduMessage = Pdu.Decode(pdu);
+                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
 
-                            return ModemResponse.ResultSuccess(new Sms(status, new PhoneNumber(pduMessage.SenderNumber), pduMessage.Timestamp, pduMessage.Message));
+                            return ModemResponse.ResultSuccess(new Sms(status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
                     }
                     break;

@@ -1,4 +1,6 @@
-﻿namespace HeboTech.ATLib.DTOs
+﻿using System;
+
+namespace HeboTech.ATLib.DTOs
 {
     public class PhoneNumber
     {
@@ -9,6 +11,12 @@
                 Format = PhoneNumberFormat.International;
             else
                 Format = PhoneNumberFormat.National;
+        }
+
+        public PhoneNumber(string number, PhoneNumberFormat format)
+        {
+            Format = format;
+            Number = number;
         }
 
         public PhoneNumberFormat Format { get; }
