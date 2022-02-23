@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.DTOs
 {
-    public enum PhoneNumberFormat : byte
+    public enum TypeOfNumber : byte
     {
         Unknown = 0x00,
         International = 0x01,

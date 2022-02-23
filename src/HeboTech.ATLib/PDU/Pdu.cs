@@ -8,19 +8,20 @@ namespace HeboTech.ATLib.PDU
 {
     public class Pdu
     {
-        public static string Encode(PhoneNumber phoneNumber, string encodedMessage, byte dataCodingScheme)
+        public static string Encode(PhoneNumber phoneNumber, string encodedMessage, byte dataCodingScheme, bool includeEmptySmscLength = true)
         {
             StringBuilder sb = new StringBuilder();
             // Length of SMSC information
-            sb.Append("00");
+            if (includeEmptySmscLength)
+                sb.Append("00");
             // First octed of the SMS-SUBMIT message
             sb.Append("11");
             // TP-Message-Reference. '00' lets the phone set the message reference number itself
             sb.Append("00");
             // Address length. Length of phone number (number of digits)
             sb.Append((phoneNumber.ToString().Length).ToString("X2"));
-            // Type-of-Address (91 - international format, 81 - national format)
-            sb.Append(((int)phoneNumber.Format).ToString("X2"));
+            // Type-of-Address
+            sb.Append((phoneNumber.AddressType).ToString("X2"));
             // Phone number in semi octets. 12345678 is represented as 21436587
             sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString()));
             // TP-PID Protocol identifier
@@ -168,9 +169,12 @@ namespace HeboTech.ATLib.PDU
         {
             if (data.Length < 4)
                 return default;
-            byte ton = (byte)((HexToByte(data[0..2]) & 0b0111_0000) >> 4);
+            TypeOfNumber ton = (TypeOfNumber)((HexToByte(data[0..2]) & 0b0111_0000) >> 4);
             string number = new String(SwapPhoneNumberDigits(data[2..]));
-            return new PhoneNumber(number, (PhoneNumberFormat)ton);
+            return new PhoneNumber(
+                number,
+                ton,
+                ton == TypeOfNumber.International ? NumberPlanIdentification.ISDN : NumberPlanIdentification.Unknown);
         }
 
         private static DateTimeOffset DecodeTimestamp(ReadOnlySpan<char> data, int timestampYearOffset = 2000)

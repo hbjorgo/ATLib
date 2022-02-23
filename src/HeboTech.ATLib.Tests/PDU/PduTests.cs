@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.Tests.PDU
             SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(data);
 
             Assert.NotNull(pduMessage);
-            Assert.Equal(PhoneNumberFormat.International, pduMessage.ServiceCenterNumber.Format);
+            Assert.Equal(TypeOfNumber.International, pduMessage.ServiceCenterNumber.Ton);
             Assert.Equal(serviceCenterNumber, pduMessage.ServiceCenterNumber.Number);
             Assert.Equal(senderNumber, pduMessage.SenderNumber.Number);
             Assert.Equal(timestamp, pduMessage.Timestamp.ToString("yy-MM-dd-HH-mm-ss-zz"));
@@ -24,6 +24,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [Theory]
         [InlineData("0011000B916407281553F80000AA0AE8329BFD4697D9EC37", "", "46708251358", "hellohello")]
         [InlineData("058178563412110008812143658700000B2B54741914AFA7C76B9058FEBEBB41E6371EA4AEB7E173D0DB5E9683E8E832881DD6E741E4F719", "87654321", "12345678", "The quick brown fox jumps over the lazy dog")]
+        [InlineData("0011000802231537180000AA0D5062154403D1CB68D03DED06", "", "32517381", "PDU 4 teh win")]
         public void SMS_SUBMIT_Tests(string data, string serviceCenterNumber, string senderNumber, string message)
         {
             SmsSubmit pduMessage = Pdu.DecodeSmsSubmit(data);

@@ -18,14 +18,14 @@ namespace HeboTech.ATLib.Parsers
 
         public async Task WriteLineAsync(string command, CancellationToken cancellationToken = default)
         {
-            await WriteAsync(command);
-            await WriteAsync("\r");
+            await WriteAsync(command, cancellationToken);
+            await WriteAsync("\r", cancellationToken);
         }
 
         public async Task WriteSmsPduAndCtrlZAsync(string smsPdu, CancellationToken cancellationToken = default)
         {
-            await WriteAsync(smsPdu);
-            await WriteAsync("\x1A");
+            await WriteAsync(smsPdu, cancellationToken);
+            await WriteAsync("\x1A", cancellationToken);
         }
 
         protected async Task WriteAsync(string text, CancellationToken cancellationToken = default)

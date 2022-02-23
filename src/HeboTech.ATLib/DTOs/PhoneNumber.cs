@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace HeboTech.ATLib.DTOs
+﻿namespace HeboTech.ATLib.DTOs
 {
     public class PhoneNumber
     {
@@ -8,19 +6,27 @@ namespace HeboTech.ATLib.DTOs
         {
             Number = number;
             if (number.StartsWith('+'))
-                Format = PhoneNumberFormat.International;
+            {
+                Ton = TypeOfNumber.International;
+                Npi = NumberPlanIdentification.ISDN;
+            }
             else
-                Format = PhoneNumberFormat.National;
+            {
+                Ton = TypeOfNumber.National;
+                Npi = NumberPlanIdentification.Unknown;
+            }
         }
 
-        public PhoneNumber(string number, PhoneNumberFormat format)
+        public PhoneNumber(string number, TypeOfNumber ton, NumberPlanIdentification npi)
         {
-            Format = format;
+            Ton = ton;
             Number = number;
         }
 
-        public PhoneNumberFormat Format { get; }
+        public TypeOfNumber Ton { get; }
+        public NumberPlanIdentification Npi { get; }
         public string Number { get; set; }
+        public byte AddressType => (byte)(0b1000_0000 + (byte)Ton + (byte)Npi);
 
         public override string ToString()
         {
