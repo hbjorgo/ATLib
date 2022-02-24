@@ -8,7 +8,7 @@ namespace HeboTech.ATLib.PDU
 {
     public class Pdu
     {
-        public static string Encode(PhoneNumber phoneNumber, string encodedMessage, byte dataCodingScheme, bool includeEmptySmscLength = true)
+        public static string EncodeSmsSubmit(PhoneNumber phoneNumber, string encodedMessage, byte dataCodingScheme, bool includeEmptySmscLength = true)
         {
             StringBuilder sb = new StringBuilder();
             // Length of SMSC information
@@ -27,7 +27,7 @@ namespace HeboTech.ATLib.PDU
             // TP-PID Protocol identifier
             sb.Append("00");
             // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
-            sb.Append(dataCodingScheme.ToString("X2"));
+            sb.Append((dataCodingScheme).ToString("X2"));
             // TP-Validity-Period. 'AA'-4 days
             sb.Append("AA");
             // TP-User-Data-Length. If TP-DCS field indicates 7-bit data, the length is the number of septets.

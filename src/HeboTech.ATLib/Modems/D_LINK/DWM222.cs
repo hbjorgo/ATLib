@@ -29,7 +29,7 @@ namespace HeboTech.ATLib.Modems.D_LINK
             {
                 case SmsTextFormat.PDU:
                     {
-                        string pdu = Pdu.Encode(phoneNumber, Gsm7.Encode(message), Gsm7.DataCodingSchemeCode, false);
+                        string pdu = Pdu.EncodeSmsSubmit(phoneNumber, Gsm7.Encode(message), Gsm7.DataCodingSchemeCode, false);
                         string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
                         string cmd2 = pdu;
                         AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
