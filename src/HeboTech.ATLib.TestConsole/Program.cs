@@ -32,7 +32,7 @@ namespace HeboTech.ATLib.TestConsole
 
             // ### Uncomment this section to use network socket
             using Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect("192.168.10.144", 7000);
+            socket.Connect("192.168.10.157", 7000);
             Console.WriteLine("Network socket opened");
             stream = new NetworkStream(socket);
 

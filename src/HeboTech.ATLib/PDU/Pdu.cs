@@ -21,7 +21,7 @@ namespace HeboTech.ATLib.PDU
             // Address length. Length of phone number (number of digits)
             sb.Append((phoneNumber.ToString().Length).ToString("X2"));
             // Type-of-Address
-            sb.Append((phoneNumber.AddressType).ToString("X2"));
+            sb.Append(GetAddressType(phoneNumber).ToString("X2"));
             // Phone number in semi octets. 12345678 is represented as 21436587
             sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString()));
             // TP-PID Protocol identifier
@@ -72,8 +72,9 @@ namespace HeboTech.ATLib.PDU
             byte tp_dcs = HexToByte(text[offset..(offset += 2)]);
             ReadOnlySpan<char> tp_scts = text[offset..(offset += 14)];
             byte tp_udl = HexToByte(text[offset..(offset += 2)]);
+            int udlBytes = (int)Math.Ceiling(tp_udl * 7 / 8.0);
 
-            ReadOnlySpan<char> tp_ud = text[offset..(offset += ((tp_udl - 1) * 2))];
+            ReadOnlySpan<char> tp_ud = text[offset..(offset += ((udlBytes) * 2))];
             string message = null;
             switch (tp_dcs)
             {
@@ -163,6 +164,11 @@ namespace HeboTech.ATLib.PDU
             if (swappedData[^1] == 'F')
                 return swappedData[..^1];
             return swappedData;
+        }
+
+        private static byte GetAddressType(PhoneNumber phoneNumber)
+        {
+            return (byte)(0b1000_0000 + (byte)phoneNumber.Ton + (byte)phoneNumber.Npi);
         }
 
         private static PhoneNumber DecodePhoneNumber(ReadOnlySpan<char> data)

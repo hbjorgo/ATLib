@@ -21,12 +21,12 @@
         {
             Ton = ton;
             Number = number;
+            Npi = npi;
         }
 
         public TypeOfNumber Ton { get; }
         public NumberPlanIdentification Npi { get; }
         public string Number { get; set; }
-        public byte AddressType => (byte)(0b1000_0000 + (byte)Ton + (byte)Npi);
 
         public override string ToString()
         {
