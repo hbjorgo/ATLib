@@ -11,6 +11,11 @@ namespace HeboTech.ATLib.CodingSchemes
     {
         public const byte DataCodingSchemeCode = 0x00;
 
+        /// <summary>
+        /// Encode to GSM7
+        /// </summary>
+        /// <param name="input">String to encode</param>
+        /// <returns>GSM7 encoded string</returns>
         public static string Encode(string text)
         {
             return Encode(Encoding.ASCII.GetBytes(text));
@@ -43,6 +48,11 @@ namespace HeboTech.ATLib.CodingSchemes
             return str;
         }
 
+        /// <summary>
+        /// Decode from GSM7
+        /// </summary>
+        /// <param name="input">GSM7 encoded string</param>
+        /// <returns>Decoded string</returns>
         public static string Decode(string strGsm7bit)
         {
             return Decode(CodingHelpers.StringToByteArray(strGsm7bit));
