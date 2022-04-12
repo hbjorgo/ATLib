@@ -32,7 +32,14 @@ namespace HeboTech.ATLib.PDU
             sb.Append("AA");
             // TP-User-Data-Length. If TP-DCS field indicates 7-bit data, the length is the number of septets.
             // If TP-DCS indicates 8-bit data or Unicode, the length is the number of octets.
-            sb.Append((encodedMessage.Length / 2 * 8 / 7).ToString("X2"));
+            if (dataCodingScheme == 0)
+            {
+                int messageBitLength = encodedMessage.Length / 2 * 7;
+                int messageLength = messageBitLength % 8 == 0 ? messageBitLength / 8 : (messageBitLength / 8) + 1;
+                sb.Append((messageLength).ToString("X2"));
+            }
+            else
+                sb.Append((encodedMessage.Length / 2 * 8 / 7).ToString("X2"));
             sb.Append(encodedMessage);
 
             return sb.ToString();
