@@ -44,6 +44,9 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         event EventHandler<UssdResponseEventArgs> UssdResponseReceived;
 
+        /// <summary>
+        /// Indicates that an event with no specific event handler is received
+        /// </summary>
         event EventHandler<GenericEventArgs> GenericEvent;
 
         /// <summary>
@@ -91,49 +94,49 @@ namespace HeboTech.ATLib.Modems
         /// <summary>
         /// Gets the available character sets
         /// </summary>
-        /// <returns>Character sets</returns>
+        /// <returns>Command status with character sets</returns>
         Task<ModemResponse<IEnumerable<string>>> GetAvailableCharacterSetsAsync();
 
         /// <summary>
         /// Gets the current battery status
         /// </summary>
-        /// <returns>Battery status</returns>
+        /// <returns>Command status with battery status</returns>
         Task<ModemResponse<BatteryStatus>> GetBatteryStatusAsync();
 
         /// <summary>
         /// Gets the current character set
         /// </summary>
-        /// <returns>Character set</returns>
+        /// <returns>Command status with character set</returns>
         Task<ModemResponse<string>> GetCurrentCharacterSetAsync();
 
         /// <summary>
         /// Gets the current date and time
         /// </summary>
-        /// <returns>Current date and time</returns>
+        /// <returns>Command status with current date and time</returns>
         Task<ModemResponse<DateTimeOffset>> GetDateTimeAsync();
 
         /// <summary>
         /// Gets the international mobile subscriber identity
         /// </summary>
-        /// <returns>IMSI</returns>
+        /// <returns>Command status with IMSI</returns>
         Task<ModemResponse<Imsi>> GetImsiAsync();
 
         /// <summary>
         /// Gets the product information (manufacturer id, model id, revision id, IMEI etc)
         /// </summary>
-        /// <returns>Product information</returns>
+        /// <returns>Command status with product information</returns>
         Task<ModemResponse<ProductIdentificationInformation>> GetProductIdentificationInformationAsync();
 
         /// <summary>
         /// Gets the signal quality
         /// </summary>
-        /// <returns>Signal quality</returns>
+        /// <returns>Command status with signal quality</returns>
         Task<ModemResponse<SignalStrength>> GetSignalStrengthAsync();
 
         /// <summary>
         /// Gets the SIM status
         /// </summary>
-        /// <returns>SIM status</returns>
+        /// <returns>Command status with SIM status</returns>
         Task<ModemResponse<SimStatus>> GetSimStatusAsync();
 
         /// <summary>
@@ -146,24 +149,41 @@ namespace HeboTech.ATLib.Modems
         /// Lists SMSs with a given status from the preferred storage
         /// </summary>
         /// <param name="smsStatus"></param>
-        /// <returns>A list of SMSs</returns>
+        /// <returns>Command status with a list of SMSs</returns>
         Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus);
 
+        /// <summary>
+        /// Set preferred message storages
+        /// </summary>
+        /// <param name="storage1Name"></param>
+        /// <param name="storage2Name"></param>
+        /// <param name="storage3Name"></param>
+        /// <returns>Command status with set preferred message storages</returns>
         Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(string storage1Name, string storage2Name, string storage3Name);
+
+        /// <summary>
+        /// Get supported preferred message storages
+        /// </summary>
+        /// <returns>Command status with supported preferred message storages/returns>
         Task<ModemResponse<SupportedPreferredMessageStorages>> GetSupportedPreferredMessageStoragesAsync();
+
+        /// <summary>
+        /// Get preferred message storages
+        /// </summary>
+        /// <returns>Command status with preferred message storages</returns>
         Task<ModemResponse<PreferredMessageStorages>> GetPreferredMessageStoragesAsync();
 
         /// <summary>
         /// Reads an SMS from the preferred storage
         /// </summary>
         /// <param name="index"></param>
-        /// <returns>SMS</returns>
+        /// <returns>Command status with SMS</returns>
         Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat);
 
         /// <summary>
         /// Reload and initialize the SIM card
         /// </summary>
-        /// <returns>True if the operation was successful, false otherwise</returns>
+        /// <returns>Command status</returns>
         Task<ModemResponse> ReInitializeSimAsync();
 
         /// <summary>
@@ -171,7 +191,7 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>
         /// <param name="message">The message body</param>
-        /// <returns></returns>
+        /// <returns>Command status with SMS reference</returns>
         Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat);
 
         /// <summary>
@@ -196,6 +216,11 @@ namespace HeboTech.ATLib.Modems
         /// <returns>Command status</returns>
         Task<ModemResponse> SetDateTimeAsync(DateTimeOffset value);
 
+        /// <summary>
+        /// Set error format
+        /// </summary>
+        /// <param name="errorFormat">Typical: 0 (disable), 1 (numeric), 2 (verbose)</param>
+        /// <returns>Command status</returns>
         Task<ModemResponse> SetErrorFormat(int errorFormat);
 
         /// <summary>
@@ -206,7 +231,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="bm">bm</param>
         /// <param name="ds">ds</param>
         /// <param name="bfr">bfr</param>
-        /// <returns></returns>
+        /// <returns>Command status</returns>
         Task<ModemResponse> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr);
 
         /// <summary>
