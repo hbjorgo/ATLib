@@ -2,6 +2,7 @@
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
+using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace HeboTech.ATLib.TestConsole
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IModem modem = new DWM222(atChannel);
+            using IModem modem = new SIM5320(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -56,7 +57,7 @@ namespace HeboTech.ATLib.TestConsole
                     Console.WriteLine($"SIM Status: {simStatus}");
                     if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_READY)
                         break;
-                    await Task.Delay(TimeSpan.FromMilliseconds(500));
+                    await Task.Delay(TimeSpan.FromMilliseconds(1000));
                 }
             }
             else
@@ -65,8 +66,14 @@ namespace HeboTech.ATLib.TestConsole
                 return;
             }
 
-            var imsi = await modem.GetImsiAsync();
-            Console.WriteLine($"IMSI: {imsi}");
+            for (int i = 0; i < 10; i++)
+            {
+                var imsi = await modem.GetImsiAsync();
+                Console.WriteLine($"IMSI: {imsi}");
+                if (imsi.IsSuccess)
+                    break;
+                await Task.Delay(TimeSpan.FromMilliseconds(1000));
+            }
 
             var signalStrength = await modem.GetSignalStrengthAsync();
             Console.WriteLine($"Signal Strength: {signalStrength}");
@@ -93,8 +100,8 @@ namespace HeboTech.ATLib.TestConsole
             var setPreferredStorages = await modem.SetPreferredMessageStorageAsync("ME", "ME", "ME");
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
-            //var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
-            //Console.WriteLine($"Single SMS: {singleSms}");
+            var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
+            Console.WriteLine($"Single SMS: {singleSms}");
 
             var smss = await modem.ListSmssAsync(SmsStatus.ALL);
             if (smss.IsSuccess)
@@ -141,7 +148,7 @@ namespace HeboTech.ATLib.TestConsole
                             string smsMessage = Console.ReadLine();
 
                             Console.WriteLine("Sending SMS...");
-                            var smsReference = await modem.SendSmsAsync(phoneNumber, smsMessage, smsTextFormat);
+                            var smsReference = await modem.SendSmsAsync(phoneNumber, smsMessage, smsTextFormat, false);
                             Console.WriteLine($"SMS Reference: {smsReference}");
                         }
                         break;

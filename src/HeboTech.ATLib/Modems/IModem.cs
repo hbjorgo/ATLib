@@ -191,8 +191,10 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>
         /// <param name="message">The message body</param>
+        /// <param name="smsTextFormat">Text or PDU format</param>
+        /// <param name="includeEmptySmscLength">In case of PDU format - wether to include empty SMSC (Short Message Service Center) length. This is required by some modems.</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat);
+        Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat, bool includeEmptySmscLength);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event
