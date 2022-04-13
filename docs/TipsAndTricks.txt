@@ -9,8 +9,17 @@
 
 Linux
 Use ser2net to forward serial port over tcp.
+Run ser2net -n to attach to console
+Run ser2net to run as daemon
+
+It uses a yaml file for configuration now. Example file is included in this folder. Copy it to /etc/ser2net/ser2net.yaml
+
+Older config:
 sudo nano /etc/ser2net.conf
 Uncomment examples and add
+
+#SIMCOM SIM5320E
+7000:telnet:0:/dev/ttyUSB2:9600 8DATABITS NONE 1STOPBIT
 
 #D-Link DWM222:
 7000:telnet:0:/dev/ttyUSB1:115200 8DATABITS NONE 1STOPBIT
@@ -18,5 +27,3 @@ Uncomment examples and add
 #TP-LINK MA260:
 7000:telnet:0:/dev/ttyUSB2:9600 8DATABITS NONE 1STOPBIT
 
-Run ser2net -n to attach to console
-Run ser2net to run as daemon
