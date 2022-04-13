@@ -17,7 +17,7 @@ namespace HeboTech.ATLib.TestConsole
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IModem modem = new SIM5320(atChannel);
+            using IModem modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -148,7 +148,7 @@ namespace HeboTech.ATLib.TestConsole
                             string smsMessage = Console.ReadLine();
 
                             Console.WriteLine("Sending SMS...");
-                            var smsReference = await modem.SendSmsAsync(phoneNumber, smsMessage, smsTextFormat, false);
+                            var smsReference = await modem.SendSmsAsync(phoneNumber, smsMessage, smsTextFormat);
                             Console.WriteLine($"SMS Reference: {smsReference}");
                         }
                         break;
