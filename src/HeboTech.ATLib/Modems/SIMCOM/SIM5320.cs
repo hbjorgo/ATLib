@@ -41,6 +41,11 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
+        public Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat)
+        {
+            return SendSmsAsync(phoneNumber, message, smsTextFormat, false);
+        }
+
         public override async Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)
         {
             switch (smsTextFormat)
