@@ -14,11 +14,11 @@ ATLib is just in the beginning, more will come. Request features 👍
 Feedback is very much welcome 🙂
 
 ## Supported commands:
-- Send SMS
+- Send SMS (text and PDU (GSM7bit, UCS2, ANSI))
 - List SMSs
-- Read SMS
+- Read SMS (text and PDU)
 - Delete SMS
-- Set SMS message format (to text)
+- Set SMS message format (text and PDU (GSM7bit, UCS2, ANSI))
 - Dial number
 - Answer incoming call
 - Hang up call
@@ -40,7 +40,7 @@ Feedback is very much welcome 🙂
 - Missed call
 - Call started
 - Call ended
-- SMS received (not fully implemented)
+- SMS received
 - Error received
 - USSD response received
 
