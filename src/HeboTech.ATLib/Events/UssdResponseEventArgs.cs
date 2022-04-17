@@ -17,7 +17,7 @@ namespace HeboTech.ATLib.Events
 
         public static UssdResponseEventArgs CreateFromResponse(string response)
         {
-            var match = Regex.Match(response, @"\+CUSD:\s(?<status>\d),""(?<message>.*)"",(?<codingScheme>\d+)");
+            var match = Regex.Match(response, @"\+CUSD:\s(?<status>\d),""(?<message>(?s).*)"",(?<codingScheme>\d+)");
             if (match.Success)
             {
                 int status = int.Parse(match.Groups["status"].Value);
