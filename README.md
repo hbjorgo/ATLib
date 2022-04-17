@@ -41,6 +41,7 @@ Feedback is very much welcome and please request features 🙂
 - SMS received
 - Error received
 - USSD response received
+- Generic event
 
 ## Supported modems:
 - Adafruit FONA 3G (based on SIMCOM SIM5320 chipset)
