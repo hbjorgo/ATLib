@@ -20,12 +20,12 @@ namespace HeboTech.ATLib.Tests.Events
         [Fact]
         public void CreateFromResponse_accepts_multiline_response()
         {
-            string response = "+CUSD: 1,\"Line1\r\nLine 2\r\nLine 3\r\nLine 4\r\nLine 5\r\nLine 5\r\nLine 6\",15";
+            string response = "+CUSD: 1,\"Line1\r\nLine 2\r\nLine 3\r\nLine 4\r\nLine 5\r\nLine 6\r\nLine 7\",15";
             
             UssdResponseEventArgs dut = UssdResponseEventArgs.CreateFromResponse(response);
 
             Assert.Equal(1, dut.Status);
-            Assert.Equal("Line1\r\nLine 2\r\nLine 3\r\nLine 4\r\nLine 5\r\nLine 5\r\nLine 6", dut.Response);
+            Assert.Equal("Line1\r\nLine 2\r\nLine 3\r\nLine 4\r\nLine 5\r\nLine 6\r\nLine 7", dut.Response);
             Assert.Equal(15, dut.CodingScheme);
         }
     }
