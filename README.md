@@ -7,11 +7,9 @@ ATLib is a C# AT command library that abstracts away the commands and makes it e
 
 Hayes command set (commonly known as AT commands) is a command set frequently used in modems. Read more about it at [Wikipedia](https://en.wikipedia.org/wiki/Hayes_command_set).
 
-ATLib is just in the beginning, more will come. Request features 👍
+Feedback is very much welcome and please request features 🙂
 
 [HeboTech.GsmApi](https://github.com/hbjorgo/GsmApi) is a REST API wrapping this library.
-
-Feedback is very much welcome 🙂
 
 ## Supported commands:
 - Send SMS (text and PDU (GSM7bit, UCS2, ANSI))
@@ -48,7 +46,7 @@ Feedback is very much welcome 🙂
 - Adafruit FONA 3G (based on SIMCOM SIM5320 chipset)
 - D-Link DWM-222 (based on Qualcomm MDM9225 chipset)
 - TP-LINK MA260 (based on a Qualcomm chipset)
-* Other modems may work using one of the implementations above
+- Other modems may work using one of the implementations above
 
 ## Usage
 Install as NuGet package
@@ -66,7 +64,7 @@ using SerialPort serialPort = new SerialPort(args[0], 9600, Parity.None, 8, Stop
 serialPort.Open();
 
 // Create AT channel
-using AtChannel atChannel = new AtChannel(serialPort.BaseStream);
+using AtChannel atChannel = AtChannel.Create(serialPort.BaseStream);
 
 // Create the modem
 using IModem modem = new Fona3G(atChannel);
@@ -84,7 +82,7 @@ if (simStatus == SimStatus.SIM_PIN)
     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 }
 
-// Set SMS text format. Currently Text is supported
+// Set SMS text format
 var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
 
 // Send SMS to the specified number
