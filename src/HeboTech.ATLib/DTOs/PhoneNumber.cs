@@ -4,14 +4,28 @@
     {
         public PhoneNumber(string number)
         {
-            Number = number;
             if (number.StartsWith('+'))
-                Format = PhoneNumberFormat.International;
+            {
+                Ton = TypeOfNumber.International;
+                Npi = NumberPlanIdentification.ISDN;
+            }
             else
-                Format = PhoneNumberFormat.National;
+            {
+                Ton = TypeOfNumber.National;
+                Npi = NumberPlanIdentification.Unknown;
+            }
+            Number = number.TrimStart('+');
         }
 
-        public PhoneNumberFormat Format { get; }
+        public PhoneNumber(string number, TypeOfNumber ton, NumberPlanIdentification npi)
+        {
+            Ton = ton;
+            Number = number;
+            Npi = npi;
+        }
+
+        public TypeOfNumber Ton { get; }
+        public NumberPlanIdentification Npi { get; }
         public string Number { get; set; }
 
         public override string ToString()

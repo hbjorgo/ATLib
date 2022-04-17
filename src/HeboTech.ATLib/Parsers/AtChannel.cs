@@ -1,15 +1,12 @@
 ﻿using System;
-using System.Buffers;
 using System.IO;
-using System.IO.Pipelines;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtChannel : IDisposable
+    public class AtChannel : IAtChannel, IDisposable
     {
         private static readonly string[] FinalResponseErrors = new string[]
         {
@@ -34,63 +31,69 @@ namespace HeboTech.ATLib.Parsers
             "+CBM:"
         };
 
-        private static readonly byte[] eolSequence = new byte[] { (byte)'\r', (byte)'\n' };
-        private static readonly byte[] smsPromptSequence = new byte[] { (byte)'>', (byte)' ' };
-
         public event EventHandler<UnsolicitedEventArgs> UnsolicitedEvent;
 
-        private readonly object lockObject = new object();
+        private bool debugEnabled;
+        private Action<string> debugAction;
+
+        private bool isDisposed;
+        private IAtReader atReader;
+        private IAtWriter atWriter;
+        private CancellationTokenSource cancellationTokenSource;
         private Task readerTask;
-        private PipeReader reader;
-        private Stream outputStream;
-        private CancellationTokenSource internalCancellationTokenSource;
-        private CancellationToken internalCancellationToken;
-        private SemaphoreSlim semaphore;
-        protected SemaphoreSlim readLoopStartSemaphore;
-        private bool running;
+        private SemaphoreSlim waitingForCommandResponse;
 
-        private AtCommandType commandType;
-        private string responsePrefix;
-        private string smsPdu;
-        private AtResponse response;
-        private bool disposedValue;
+        private AtCommand currentCommand;
+        private AtResponse currentResponse;
 
-        public AtChannel(Stream stream)
-            : this(stream, stream, null)
+        public AtChannel(IAtReader atReader, IAtWriter atWriter)
         {
+            this.atReader = atReader;
+            this.atWriter = atWriter;
+            cancellationTokenSource = new CancellationTokenSource();
+            waitingForCommandResponse = new SemaphoreSlim(0, 1);
         }
 
-        public AtChannel(Stream inputStream, Stream outputStream)
-            : this(inputStream, outputStream, null)
+        public TimeSpan DefaultCommandTimeout { get; set; } = TimeSpan.FromSeconds(5);
+
+        public void Open()
         {
+            atReader.Open();
+            readerTask = Task.Factory.StartNew(() => ReaderLoopAsync(cancellationTokenSource.Token), TaskCreationOptions.LongRunning);
         }
 
-        protected AtChannel(Stream inputStream, Stream outputStream, SemaphoreSlim readLoopStartSemaphore)
+        public void Close()
         {
-            if (inputStream == null)
-                throw new ArgumentNullException(nameof(inputStream));
-            if (outputStream == null)
-                throw new ArgumentNullException(nameof(outputStream));
+            Dispose();
+        }
 
-            if (!inputStream.CanRead)
-                throw new ArgumentException($"{nameof(inputStream)} is closed");
-            if (!outputStream.CanWrite)
-                throw new ArgumentException($"{nameof(outputStream)} is closed");
+        public bool IsDebugEnabled()
+        {
+            return debugEnabled;
+        }
 
-            internalCancellationTokenSource = new CancellationTokenSource();
-            internalCancellationToken = internalCancellationTokenSource.Token;
-            semaphore = new SemaphoreSlim(0, 1);
-            this.outputStream = outputStream;
-            reader = PipeReader.Create(inputStream);
-            this.readLoopStartSemaphore = readLoopStartSemaphore;
+        public void EnableDebug(Action<string> debugAction)
+        {
+            this.debugAction = debugAction ?? throw new ArgumentNullException(nameof(debugAction));
+            debugEnabled = true;
+        }
 
-            running = true;
-            readerTask = Task.Run(async () =>
+        public void DisableDebug()
+        {
+            debugEnabled = false;
+            debugAction = default;
+        }
+
+        /// <summary>
+        /// Clears all available items
+        /// </summary>
+        /// <returns></returns>
+        public async Task ClearAsync(CancellationToken cancellationToken = default)
+        {
+            for (int i = 0; i < atReader.AvailableItems(); i++)
             {
-                if (readLoopStartSemaphore != null)
-                    await readLoopStartSemaphore.WaitAsync(internalCancellationToken).ConfigureAwait(false);
-                await ReaderLoopAsync(internalCancellationToken).ConfigureAwait(false);
-            }, internalCancellationToken);
+                await atReader.ReadAsync(cancellationToken);
+            }
         }
 
         /// <summary>
@@ -99,167 +102,151 @@ namespace HeboTech.ATLib.Parsers
         /// <param name="command"></param>
         /// <param name="response"></param>
         /// <returns></returns>
-        public virtual Task<(AtError error, AtResponse response)> SendCommand(string command)
+        public virtual Task<AtResponse> SendCommand(string command, TimeSpan? timeout = null)
         {
-            return SendFullCommandAsync(command, AtCommandType.NO_RESULT, null, null, TimeSpan.Zero);
+            return SendFullCommandAsync(new AtCommand(AtCommandType.NO_RESULT, command, null, null, timeout ?? DefaultCommandTimeout));
         }
 
-        public virtual async Task<(AtError error, AtResponse response)> SendSingleLineCommandAsync(string command, string responsePrefix)
+        public virtual async Task<AtResponse> SendSingleLineCommandAsync(string command, string responsePrefix, TimeSpan? timeout = null)
         {
-            (AtError error, AtResponse response) = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, null, TimeSpan.Zero);
+            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
 
-            if (error == AtError.NO_ERROR && response != null && response.Success && !response.Intermediates.Any())
+            if (response != null && response.Success && !response.Intermediates.Any())
             {
                 // Successful command must have an intermediate response
-                return (AtError.INVALID_RESPONSE, default);
+                throw new InvalidResponseException("Did not get an intermediate response");
             }
 
-            return (error, response);
+            return response;
         }
 
-        public virtual Task<(AtError error, AtResponse response)> SendMultilineCommand(string command, string responsePrefix)
+        public virtual Task<AtResponse> SendMultilineCommand(string command, string responsePrefix, TimeSpan? timeout = null)
         {
             AtCommandType commandType = responsePrefix == null ? AtCommandType.MULTILINE_NO_PREFIX : AtCommandType.MULTILINE;
-            return SendFullCommandAsync(command, commandType, responsePrefix, null, TimeSpan.Zero);
+            return SendFullCommandAsync(new AtCommand(commandType, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
         }
 
-        public virtual async Task<(AtError error, AtResponse response)> SendSmsAsync(string command, string pdu, string responsePrefix)
+        public virtual async Task<AtResponse> SendSmsAsync(string command, string pdu, string responsePrefix, TimeSpan? timeout = null)
         {
-            (AtError error, AtResponse response) = await SendFullCommandAsync(command, AtCommandType.SINGELLINE, responsePrefix, pdu, TimeSpan.Zero);
+            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, pdu, timeout ?? DefaultCommandTimeout));
 
-            if (error == AtError.NO_ERROR && response != null && response.Success && !response.Intermediates.Any())
+            if (response != null && response.Success && !response.Intermediates.Any())
             {
                 // Successful command must have an intermediate response
-                return (AtError.INVALID_RESPONSE, default);
+                throw new InvalidResponseException("Did not get an intermediate response");
             }
 
-            return (error, response);
+            return response;
         }
 
-        // TODO: Ref
-        public virtual async Task<(AtError error, AtResponse response)> SendFullCommandAsync(string command, AtCommandType commandType, string responsePrefix, string smsPdu, TimeSpan timeout)
+        /// <summary>
+        /// Not re-entrant
+        /// </summary>
+        /// <param name="command"></param>
+        /// <param name="commandType"></param>
+        /// <param name="responsePrefix"></param>
+        /// <param name="smsPdu"></param>
+        /// <param name="timeout"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        private async Task<AtResponse> SendFullCommandAsync(AtCommand command, CancellationToken cancellationToken = default)
         {
-            lock (lockObject)
-            {
-                if (response != null)
-                {
-                    return OnError(AtError.COMMAND_PENDING);
-                }
-
-                this.commandType = commandType;
-                this.responsePrefix = responsePrefix;
-                this.smsPdu = smsPdu;
-                this.response = new AtResponse();
-            }
-
-            AtError writeError = WriteLine(command);
-            if (writeError != AtError.NO_ERROR)
-            {
-                return OnError(writeError);
-            }
-
             try
             {
-                if (!await semaphore.WaitAsync(10_000, internalCancellationToken))
-                {
-                    return OnError(AtError.TIMEOUT);
-                }
+                this.currentCommand = command;
+                this.currentResponse = new AtResponse();
+
+                if (debugEnabled)
+                    debugAction($"Out: {command.Command}");
+                await atWriter.WriteLineAsync(command.Command);
+
+                if (!await waitingForCommandResponse.WaitAsync(command.Timeout, cancellationToken))
+                    throw new TimeoutException("Timed out while waiting for command response");
+
+                return currentResponse;
             }
-            catch (Exception ex) when (ex is OperationCanceledException || ex is ObjectDisposedException)
+            finally
             {
-                return OnError(AtError.CHANNEL_CLOSED);
+                this.currentCommand = default;
+                this.currentResponse = default;
             }
-
-            // TODO: Ref
-
-            AtResponse retVal = response;
-            this.response = default;
-
-            return (AtError.NO_ERROR, retVal);
-
-            (AtError, AtResponse) OnError(AtError error)
-            {
-                response = default;
-                responsePrefix = default;
-                smsPdu = default;
-                return (error, default);
-            }
-        }
-
-        private AtError WriteLine(string command)
-        {
-            Write(command);
-            Write("\r");
-
-            return AtError.NO_ERROR;
         }
 
         private async Task ReaderLoopAsync(CancellationToken cancellationToken = default)
         {
-            while (running)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                if (cancellationToken.IsCancellationRequested)
-                    cancellationToken.ThrowIfCancellationRequested();
-
-                string line1 = await ReadSingleMessageAsync(cancellationToken);
-                if (line1 == null)
+                string line1;
+                try
+                {
+                    line1 = await atReader.ReadAsync(cancellationToken);
+                    if (debugEnabled)
+                        debugAction($"In: {line1}");
+                }
+                catch (OperationCanceledException)
                 {
                     break;
                 }
+                if (line1 == null)
+                    break;
                 if (line1 == string.Empty)
-                {
                     continue;
-                }
-
                 if (IsSMSUnsolicited(line1))
                 {
-                    string line2 = await ReadSingleMessageAsync(cancellationToken);
-                    if (line2 == null)
+                    string line2;
+                    try
+                    {
+                        line2 = await atReader.ReadAsync(cancellationToken);
+                        if (debugEnabled)
+                            debugAction($"In: {line2}");
+                    }
+                    catch (OperationCanceledException)
                     {
                         break;
                     }
-
+                    if (line2 == null)
+                        break;
                     HandleUnsolicited(line1, line2);
                 }
                 else
-                {
                     ProcessMessage(line1);
-                }
             }
         }
 
         private void ProcessMessage(string line)
         {
-            if (response == null)
+            if (currentResponse == null)
             {
                 HandleUnsolicited(line);
             }
             else if (IsFinalResponseSuccess(line))
             {
-                response.Success = true;
+                currentResponse.Success = true;
                 HandleFinalResponse(line);
             }
             else if (IsFinalResponseError(line))
             {
-                response.Success = false;
+                currentResponse.Success = false;
                 HandleFinalResponse(line);
             }
-            else if (smsPdu != null && line == "> ")
+            else if (currentCommand.SmsPdu != null && line == "> ")
             {
                 // See eg. TS 27.005 4.3
                 // Commands like AT+CMGS have a "> " prompt
-                WriteCtrlZ(smsPdu);
-                smsPdu = null;
+                if (debugEnabled)
+                    debugAction($"Out: {currentCommand.SmsPdu}");
+                atWriter.WriteSmsPduAndCtrlZAsync(currentCommand.SmsPdu);
+                currentCommand.SmsPdu = null;
             }
             else
             {
-                switch (commandType)
+                switch (currentCommand.CommandType)
                 {
                     case AtCommandType.NO_RESULT:
                         HandleUnsolicited(line);
                         break;
                     case AtCommandType.NUMERIC:
-                        if (!response.Intermediates.Any() && char.IsDigit(line[0]))
+                        if (!currentResponse.Intermediates.Any() && char.IsDigit(line[0]))
                         {
                             AddIntermediate(line);
                         }
@@ -270,7 +257,7 @@ namespace HeboTech.ATLib.Parsers
                         }
                         break;
                     case AtCommandType.SINGELLINE:
-                        if (!response.Intermediates.Any() && line.StartsWith(responsePrefix))
+                        if (!currentResponse.Intermediates.Any() && line.StartsWith(currentCommand.ResponsePrefix))
                         {
                             AddIntermediate(line);
                         }
@@ -281,7 +268,7 @@ namespace HeboTech.ATLib.Parsers
                         }
                         break;
                     case AtCommandType.MULTILINE:
-                        if (line.StartsWith(responsePrefix))
+                        if (line.StartsWith(currentCommand.ResponsePrefix))
                         {
                             AddIntermediate(line);
                         }
@@ -304,43 +291,13 @@ namespace HeboTech.ATLib.Parsers
 
         private void AddIntermediate(string line)
         {
-            response.Intermediates.Add(line);
-        }
-
-        private void WriteCtrlZ(string smsPdu)
-        {
-            Write(smsPdu);
-            Write("\x1A");
-        }
-
-        private static bool IsFinalResponseError(string line)
-        {
-            foreach (string response in FinalResponseErrors)
-            {
-                if (line.StartsWith(response))
-                {
-                    return true;
-                }
-            }
-            return false;
+            currentResponse.Intermediates.Add(line);
         }
 
         private void HandleFinalResponse(string line)
         {
-            response.FinalResponse = line;
-            semaphore.Release();
-        }
-
-        private static bool IsFinalResponseSuccess(string line)
-        {
-            foreach (string response in FinalResponseSuccesses)
-            {
-                if (line.StartsWith(response))
-                {
-                    return true;
-                }
-            }
-            return false;
+            currentResponse.FinalResponse = line;
+            waitingForCommandResponse.Release();
         }
 
         private void HandleUnsolicited(string line1, string line2 = null)
@@ -348,178 +305,52 @@ namespace HeboTech.ATLib.Parsers
             UnsolicitedEvent?.Invoke(this, new UnsolicitedEventArgs(line1, line2));
         }
 
+        private static bool IsFinalResponseSuccess(string line)
+        {
+            return FinalResponseSuccesses.Any(response => line.StartsWith(response));
+        }
+
+        private static bool IsFinalResponseError(string line)
+        {
+            return FinalResponseErrors.Any(response => line.StartsWith(response));
+        }
+
         private static bool IsSMSUnsolicited(string line)
         {
-            foreach (var response in SmsUnsoliciteds)
-            {
-                if (line.StartsWith(response))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return SmsUnsoliciteds.Any(response => line.StartsWith(response));
         }
 
-        protected async Task<string> ReadSingleMessageAsync(CancellationToken cancellationToken = default)
+        public static AtChannel Create(Stream stream)
         {
-            while (running)
-            {
-                ReadResult result;
-                try
-                {
-                    result = await reader.ReadAsync(cancellationToken);
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-                if (!result.IsCanceled)
-                {
-                    ReadOnlySequence<byte> buffer = result.Buffer;
-
-                    // In the event that no message is parsed successfully, mark consumed
-                    // as nothing and examined as the entire buffer.
-                    SequencePosition consumed = buffer.Start;
-                    SequencePosition examined = buffer.End;
-
-                    try
-                    {
-                        if (TryReadMessage(ref buffer, out string message))
-                        {
-                            // A single message was successfully parsed so mark the start as the
-                            // parsed buffer as consumed. TryParseMessage trims the buffer to
-                            // point to the data after the message was parsed.
-                            consumed = buffer.Start;
-
-                            // Examined is marked the same as consumed here, so the next call
-                            // to ReadSingleMessageAsync will process the next message if there's
-                            // one.
-                            examined = consumed;
-
-                            return message;
-                        }
-
-                        // There's no more data to be processed.
-                        if (result.IsCompleted)
-                        {
-                            break;
-                        }
-                    }
-                    finally
-                    {
-                        reader.AdvanceTo(consumed, examined);
-                    }
-                }
-            }
-
-            return null;
+            return new AtChannel(new AtReader(stream), new AtWriter(stream));
         }
 
-        private static bool TryReadMessage(ref ReadOnlySequence<byte> buffer, out string line)
+        public static AtChannel Create(Stream inputStream, Stream outputStream)
         {
-            // Get the index of EOL and SMS prompt
-            long eolIndex = FindIndexOf(buffer, eolSequence.AsSpan());
-            long smsPromptIndex = FindIndexOf(buffer, smsPromptSequence.AsSpan());
-
-            // Read the first occurence of either EOL or SMS prompt
-            if ((eolIndex >= 0 && smsPromptIndex < 0) || (eolIndex >= 0 && eolIndex < smsPromptIndex))
-                return TryReadLine(ref buffer, out line);
-            else if ((smsPromptIndex >= 0 && eolIndex < 0) || (smsPromptIndex >= 0 && smsPromptIndex < eolIndex))
-                return TryReadSmsPrompt(ref buffer, out line);
-            else
-            {
-                line = default;
-                return false;
-            }
-        }
-
-        /// <summary>
-        /// Get the index of the first occurence of the segment
-        /// </summary>
-        /// <param name="buffer">The buffer to search in</param>
-        /// <param name="data">The segment to find</param>
-        /// <returns>Returns the index of the segment, or -1 if not found</returns>
-        private static long FindIndexOf(in ReadOnlySequence<byte> buffer, ReadOnlySpan<byte> data)
-        {
-            long position = 0;
-
-            foreach (ReadOnlyMemory<byte> segment in buffer)
-            {
-                ReadOnlySpan<byte> span = segment.Span;
-                var index = span.IndexOf(data);
-                if (index != -1)
-                {
-                    return position + index;
-                }
-
-                position += span.Length;
-            }
-
-            return -1;
-        }
-
-        private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out string line)
-        {
-            SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
-            if (sequenceReader.TryReadTo(out ReadOnlySequence<byte> slice, eolSequence.AsSpan(), advancePastDelimiter: true))
-            {
-                string temp = Encoding.ASCII.GetString(slice.ToArray());
-                buffer = buffer.Slice(sequenceReader.Position);
-                line = temp;
-                return true;
-            }
-            line = default;
-            return false;
-        }
-
-        private static bool TryReadSmsPrompt(ref ReadOnlySequence<byte> buffer, out string line)
-        {
-            SequenceReader<byte> sequenceReader = new SequenceReader<byte>(buffer);
-            if (sequenceReader.TryReadTo(out _, smsPromptSequence.AsSpan(), advancePastDelimiter: true))
-            {
-                line = Encoding.ASCII.GetString(smsPromptSequence);
-                buffer = buffer.Slice(sequenceReader.Position);
-                return true;
-            }
-            line = default;
-            return false;
-        }
-
-        protected void Write(string text)
-        {
-            byte[] buffer = Encoding.UTF8.GetBytes(text);
-            outputStream.Write(buffer, 0, buffer.Length);
-            outputStream.Flush();
+            return new AtChannel(new AtReader(inputStream), new AtWriter(outputStream));
         }
 
         #region Dispose
         protected virtual void Dispose(bool disposing)
         {
-            if (!disposedValue)
+            if (!isDisposed)
             {
                 if (disposing)
                 {
-                    // Dispose managed state (managed objects)
-                    outputStream.Flush();
-                    running = false;
-                    reader.CancelPendingRead();
-                    reader.Complete();
-                    internalCancellationTokenSource.Cancel();
-                    readerTask.Wait(TimeSpan.FromSeconds(1));
-
-                    semaphore.Dispose();
-                    readLoopStartSemaphore?.Dispose();
-                    internalCancellationTokenSource.Dispose();
-                    reader = null;
-                    outputStream = null;
-                    semaphore = null;
-                    readLoopStartSemaphore = null;
-                    internalCancellationTokenSource = null;
+                    // TODO: dispose managed state (managed objects)
+                    cancellationTokenSource.Cancel();
+                    readerTask?.Wait();
+                    readerTask?.Dispose();
+                    readerTask = null;
+                    atReader.Close();
+                    atWriter.Close();
+                    waitingForCommandResponse.Dispose();
+                    waitingForCommandResponse = null;
                 }
 
-                // Free unmanaged resources (unmanaged objects) and override finalizer
-                // Set large fields to null
-                disposedValue = true;
+                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
+                // TODO: set large fields to null
+                isDisposed = true;
             }
         }
 

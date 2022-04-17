@@ -2,7 +2,7 @@
 {
     public enum SmsTextFormat
     {
-        //PDU = 0,
+        PDU = 0,
         Text = 1
     }
 }

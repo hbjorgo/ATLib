@@ -1,5 +1,7 @@
-﻿using HeboTech.ATLib.Modems.Generic;
+﻿using HeboTech.ATLib.DTOs;
+using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
+using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.Qualcomm
 {
@@ -8,6 +10,11 @@ namespace HeboTech.ATLib.Modems.Qualcomm
         public MDM9225(AtChannel channel)
             : base(channel)
         {
+        }
+
+        public Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat)
+        {
+            return SendSmsAsync(phoneNumber, message, smsTextFormat, false);
         }
     }
 }

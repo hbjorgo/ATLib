@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.PDU;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,9 +20,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         #region Custom
         public virtual async Task<RemainingPinPukAttempts> GetRemainingPinPukAttemptsAsync()
         {
-            (AtError error, AtResponse response) = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:");
 
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 string line = response.Intermediates.First();
                 var match = Regex.Match(line, @"\+SPIC:\s(?<pin1>\d+),(?<pin2>\d+),(?<puk1>\d+),(?<puk2>\d+)");
@@ -40,39 +41,70 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public override async Task<Sms> ReadSmsAsync(int index)
+        public Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat)
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
-
-            if (error == AtError.NO_ERROR && response.Intermediates.Count > 0)
-            {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+?\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
-                if (match.Success)
-                {
-                    SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                    PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
-                    int year = int.Parse(match.Groups["year"].Value);
-                    int month = int.Parse(match.Groups["month"].Value);
-                    int day = int.Parse(match.Groups["day"].Value);
-                    int hour = int.Parse(match.Groups["hour"].Value);
-                    int minute = int.Parse(match.Groups["minute"].Value);
-                    int second = int.Parse(match.Groups["second"].Value);
-                    int zone = int.Parse(match.Groups["zone"].Value);
-                    DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-                    string message = response.Intermediates.Last();
-                    return new Sms(status, sender, received, message);
-                }
-            }
-            return null;
+            return SendSmsAsync(phoneNumber, message, smsTextFormat, false);
         }
 
-        public override async Task<IList<SmsWithIndex>> ListSmssAsync(SmsStatus smsStatus)
+        public override async Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)
         {
-            (AtError error, AtResponse response) = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
+            switch (smsTextFormat)
+            {
+                case SmsTextFormat.PDU:
+                    AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
+
+                    if (pduResponse.Success && pduResponse.Intermediates.Count > 0)
+                    {
+                        string line1 = pduResponse.Intermediates[0];
+                        string line2 = pduResponse.Intermediates[1];
+                        var line1Match = Regex.Match(line1, @"\+CMGR:\s(?<status>\d{1}),""(?<alphabet>.*)"",(?<length>\d+)");
+                        var line2Match = Regex.Match(line2, @"(?<pdu>[0-9A-F]*)");
+                        if (line1Match.Success && line2Match.Success)
+                        {
+                            int status = int.Parse(line1Match.Groups["status"].Value);
+                            string alphabet = line1Match.Groups["alphabet"].Value;
+                            int length = int.Parse(line1Match.Groups["length"].Value);
+                            string pdu = line2Match.Groups["pdu"].Value;
+                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
+                            return ModemResponse.ResultSuccess(new Sms((SmsStatus)status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
+                        }
+                    }
+                    return ModemResponse.ResultError<Sms>();
+                case SmsTextFormat.Text:
+                    AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
+
+                    if (textResponse.Success && textResponse.Intermediates.Count > 0)
+                    {
+                        string line = textResponse.Intermediates.First();
+                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+?\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
+                        if (match.Success)
+                        {
+                            SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
+                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            int year = int.Parse(match.Groups["year"].Value);
+                            int month = int.Parse(match.Groups["month"].Value);
+                            int day = int.Parse(match.Groups["day"].Value);
+                            int hour = int.Parse(match.Groups["hour"].Value);
+                            int minute = int.Parse(match.Groups["minute"].Value);
+                            int second = int.Parse(match.Groups["second"].Value);
+                            int zone = int.Parse(match.Groups["zone"].Value);
+                            DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+                            string message = textResponse.Intermediates.Last();
+                            return ModemResponse.ResultSuccess(new Sms(status, sender, received, message));
+                        }
+                    }
+                    return ModemResponse.ResultError<Sms>();
+                default:
+                    throw new NotSupportedException("The format is not supported");
+            }
+        }
+
+        public override async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
+        {
+            AtResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"", null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
-            if (error == AtError.NO_ERROR)
+            if (response.Success)
             {
                 for (int i = 0; i < response.Intermediates.Count; i += 2)
                 {
@@ -96,7 +128,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                     }
                 }
             }
-            return smss;
+            return ModemResponse.ResultSuccess(smss);
         }
         #endregion
     }

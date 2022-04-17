@@ -4,13 +4,16 @@ using System.Globalization;
 using System.Linq;
 using System.Text;
 
-namespace HeboTech.ATLib.Parsers
+namespace HeboTech.ATLib.CodingSchemes
 {
     /// <summary>
     /// Encode / decode UCS2 strings
+    /// Unicode 16 bits.
     /// </summary>
     public class UCS2
     {
+        public const byte DataCodingSchemeCode = 0x08;
+
         /// <summary>
         /// Encode to UCS2
         /// </summary>
@@ -29,19 +32,8 @@ namespace HeboTech.ATLib.Parsers
         /// <returns>Decoded string</returns>
         public static string Decode(string input)
         {
-            IEnumerable<byte> bytes = ConvertToBytes(input);
+            IEnumerable<byte> bytes = CodingHelpers.StringToByteArray(input);
             return Encoding.BigEndianUnicode.GetString(bytes.ToArray());
-        }
-
-        private static IEnumerable<byte> ConvertToBytes(string input)
-        {
-            if (input.Length % 2 != 0)
-                yield break;
-
-            for (int i = 0; i < input.Length / 2; i++)
-            {
-                yield return byte.Parse(input.Substring(i * 2, 2), NumberStyles.HexNumber);
-            }
         }
     }
 }

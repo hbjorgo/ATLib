@@ -3,7 +3,6 @@ using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
-using System.IO.Ports;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,20 +10,15 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class StressTest
     {
-        public static async Task Run(string port, string pin, string phoneNumber)
+        private static SmsTextFormat smsTextFormat = SmsTextFormat.Text;
+
+        public static async Task Run(System.IO.Stream stream, string pin)
         {
             Console.WriteLine($"Test started ({DateTime.Now})");
 
-            using SerialPort serialPort = new SerialPort(port, 9600, Parity.None, 8, StopBits.One)
-            {
-                Handshake = Handshake.RequestToSend
-            };
-            Console.WriteLine("Opening serial port...");
-            serialPort.Open();
-            Console.WriteLine("Serialport opened");
-
-            using AtChannel atChannel = new AtChannel(serialPort.BaseStream, serialPort.BaseStream);
+            using AtChannel atChannel = AtChannel.Create(stream);
             using IModem modem = new DWM222(atChannel);
+            atChannel.Open();
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;
@@ -39,7 +33,7 @@ namespace HeboTech.ATLib.TestConsole
                 var simStatus = await modem.GetSimStatusAsync();
                 Console.WriteLine($"SIM Status: {simStatus}");
 
-                if (simStatus == SimStatus.SIM_PIN)
+                if (simStatus.Result == SimStatus.SIM_PIN)
                 {
                     var simPinStatus = await modem.EnterSimPinAsync(new PersonalIdentificationNumber(pin));
                     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
@@ -66,16 +60,19 @@ namespace HeboTech.ATLib.TestConsole
                 var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
                 Console.WriteLine($"Setting SMS text format: {smsTextFormatResult}");
 
-                var singleSms = await modem.ReadSmsAsync(5);
+                var singleSms = await modem.ReadSmsAsync(5, smsTextFormat);
                 Console.WriteLine($"Single SMS: {singleSms}");
 
                 var smss = await modem.ListSmssAsync(SmsStatus.ALL);
-                foreach (var sms in smss)
+                if (smss.IsSuccess)
                 {
-                    Console.WriteLine($"SMS: {sms}");
+                    foreach (var sms in smss.Result)
+                    {
+                        Console.WriteLine($"SMS: {sms}");
+                    }
                 }
 
-                Thread.Sleep(2500);
+                Thread.Sleep(500);
             }
             Console.WriteLine($"Test complete ({DateTime.Now})");
             Console.ReadKey();
