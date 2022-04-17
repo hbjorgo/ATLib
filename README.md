@@ -49,6 +49,9 @@ Feedback is very much welcome and please request features 🙂
 - TP-LINK MA260 (based on a Qualcomm chipset)
 - Other modems may work using one of the implementations above
 
+## Other
+- Debug functionality that lets you intercept incoming and outgoing data
+
 ## Usage
 Install as NuGet package
 ```shell
