@@ -145,7 +145,7 @@ namespace HeboTech.ATLib.Parsers
                         break;
                 }
             }
-            slice = sequence.Slice(0, i - delimiter.Length);
+            slice = sequence.Slice(0, Math.Max(0, i - delimiter.Length));
             
             if (i == sequence.Length && d != delimiter.Length)
                 return -1;
