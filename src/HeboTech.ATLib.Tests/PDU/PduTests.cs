@@ -1,4 +1,5 @@
-﻿using HeboTech.ATLib.CodingSchemes;
+﻿using System;
+using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.PDU;
 using Xunit;
@@ -23,7 +24,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("07911326040000F0040B911346610089F60000208062917314800CC8F71D14969741F977FD07", "31624000000", "31641600986", "02-08-26-19-37-41-+02", "How are you?")]
         public void Decode_SmsDeliver_tests(string data, string serviceCenterNumber, string senderNumber, string timestamp, string message)
         {
-            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(data);
+            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(data.AsSpan());
 
             Assert.NotNull(pduMessage);
             Assert.Equal(TypeOfNumber.International, pduMessage.ServiceCenterNumber.Ton);
@@ -39,7 +40,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("0011000802231537180000AA0D5062154403D1CB68D03DED06", "", "32517381", "PDU 4 teh win")]
         public void Decode_SmsSubmit_tests(string data, string serviceCenterNumber, string senderNumber, string message)
         {
-            SmsSubmit pduMessage = Pdu.DecodeSmsSubmit(data);
+            SmsSubmit pduMessage = Pdu.DecodeSmsSubmit(data.AsSpan());
 
             Assert.NotNull(pduMessage);
             Assert.Equal(serviceCenterNumber, pduMessage.ServiceCenterNumber?.Number ?? "");
