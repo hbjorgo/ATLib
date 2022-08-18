@@ -4,7 +4,7 @@
     {
         public PhoneNumber(string number)
         {
-            if (number.StartsWith('+'))
+            if (number.StartsWith("+"))
             {
                 Ton = TypeOfNumber.International;
                 Npi = NumberPlanIdentification.ISDN;

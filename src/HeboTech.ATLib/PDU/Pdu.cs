@@ -23,7 +23,7 @@ namespace HeboTech.ATLib.PDU
             // Type-of-Address
             sb.Append(GetAddressType(phoneNumber).ToString("X2"));
             // Phone number in semi octets. 12345678 is represented as 21436587
-            sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString()));
+            sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString().AsSpan()));
             // TP-PID Protocol identifier
             sb.Append("00");
             // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
@@ -86,7 +86,7 @@ namespace HeboTech.ATLib.PDU
             switch (tp_dcs)
             {
                 case 0x00:
-                    message = Gsm7.Decode(new string(tp_ud));
+                    message = Gsm7.Decode(new string(tp_ud.ToArray()));
                     break;
                 default:
                     break;
@@ -146,7 +146,7 @@ namespace HeboTech.ATLib.PDU
                 case 0x00:
                     int length = (tp_udl * 7 / 8) + 1;
                     ReadOnlySpan<char> tp_ud = text[offset..(offset += ((length) * 2))];
-                    message = Gsm7.Decode(new string(tp_ud));
+                    message = Gsm7.Decode(new string(tp_ud.ToArray()));
                     break;
                 default:
                     break;
@@ -156,7 +156,7 @@ namespace HeboTech.ATLib.PDU
 
         private static byte HexToByte(ReadOnlySpan<char> text)
         {
-            byte retVal = (byte)int.Parse(text, NumberStyles.HexNumber);
+            byte retVal = (byte)int.Parse(text.ToString(), NumberStyles.HexNumber);
             return retVal;
         }
 
@@ -214,10 +214,11 @@ namespace HeboTech.ATLib.PDU
                 TimeSpan.FromMinutes(offsetQuarters * 15)); // Offset in quarter of hours
             return timestamp;
 
-            static byte DecimalToByte(ReadOnlySpan<char> text)
-            {
-                return (byte)int.Parse(text, NumberStyles.Integer);
-            }
+        }
+
+        private static byte DecimalToByte(ReadOnlySpan<char> text)
+        {
+            return (byte)int.Parse(text.ToString(), NumberStyles.Integer);
         }
     }
 }

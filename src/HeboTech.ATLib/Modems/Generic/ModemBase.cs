@@ -122,7 +122,7 @@ namespace HeboTech.ATLib.Modems.Generic
                 var match = Regex.Match(line, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)");
                 if (match.Success)
                 {
-                    return ModemResponse.ResultSuccess(match.Groups["characterSet"].Captures.Select(x => x.Value));
+                    return ModemResponse.ResultSuccess(match.Groups["characterSet"].Captures.Cast<Capture>().Select(x => x.Value));
                 }
             }
             return ModemResponse.ResultError<IEnumerable<string>>();
@@ -317,7 +317,7 @@ namespace HeboTech.ATLib.Modems.Generic
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(statusCode);
 
                             string pdu = line2Match.Groups["status"].Value;
-                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
+                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu.AsSpan());
 
                             return ModemResponse.ResultSuccess(new Sms(status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
@@ -429,14 +429,19 @@ namespace HeboTech.ATLib.Modems.Generic
             if (match.Success)
             {
                 string cpinResult = match.Groups["pinresult"].Value;
-                return cpinResult switch
+                switch (cpinResult)
                 {
-                    "SIM PIN" => ModemResponse.ResultSuccess(SimStatus.SIM_PIN),
-                    "SIM PUK" => ModemResponse.ResultSuccess(SimStatus.SIM_PUK),
-                    "PH-NET PIN" => ModemResponse.ResultSuccess(SimStatus.SIM_NETWORK_PERSONALIZATION),
-                    "READY" => ModemResponse.ResultSuccess(SimStatus.SIM_READY),
-                    _ => ModemResponse.ResultSuccess(SimStatus.SIM_ABSENT),// Treat unsupported lock types as "sim absent"
-                };
+                    case "SIM PIN":
+                        return ModemResponse.ResultSuccess(SimStatus.SIM_PIN);
+                    case "SIM PUK":
+                        return ModemResponse.ResultSuccess(SimStatus.SIM_PUK);
+                    case "PH-NET PIN":
+                        return ModemResponse.ResultSuccess(SimStatus.SIM_NETWORK_PERSONALIZATION);
+                    case "READY":
+                        return ModemResponse.ResultSuccess(SimStatus.SIM_READY);
+                    default:
+                        return ModemResponse.ResultSuccess(SimStatus.SIM_ABSENT);
+                }
             }
 
             return ModemResponse.ResultError<SimStatus>();
