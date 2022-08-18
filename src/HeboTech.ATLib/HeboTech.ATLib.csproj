@@ -1,8 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!--<TargetFramework>netstandard2.1</TargetFramework>-->
-    <TargetFramework>net48</TargetFramework>
+    <TargetFrameworks>netstandard2.1;net48</TargetFrameworks>
     <Authors>HeboTech</Authors>
     <Product>HeboTech ATLib</Product>
     <Version>4.1.0</Version>
