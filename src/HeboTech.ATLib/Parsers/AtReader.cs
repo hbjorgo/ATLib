@@ -95,37 +95,62 @@ namespace HeboTech.ATLib.Parsers
 
         private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out string line)
         {
-            SequenceReader<byte> eolReader = new SequenceReader<byte>(buffer);
-            SequenceReader<byte> smsReader = new SequenceReader<byte>(buffer);
-            bool eolSuccess = eolReader.TryReadTo(out ReadOnlySequence<byte> eolSlice, eolSequence.AsSpan(), advancePastDelimiter: true);
-            bool smsSuccess = smsReader.TryReadTo(out ReadOnlySequence<byte> smsSlice, smsPromptSequence.AsSpan(), advancePastDelimiter: true);
+            //SequenceReader<byte> eolReader = new SequenceReader<byte>(buffer);
+            //SequenceReader<byte> smsReader = new SequenceReader<byte>(buffer);
+            int eolPosition = Find(buffer, out ReadOnlySequence<byte> eolSlice, eolSequence);
+            int smsPosition = Find(buffer, out ReadOnlySequence<byte> smsSlice, smsPromptSequence);
 
-            if (eolSuccess && smsSuccess)
+            if (eolPosition != -1 && smsPosition != -1)
             {
                 if (eolSlice.Length == smsSlice.Length)
                     throw new Exception("Conflicting line endings");
                 if (eolSlice.Length < smsSlice.Length)
-                    smsSuccess = false;
+                    smsPosition = -1;
                 else
-                    eolSuccess = false;
+                    eolPosition = -1;
             }
 
-            if (eolSuccess)
+            if (eolPosition != -1)
             {
                 string temp = Encoding.ASCII.GetString(eolSlice.ToArray());
-                buffer = buffer.Slice(eolReader.Position);
+                buffer = buffer.Slice(eolPosition);
                 line = temp;
                 return true;
             }
-            else if (smsSuccess)
+            else if (smsPosition != -1)
             {
                 string temp = Encoding.ASCII.GetString(smsPromptSequence); // Return the SMS prompt sequence instead of an empty string (the sequence is consumed by the reader).
-                buffer = buffer.Slice(smsReader.Position);
+                buffer = buffer.Slice(smsPosition);
                 line = temp;
                 return true;
             }
             line = default;
             return false;
+        }
+
+        private static int Find(ReadOnlySequence<byte> sequence, out ReadOnlySequence<byte> slice, byte[] delimiter)
+        {
+            int i = 0;
+            int d = 0;
+            foreach (var memory in sequence)
+            {
+                foreach (var b in memory.Span)
+                {
+                    if (b == delimiter[d])
+                        d++;
+                    else
+                        d = 0;
+                    i++;
+                    if (d == delimiter.Length)
+                        break;
+                }
+            }
+            slice = sequence.Slice(0, i - delimiter.Length);
+            
+            if (i == sequence.Length && d != delimiter.Length)
+                return -1;
+
+            return i; // We want to move past the delimiter
         }
 
         #region Dispose
