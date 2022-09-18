@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if NETSTANDARD2_0
+using System;
 
 namespace HeboTech.ATLib.PDU
 {
@@ -10,3 +11,4 @@ namespace HeboTech.ATLib.PDU
         }
     }
 }
+#endif
