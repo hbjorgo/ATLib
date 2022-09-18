@@ -10,7 +10,7 @@ Write-Host "### dotnet build... ###"
 dotnet build .\src\HeboTech.ATLib\HeboTech.ATLib.csproj -c Release
 
 Write-Host "### dotnet test... ###"
-dotnet test .\src\HeboTech.ATLib.Tests\HeboTech.ATLib.Tests.csproj -c Release
+dotnet test .\src\HeboTech.ATLib.Tests\HeboTech.ATLib.Tests.csproj -c Release -f net6.0
 
 Write-Host "### dotnet pack... ###"
 dotnet pack .\src\HeboTech.ATLib\HeboTech.ATLib.csproj -c Release -o $artifacts --no-build
