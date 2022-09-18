@@ -73,6 +73,9 @@ using AtChannel atChannel = AtChannel.Create(serialPort.BaseStream);
 // Create the modem
 using IModem modem = new Fona3G(atChannel);
 
+// Open AT channel
+atChannel.Open();
+
 // The library doesn't support echo, so turn it off
 await modem.DisableEchoAsync();
 
