@@ -18,10 +18,17 @@ namespace HeboTech.ATLib.DTOs
 
         public override string ToString()
         {
+#if NETSTANDARD2_0
+            return
+                $"Storage1: {string.Join(",", Storage1)}{Environment.NewLine}" +
+                $"Storage2: {string.Join(",", Storage2)}{Environment.NewLine}" +
+                $"Storage3: {string.Join(",", Storage3)}";
+#else
             return
                 $"Storage1: {string.Join(',', Storage1)}{Environment.NewLine}" +
                 $"Storage2: {string.Join(',', Storage2)}{Environment.NewLine}" +
                 $"Storage3: {string.Join(',', Storage3)}";
+#endif
         }
     }
 }

@@ -317,7 +317,11 @@ namespace HeboTech.ATLib.Modems.Generic
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(statusCode);
 
                             string pdu = line2Match.Groups["status"].Value;
+#if NETSTANDARD2_0
+                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu.AsSpan());
+#else
                             SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
+#endif
 
                             return ModemResponse.ResultSuccess(new Sms(status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
@@ -408,9 +412,9 @@ namespace HeboTech.ATLib.Modems.Generic
             AtResponse response = await channel.SendCommand($"AT+CMGD={index}");
             return ModemResponse.Success(response.Success);
         }
-        #endregion
+#endregion
 
-        #region _3GPP_TS_27_007
+#region _3GPP_TS_27_007
         public event EventHandler<UssdResponseEventArgs> UssdResponseReceived;
 
         public virtual async Task<ModemResponse<SimStatus>> GetSimStatusAsync()
@@ -429,6 +433,16 @@ namespace HeboTech.ATLib.Modems.Generic
             if (match.Success)
             {
                 string cpinResult = match.Groups["pinresult"].Value;
+#if NETSTANDARD2_0
+                switch(cpinResult)
+                {
+                    case "SIM PIN": return ModemResponse.ResultSuccess(SimStatus.SIM_PIN);
+                    case "SIM PUK": return ModemResponse.ResultSuccess(SimStatus.SIM_PUK);
+                    case "PH-NET PIN": return ModemResponse.ResultSuccess(SimStatus.SIM_NETWORK_PERSONALIZATION);
+                    case "READY": return ModemResponse.ResultSuccess(SimStatus.SIM_READY);
+                    default: return ModemResponse.ResultSuccess(SimStatus.SIM_ABSENT);// Treat unsupported lock types as "sim absent"
+                };
+#else
                 return cpinResult switch
                 {
                     "SIM PIN" => ModemResponse.ResultSuccess(SimStatus.SIM_PIN),
@@ -437,6 +451,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     "READY" => ModemResponse.ResultSuccess(SimStatus.SIM_READY),
                     _ => ModemResponse.ResultSuccess(SimStatus.SIM_ABSENT),// Treat unsupported lock types as "sim absent"
                 };
+#endif
             }
 
             return ModemResponse.ResultError<SimStatus>();
@@ -530,7 +545,7 @@ namespace HeboTech.ATLib.Modems.Generic
             AtResponse response = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}");
             return ModemResponse.Success(response.Success);
         }
-        #endregion
+#endregion
 
         public virtual async Task<ModemResponse> SetErrorFormat(int errorFormat)
         {
@@ -543,7 +558,7 @@ namespace HeboTech.ATLib.Modems.Generic
             Dispose();
         }
 
-        #region Dispose
+#region Dispose
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed)
@@ -573,6 +588,6 @@ namespace HeboTech.ATLib.Modems.Generic
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-        #endregion
+#endregion
     }
 }
