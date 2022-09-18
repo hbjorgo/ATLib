@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
     <Authors>HeboTech</Authors>
     <Product>HeboTech ATLib</Product>
     <Version>4.1.0</Version>
@@ -15,6 +15,7 @@
     <PackageReleaseNotes>https://github.com/hbjorgo/ATLib/releases</PackageReleaseNotes>
     <AssemblyVersion>4.1.0.0</AssemblyVersion>
     <FileVersion>4.1.0.0</FileVersion>
+    <UserSecretsId>b8328b1a-795d-4e26-9238-43eee2160ffc</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

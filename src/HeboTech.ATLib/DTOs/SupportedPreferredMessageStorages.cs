@@ -23,7 +23,7 @@ namespace HeboTech.ATLib.DTOs
                 $"Storage1: {string.Join(",", Storage1)}{Environment.NewLine}" +
                 $"Storage2: {string.Join(",", Storage2)}{Environment.NewLine}" +
                 $"Storage3: {string.Join(",", Storage3)}";
-#else
+#elif NETSTANDARD2_1_OR_GREATER
             return
                 $"Storage1: {string.Join(',', Storage1)}{Environment.NewLine}" +
                 $"Storage2: {string.Join(',', Storage2)}{Environment.NewLine}" +

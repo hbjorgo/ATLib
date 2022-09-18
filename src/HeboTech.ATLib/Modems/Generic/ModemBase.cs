@@ -124,7 +124,7 @@ namespace HeboTech.ATLib.Modems.Generic
                 {
 #if NETSTANDARD2_0
                     return ModemResponse.ResultSuccess(match.Groups["characterSet"].Captures.Cast<Capture>().Select(x => x.Value));
-#else
+#elif NETSTANDARD2_1_OR_GREATER
                     return ModemResponse.ResultSuccess(match.Groups["characterSet"].Captures.Select(x => x.Value));
 #endif
                 }
@@ -323,7 +323,7 @@ namespace HeboTech.ATLib.Modems.Generic
                             string pdu = line2Match.Groups["status"].Value;
 #if NETSTANDARD2_0
                             SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu.AsSpan());
-#else
+#elif NETSTANDARD2_1_OR_GREATER
                             SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
 #endif
 
@@ -446,7 +446,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     case "READY": return ModemResponse.ResultSuccess(SimStatus.SIM_READY);
                     default: return ModemResponse.ResultSuccess(SimStatus.SIM_ABSENT);// Treat unsupported lock types as "sim absent"
                 };
-#else
+#elif NETSTANDARD2_1_OR_GREATER
                 return cpinResult switch
                 {
                     "SIM PIN" => ModemResponse.ResultSuccess(SimStatus.SIM_PIN),

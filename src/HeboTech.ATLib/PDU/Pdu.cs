@@ -51,15 +51,15 @@ namespace HeboTech.ATLib.PDU
             int offset = 0;
 
             // SMSC information
-            byte smsc_length = HexToByte(text.Slice(offset, (offset += 2)));
+            byte smsc_length = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
             PhoneNumber serviceCenterNumber = null;
             if (smsc_length > 0)
             {
-                serviceCenterNumber = DecodePhoneNumber(text.Slice(offset,(offset += smsc_length * 2)));
+                serviceCenterNumber = DecodePhoneNumber(text.SliceOnIndex(offset,(offset += smsc_length * 2)));
             }
 
             // SMS-DELIVER start
-            byte header = HexToByte(text.Slice(offset,(offset += 2)));
+            byte header = HexToByte(text.SliceOnIndex(offset,(offset += 2)));
 
             int tp_mti = header & 0b0000_0011;
             if (tp_mti != (byte)PduType.SMS_DELIVER)
@@ -68,21 +68,21 @@ namespace HeboTech.ATLib.PDU
             int tp_mms = header & 0b0000_0100;
             int tp_rp = header & 0b1000_0000;
 
-            byte tp_oa_length = HexToByte(text.Slice(offset, (offset += 2)));
+            byte tp_oa_length = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
             tp_oa_length = (byte)(tp_oa_length % 2 == 0 ? tp_oa_length : tp_oa_length + 1);
             PhoneNumber oa = null;
             if (tp_oa_length > 0)
             {
                 int oa_digits = tp_oa_length + 2; // Add 2 for TON
-                oa = DecodePhoneNumber(text.Slice(offset, (offset += oa_digits)));
+                oa = DecodePhoneNumber(text.SliceOnIndex(offset, (offset += oa_digits)));
             }
-            byte tp_pid = HexToByte(text.Slice(offset, (offset += 2)));
-            byte tp_dcs = HexToByte(text.Slice(offset, (offset += 2)));
-            ReadOnlySpan<char> tp_scts = text.Slice(offset, (offset += 14));
-            byte tp_udl = HexToByte(text.Slice(offset, (offset += 2)));
+            byte tp_pid = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
+            byte tp_dcs = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
+            ReadOnlySpan<char> tp_scts = text.SliceOnIndex(offset, (offset += 14));
+            byte tp_udl = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
             int udlBytes = (int)Math.Ceiling(tp_udl * 7 / 8.0);
 
-            ReadOnlySpan<char> tp_ud = text.Slice(offset, (offset += ((udlBytes) * 2)));
+            ReadOnlySpan<char> tp_ud = text.SliceOnIndex(offset, (offset += ((udlBytes) * 2)));
             string message = null;
             switch (tp_dcs)
             {
@@ -101,15 +101,15 @@ namespace HeboTech.ATLib.PDU
             int offset = 0;
 
             // SMSC information
-            byte smsc_length = HexToByte(text.Slice(offset, (offset += 2)));
+            byte smsc_length = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
             PhoneNumber serviceCenterNumber = null;
             if (smsc_length > 0)
             {
-                serviceCenterNumber = DecodePhoneNumber(text.Slice(offset, (offset += smsc_length * 2)));
+                serviceCenterNumber = DecodePhoneNumber(text.SliceOnIndex(offset, (offset += smsc_length * 2)));
             }
 
             // SMS-DELIVER start
-            byte header = HexToByte(text.Slice(offset, (offset += 2)));
+            byte header = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
 
             int tp_mti = header & 0b0000_0011;
             if (tp_mti != (byte)PduType.SMS_SUBMIT)
@@ -119,34 +119,34 @@ namespace HeboTech.ATLib.PDU
             int tp_vpf = header & 0b0001_1000;
             int tp_rp = header & 0b1000_0000;
 
-            byte tp_mr = HexToByte(text.Slice(offset, (offset += 2)));
-            byte tp_oa_length = HexToByte(text.Slice(offset, (offset += 2)));
+            byte tp_mr = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
+            byte tp_oa_length = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
             tp_oa_length = (byte)(tp_oa_length % 2 == 0 ? tp_oa_length : tp_oa_length + 1);
             PhoneNumber oa = null;
             if (tp_oa_length > 0)
             {
                 int oa_digits = tp_oa_length + 2; // Add 2 for TON
-                oa = DecodePhoneNumber(text.Slice(offset, (offset += oa_digits)));
+                oa = DecodePhoneNumber(text.SliceOnIndex(offset, (offset += oa_digits)));
             }
-            byte tp_pid = HexToByte(text.Slice(offset, (offset += 2)));
-            byte tp_dcs = HexToByte(text.Slice(offset, (offset += 2)));
+            byte tp_pid = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
+            byte tp_dcs = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
             byte tp_vp = 0;
             if (tp_vpf == 0x00)
-                tp_vp = HexToByte(text.Slice(offset, (offset += 0)));
+                tp_vp = HexToByte(text.SliceOnIndex(offset, (offset += 0)));
             else if (tp_vpf == 0x01)
-                tp_vp = HexToByte(text.Slice(offset, (offset += 14)));
+                tp_vp = HexToByte(text.SliceOnIndex(offset, (offset += 14)));
             else if (tp_vpf == 0x10)
-                tp_vp = HexToByte(text.Slice(offset, (offset += 2)));
+                tp_vp = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
             else if (tp_vpf == 0x11)
-                tp_vp = HexToByte(text.Slice(offset, (offset += 14)));
-            byte tp_udl = HexToByte(text.Slice(offset, (offset += 2)));
+                tp_vp = HexToByte(text.SliceOnIndex(offset, (offset += 14)));
+            byte tp_udl = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
 
             string message = null;
             switch (tp_dcs)
             {
                 case 0x00:
                     int length = (tp_udl * 7 / 8) + 1;
-                    ReadOnlySpan<char> tp_ud = text.Slice(offset, (offset += ((length) * 2)));
+                    ReadOnlySpan<char> tp_ud = text.SliceOnIndex(offset, (offset += ((length) * 2)));
                     message = Gsm7.Decode(tp_ud.ToString());
                     break;
                 default:
@@ -205,17 +205,17 @@ namespace HeboTech.ATLib.PDU
             }
             ReadOnlySpan<char> swappedSpan = swappedData;
 
-            byte offset = DecimalToByte(swappedSpan.Slice(12, 14));
+            byte offset = DecimalToByte(swappedSpan.SliceOnIndex(12, 14));
             bool positive = (offset & (1 << 7)) == 0;
             byte offsetQuarters = (byte)(offset & 0b0111_1111);
 
             DateTimeOffset timestamp = new DateTimeOffset(
-                DecimalToByte(swappedSpan.Slice(0, 2)) + timestampYearOffset,
-                DecimalToByte(swappedSpan.Slice(2, 4)),
-                DecimalToByte(swappedSpan.Slice(4, 6)),
-                DecimalToByte(swappedSpan.Slice(6, 8)),
-                DecimalToByte(swappedSpan.Slice(8, 10)),
-                DecimalToByte(swappedSpan.Slice(10, 12)),
+                DecimalToByte(swappedSpan.SliceOnIndex(0, 2)) + timestampYearOffset,
+                DecimalToByte(swappedSpan.SliceOnIndex(2, 4)),
+                DecimalToByte(swappedSpan.SliceOnIndex(4, 6)),
+                DecimalToByte(swappedSpan.SliceOnIndex(6, 8)),
+                DecimalToByte(swappedSpan.SliceOnIndex(8, 10)),
+                DecimalToByte(swappedSpan.SliceOnIndex(10, 12)),
                 TimeSpan.FromMinutes(offsetQuarters * 15)); // Offset in quarter of hours
             return timestamp;
         }
@@ -226,7 +226,7 @@ namespace HeboTech.ATLib.PDU
         }
     }
 
-#else
+#elif NETSTANDARD2_1_OR_GREATER
     public class Pdu
     {
         public static string EncodeSmsSubmit(PhoneNumber phoneNumber, string encodedMessage, byte dataCodingScheme, bool includeEmptySmscLength = true)

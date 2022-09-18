@@ -15,7 +15,7 @@
         {
 #if NETSTANDARD2_0
             string[] split = response.Split(new char[] { ' ' }, 3);
-#else
+#elif NETSTANDARD2_1_OR_GREATER
             string[] split = response.Split(' ', 3);
 #endif
             return new MissedCallEventArgs(split[1], split[2]);

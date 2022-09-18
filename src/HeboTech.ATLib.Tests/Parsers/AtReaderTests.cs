@@ -16,7 +16,11 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             string input = "Line1\r\nLine2\r\nLine3\r\n";
             byte[] buffer = Encoding.UTF8.GetBytes(input);
+#if NET40_OR_GREATER
+            stream.Write(buffer, 0, buffer.Length);
+#else
             stream.Write(buffer);
+#endif
             stream.Position = 0;
 
             dut.Open();
@@ -40,7 +44,11 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             string input = "Line1\r\nLine2\r\n> Line3\r\n";
             byte[] buffer = Encoding.UTF8.GetBytes(input);
+#if NET40_OR_GREATER
+            stream.Write(buffer, 0, buffer.Length);
+#else
             stream.Write(buffer);
+#endif
             stream.Position = 0;
 
             dut.Open();
@@ -66,7 +74,11 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             string input = "\r\n\r\n\r\n";
             byte[] buffer = Encoding.UTF8.GetBytes(input);
+#if NET40_OR_GREATER
+            stream.Write(buffer, 0, buffer.Length);
+#else
             stream.Write(buffer);
+#endif
             stream.Position = 0;
 
             dut.Open();
@@ -90,7 +102,11 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             string input = "+CME ERROR: ErrorMessage\r\n";
             byte[] buffer = Encoding.UTF8.GetBytes(input);
+#if NET40_OR_GREATER
+            stream.Write(buffer, 0, buffer.Length);
+#else
             stream.Write(buffer);
+#endif
             stream.Position = 0;
 
             dut.Open();
@@ -110,7 +126,11 @@ namespace HeboTech.ATLib.Tests.Parsers
 
             string input = "RING\r\n\r\nRING\r\n\r\nMISSED_CALL: 01:23PM 12345678\r\n";
             byte[] buffer = Encoding.UTF8.GetBytes(input);
+#if NET40_OR_GREATER
+            stream.Write(buffer, 0, buffer.Length);
+#else
             stream.Write(buffer);
+#endif
             stream.Position = 0;
 
             dut.Open();
