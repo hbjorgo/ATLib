@@ -122,7 +122,11 @@ namespace HeboTech.ATLib.Modems.Generic
                 var match = Regex.Match(line, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)");
                 if (match.Success)
                 {
+#if NETSTANDARD2_0
+                    return ModemResponse.ResultSuccess(match.Groups["characterSet"].Captures.Cast<Capture>().Select(x => x.Value));
+#else
                     return ModemResponse.ResultSuccess(match.Groups["characterSet"].Captures.Select(x => x.Value));
+#endif
                 }
             }
             return ModemResponse.ResultError<IEnumerable<string>>();
@@ -150,9 +154,9 @@ namespace HeboTech.ATLib.Modems.Generic
             AtResponse response = await channel.SendCommand($"AT+CSCS=\"{characterSet}\"");
             return ModemResponse.Success(response.Success);
         }
-        #endregion
+#endregion
 
-        #region _3GPP_TS_27_005
+#region _3GPP_TS_27_005
         public event EventHandler<SmsReceivedEventArgs> SmsReceived;
 
         public virtual async Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format)
