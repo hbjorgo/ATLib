@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
     <Authors>HeboTech</Authors>
     <Product>HeboTech ATLib</Product>
     <Version>4.1.0</Version>
@@ -15,12 +15,16 @@
     <PackageReleaseNotes>https://github.com/hbjorgo/ATLib/releases</PackageReleaseNotes>
     <AssemblyVersion>4.1.0.0</AssemblyVersion>
     <FileVersion>4.1.0.0</FileVersion>
+    <UserSecretsId>b8328b1a-795d-4e26-9238-43eee2160ffc</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.IO.Pipelines" Version="6.0.2" />
-    <PackageReference Include="System.IO.Ports" Version="6.0.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="6.0.3" />
     <PackageReference Include="System.Threading.Channels" Version="6.0.0" />
   </ItemGroup>
+
+	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
+    <PackageReference Include="Nerdbank.Streams" Version="2.9.91-alpha" />
+	</ItemGroup>
 
 </Project>

@@ -1,7 +1,10 @@
 ﻿using System;
 using System.IO;
 using System.IO.Ports;
+using System.Linq;
 using System.Net.Sockets;
+using System.Reflection;
+using System.Runtime.Versioning;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -10,6 +13,14 @@ namespace HeboTech.ATLib.TestConsole
     {
         static async Task Main(string[] args)
         {
+            // Because of multi targeting, print out current framework target for information
+            var targetFrameworkAttribute = Assembly.GetExecutingAssembly()
+                .GetCustomAttributes(typeof(TargetFrameworkAttribute), false)
+                .SingleOrDefault() as TargetFrameworkAttribute;
+            Console.WriteLine($"Current target: {targetFrameworkAttribute.FrameworkName}");
+
+
+
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
             string pin = args[0];
