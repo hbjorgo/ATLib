@@ -10,6 +10,8 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using UnitsNet;
+using UnitsNet.Units;
 
 namespace HeboTech.ATLib.Modems.Generic
 {
@@ -485,7 +487,7 @@ namespace HeboTech.ATLib.Modems.Generic
                 {
                     int rssi = int.Parse(match.Groups["rssi"].Value);
                     int ber = int.Parse(match.Groups["ber"].Value);
-                    return ModemResponse.ResultSuccess(new SignalStrength(rssi, ber));
+                    return ModemResponse.ResultSuccess(new SignalStrength(PowerRatio.FromDecibelMilliwatts(rssi), Ratio.FromPercent(ber)));
                 }
             }
             return ModemResponse.ResultError<SignalStrength>();
@@ -503,7 +505,7 @@ namespace HeboTech.ATLib.Modems.Generic
                 {
                     int bcs = int.Parse(match.Groups["bcs"].Value);
                     int bcl = int.Parse(match.Groups["bcl"].Value);
-                    return ModemResponse.ResultSuccess(new BatteryStatus((BatteryChargeStatus)bcs, bcl));
+                    return ModemResponse.ResultSuccess(new BatteryStatus((BatteryChargeStatus)bcs, Ratio.FromPercent(bcl)));
                 }
             }
             return ModemResponse.ResultError<BatteryStatus>();

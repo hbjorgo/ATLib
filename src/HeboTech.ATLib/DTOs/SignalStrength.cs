@@ -1,8 +1,10 @@
-﻿namespace HeboTech.ATLib.DTOs
+﻿using UnitsNet;
+
+namespace HeboTech.ATLib.DTOs
 {
     public class SignalStrength
     {
-        public SignalStrength(int rssi, int ber)
+        public SignalStrength(PowerRatio rssi, Ratio ber)
         {
             Rssi = rssi;
             Ber = ber;
@@ -11,12 +13,12 @@
         /// <summary>
         /// Received Signal Strength Indicator. (99 - not known or not detectable)
         /// </summary>
-        public int Rssi { get; }
+        public PowerRatio Rssi { get; }
 
         /// <summary>
         /// Bit Error Rate. (99 - not known or not detectable)
         /// </summary>
-        public int Ber { get; }
+        public Ratio Ber { get; }
 
         public override string ToString()
         {
