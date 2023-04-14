@@ -1,14 +1,15 @@
 ﻿using HeboTech.ATLib.Extensions;
+using UnitsNet;
 
 namespace HeboTech.ATLib.DTOs
 {
     public class BatteryStatus
     {
         public BatteryChargeStatus Status { get; }
-        public int ChargeLevel { get; }
-        public double? Voltage { get; }
+        public Ratio ChargeLevel { get; }
+        public ElectricPotential? Voltage { get; }
 
-        public BatteryStatus(BatteryChargeStatus status, int chargeLevel, double? voltage = null)
+        public BatteryStatus(BatteryChargeStatus status, Ratio chargeLevel, ElectricPotential? voltage = null)
         {
             Status = status;
             ChargeLevel = chargeLevel;
@@ -18,8 +19,8 @@ namespace HeboTech.ATLib.DTOs
         public override string ToString()
         {
             if (Voltage.HasValue)
-                return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel}%, Voltage: {Voltage}V";
-            return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel}%";
+                return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel.Percent}%, Voltage: {Voltage?.Volts}V";
+            return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel.Percent}%";
         }
     }
 }
