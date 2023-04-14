@@ -22,7 +22,7 @@ namespace HeboTech.ATLib.DTOs
 
         public override string ToString()
         {
-            return $"RSSI: {Rssi.DecibelMilliwatts}dBm, BER: {Ber.Percent}%";
+            return $"RSSI: {Rssi}, BER: {Ber}";
         }
     }
 }

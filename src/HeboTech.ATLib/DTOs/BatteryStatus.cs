@@ -19,8 +19,8 @@ namespace HeboTech.ATLib.DTOs
         public override string ToString()
         {
             if (Voltage.HasValue)
-                return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel.Percent}%, Voltage: {Voltage?.Volts}V";
-            return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel.Percent}%";
+                return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel}, Voltage: {Voltage}";
+            return $"Charge Status: {Status.GetDescription()}, Charge Level: {ChargeLevel}";
         }
     }
 }
