@@ -1,4 +1,5 @@
-﻿using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System.Threading.Tasks;
@@ -18,9 +19,9 @@ namespace HeboTech.ATLib.Modems.TP_LINK
         {
         }
 
-        public Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat)
+        public Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
         {
-            return SendSmsAsync(phoneNumber, message, smsTextFormat, false);
+            return SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
         }
     }
 }
