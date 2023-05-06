@@ -188,22 +188,19 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse> ReInitializeSimAsync();
 
         /// <summary>
-        /// Sends an SMS.
+        /// Sends an SMS in text format
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>
         /// <param name="message">The message body</param>
-        /// <param name="smsTextFormat">Text or PDU format</param>
-        /// <param name="pduEncoding">When using PDU text format, choose what encoding to use</param>
         /// <returns>Command status with SMS reference</returns>
         Task<ModemResponse<SmsReference>> SendSmsInTextFormatAsync(PhoneNumber phoneNumber, string message);
 
         /// <summary>
-        /// Sends an SMS.
+        /// Sends an SMS in PDU format
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>
         /// <param name="message">The message body</param>
-        /// <param name="smsTextFormat">Text or PDU format</param>
-        /// <param name="pduEncoding">When using PDU text format, choose what encoding to use</param>
+        /// <param name="codingScheme">Encoding to use</param>
         /// <returns>Command status with SMS reference</returns>
         Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
 

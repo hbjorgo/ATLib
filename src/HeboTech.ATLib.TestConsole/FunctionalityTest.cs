@@ -11,9 +11,10 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class FunctionalityTest
     {
-        public static async Task Run(System.IO.Stream stream, string pin)
+        public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
+            CodingScheme smsCodingScheme = CodingScheme.UCS2;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
@@ -152,7 +153,7 @@ namespace HeboTech.ATLib.TestConsole
                             switch (smsTextFormat)
                             {
                                 case SmsTextFormat.PDU:
-                                    smsReference = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage, CodingScheme.UCS2);
+                                    smsReference = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage, smsCodingScheme);
                                     break;
                                 case SmsTextFormat.Text:
                                     smsReference = await modem.SendSmsInTextFormatAsync(phoneNumber, smsMessage);
