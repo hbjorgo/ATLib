@@ -7,6 +7,7 @@ namespace HeboTech.ATLib.Tests.PDU
     {
         [Theory]
         [InlineData("A", "0041")]
+        [InlineData("ښ", "069A")]
         [InlineData("AB", "00410042")]
         [InlineData("ABC", "004100420043")]
         [InlineData("Google", "0047006F006F0067006C0065")]
@@ -23,6 +24,7 @@ namespace HeboTech.ATLib.Tests.PDU
 
         [Theory]
         [InlineData("0041", "A")]
+        [InlineData("069A", "ښ")]
         [InlineData("00410042", "AB")]
         [InlineData("004100420043", "ABC")]
         [InlineData("0047006F006F0067006C0065", "Google")]
