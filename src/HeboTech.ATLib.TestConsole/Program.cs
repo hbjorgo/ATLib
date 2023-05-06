@@ -54,7 +54,7 @@ namespace HeboTech.ATLib.TestConsole
 
             // ### Choose what to run
             await FunctionalityTest.RunAsync(stream, pin);
-            //await StressTest.Run(stream, pin);
+            //await StressTest.RunAsync(stream, pin);
         }
     }
 }

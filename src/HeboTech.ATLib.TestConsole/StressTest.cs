@@ -12,7 +12,7 @@ namespace HeboTech.ATLib.TestConsole
     {
         private static SmsTextFormat smsTextFormat = SmsTextFormat.Text;
 
-        public static async Task Run(System.IO.Stream stream, string pin)
+        public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             Console.WriteLine($"Test started ({DateTime.Now})");
 
