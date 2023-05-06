@@ -42,9 +42,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
+        public override Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
         {
-            return SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
+            return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
         }
 
         public override async Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)

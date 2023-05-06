@@ -13,9 +13,9 @@ namespace HeboTech.ATLib.Modems.Qualcomm
         {
         }
 
-        public Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
+        public override Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
         {
-            return SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
+            return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
         }
     }
 }

@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnitsNet;
-using UnitsNet.Units;
 
 namespace HeboTech.ATLib.Modems.Generic
 {
@@ -186,6 +185,11 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<SmsReference>> SendSmsInTextFormatAsync(PhoneNumber phoneNumber, string message)
         {
+            if (phoneNumber is null)
+                throw new ArgumentNullException(nameof(phoneNumber));
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+
             string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
             string cmd2 = message;
             AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
@@ -203,8 +207,15 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.ResultError<SmsReference>();
         }
 
-        public virtual async Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength = true)
+        public abstract Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
+
+        protected virtual async Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
         {
+            if (phoneNumber is null)
+                throw new ArgumentNullException(nameof(phoneNumber));
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+
             byte dataCodingScheme;
             string encodedMessage;
             switch (codingScheme)

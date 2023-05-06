@@ -17,7 +17,7 @@ namespace HeboTech.ATLib.TestConsole
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using DWM222 modem = new DWM222(atChannel);
+            using IModem modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -100,8 +100,8 @@ namespace HeboTech.ATLib.TestConsole
             var setPreferredStorages = await modem.SetPreferredMessageStorageAsync("ME", "ME", "ME");
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
-            var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
-            Console.WriteLine($"Single SMS: {singleSms}");
+            //var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
+            //Console.WriteLine($"Single SMS: {singleSms}");
 
             var smss = await modem.ListSmssAsync(SmsStatus.ALL);
             if (smss.IsSuccess)
@@ -152,7 +152,6 @@ namespace HeboTech.ATLib.TestConsole
                             switch (smsTextFormat)
                             {
                                 case SmsTextFormat.PDU:
-                                    //smsReference = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage, CodingScheme.UCS2, false);
                                     smsReference = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage, CodingScheme.UCS2);
                                     break;
                                 case SmsTextFormat.Text:

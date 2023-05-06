@@ -205,7 +205,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="smsTextFormat">Text or PDU format</param>
         /// <param name="pduEncoding">When using PDU text format, choose what encoding to use</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength = true);
+        Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event
