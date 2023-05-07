@@ -1,8 +1,8 @@
-﻿using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
-using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Threading.Tasks;
@@ -11,9 +11,10 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class FunctionalityTest
     {
-        public static async Task Run(System.IO.Stream stream, string pin)
+        public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
+            CodingScheme smsCodingScheme = CodingScheme.UCS2;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
@@ -100,8 +101,8 @@ namespace HeboTech.ATLib.TestConsole
             var setPreferredStorages = await modem.SetPreferredMessageStorageAsync("ME", "ME", "ME");
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
-            var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
-            Console.WriteLine($"Single SMS: {singleSms}");
+            //var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
+            //Console.WriteLine($"Single SMS: {singleSms}");
 
             var smss = await modem.ListSmssAsync(SmsStatus.ALL);
             if (smss.IsSuccess)
@@ -148,8 +149,21 @@ namespace HeboTech.ATLib.TestConsole
                             string smsMessage = Console.ReadLine();
 
                             Console.WriteLine("Sending SMS...");
-                            var smsReference = await modem.SendSmsAsync(phoneNumber, smsMessage, smsTextFormat);
-                            Console.WriteLine($"SMS Reference: {smsReference}");
+                            ModemResponse<SmsReference> smsReference = null;
+                            switch (smsTextFormat)
+                            {
+                                case SmsTextFormat.PDU:
+                                    smsReference = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage, smsCodingScheme);
+                                    break;
+                                case SmsTextFormat.Text:
+                                    smsReference = await modem.SendSmsInTextFormatAsync(phoneNumber, smsMessage);
+                                    break;
+                                default:
+                                    Console.WriteLine("Unsupported SMS text format");
+                                    break;
+                            }
+                            if (smsReference is not null)
+                                Console.WriteLine($"SMS Reference: {smsReference}");
                         }
                         break;
                     case ConsoleKey.R:

@@ -11,7 +11,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnitsNet;
-using UnitsNet.Units;
 
 namespace HeboTech.ATLib.Modems.Generic
 {
@@ -156,9 +155,9 @@ namespace HeboTech.ATLib.Modems.Generic
             AtResponse response = await channel.SendCommand($"AT+CSCS=\"{characterSet}\"");
             return ModemResponse.Success(response.Success);
         }
-#endregion
+        #endregion
 
-#region _3GPP_TS_27_005
+        #region _3GPP_TS_27_005
         public event EventHandler<SmsReceivedEventArgs> SmsReceived;
 
         public virtual async Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format)
@@ -184,55 +183,80 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.Success(response.Success);
         }
 
-        public virtual async Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat, bool includeEmptySmscLength = true)
+        public virtual async Task<ModemResponse<SmsReference>> SendSmsInTextFormatAsync(PhoneNumber phoneNumber, string message)
         {
-            switch (smsTextFormat)
+            if (phoneNumber is null)
+                throw new ArgumentNullException(nameof(phoneNumber));
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+
+            string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
+            string cmd2 = message;
+            AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
+
+            if (response.Success)
             {
-                case SmsTextFormat.PDU:
-                    {
-                        string pdu = Pdu.EncodeSmsSubmit(phoneNumber, Gsm7.Encode(message), Gsm7.DataCodingSchemeCode, includeEmptySmscLength);
-                        string cmd1 = $"AT+CMGS={(pdu.Length)/ 2}";
-                        string cmd2 = pdu;
-                        AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
-
-                        if (response.Success)
-                        {
-                            string line = response.Intermediates.First();
-                            var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                            if (match.Success)
-                            {
-                                int mr = int.Parse(match.Groups["mr"].Value);
-                                return ModemResponse.ResultSuccess(new SmsReference(mr));
-                            }
-                        }
-                        else
-                        {
-                            if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                                return ModemResponse.ResultError<SmsReference>(error.ToString());
-                        }
-                        return ModemResponse.ResultError<SmsReference>();
-                    }
-                case SmsTextFormat.Text:
-                    {
-                        string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
-                        string cmd2 = message;
-                        AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
-
-                        if (response.Success)
-                        {
-                            string line = response.Intermediates.First();
-                            var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                            if (match.Success)
-                            {
-                                int mr = int.Parse(match.Groups["mr"].Value);
-                                return ModemResponse.ResultSuccess(new SmsReference(mr));
-                            }
-                        }
-                        return ModemResponse.ResultError<SmsReference>();
-                    }
-                default:
-                    throw new NotSupportedException($"Text format {smsTextFormat} is not supported");
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                if (match.Success)
+                {
+                    int mr = int.Parse(match.Groups["mr"].Value);
+                    return ModemResponse.ResultSuccess(new SmsReference(mr));
+                }
             }
+            return ModemResponse.ResultError<SmsReference>();
+        }
+
+        public abstract Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
+
+        protected virtual async Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
+        {
+            if (phoneNumber is null)
+                throw new ArgumentNullException(nameof(phoneNumber));
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+
+            byte dataCodingScheme;
+            string encodedMessage;
+            switch (codingScheme)
+            {
+                case CodingScheme.Ansi:
+                    encodedMessage = Ansi.Encode(message);
+                    dataCodingScheme = Ansi.DataCodingSchemeCode;
+                    break;
+                case CodingScheme.Gsm7:
+                    encodedMessage = Gsm7.Encode(message);
+                    dataCodingScheme = Gsm7.DataCodingSchemeCode;
+                    break;
+                case CodingScheme.UCS2:
+                    encodedMessage = UCS2.Encode(message);
+                    dataCodingScheme = UCS2.DataCodingSchemeCode;
+                    break;
+                default:
+                    throw new ArgumentException("The encoding scheme is not supported");
+            }
+
+            string pdu = Pdu.EncodeSmsSubmit(phoneNumber, encodedMessage, dataCodingScheme, includeEmptySmscLength);
+            string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
+            string cmd2 = pdu;
+            AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
+
+            if (response.Success)
+            {
+                string line = response.Intermediates.First();
+                var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                if (match.Success)
+                {
+                    int mr = int.Parse(match.Groups["mr"].Value);
+                    return ModemResponse.ResultSuccess(new SmsReference(mr));
+                }
+            }
+            else
+            {
+                if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
+                    return ModemResponse.ResultError<SmsReference>(error.ToString());
+            }
+            return ModemResponse.ResultError<SmsReference>();
         }
 
         public virtual async Task<ModemResponse<SupportedPreferredMessageStorages>> GetSupportedPreferredMessageStoragesAsync()
@@ -418,9 +442,9 @@ namespace HeboTech.ATLib.Modems.Generic
             AtResponse response = await channel.SendCommand($"AT+CMGD={index}");
             return ModemResponse.Success(response.Success);
         }
-#endregion
+        #endregion
 
-#region _3GPP_TS_27_007
+        #region _3GPP_TS_27_007
         public event EventHandler<UssdResponseEventArgs> UssdResponseReceived;
 
         public virtual async Task<ModemResponse<SimStatus>> GetSimStatusAsync()
@@ -440,7 +464,7 @@ namespace HeboTech.ATLib.Modems.Generic
             {
                 string cpinResult = match.Groups["pinresult"].Value;
 #if NETSTANDARD2_0
-                switch(cpinResult)
+                switch (cpinResult)
                 {
                     case "SIM PIN": return ModemResponse.ResultSuccess(SimStatus.SIM_PIN);
                     case "SIM PUK": return ModemResponse.ResultSuccess(SimStatus.SIM_PUK);
@@ -551,7 +575,7 @@ namespace HeboTech.ATLib.Modems.Generic
             AtResponse response = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}");
             return ModemResponse.Success(response.Success);
         }
-#endregion
+        #endregion
 
         public virtual async Task<ModemResponse> SetErrorFormat(int errorFormat)
         {
@@ -564,7 +588,7 @@ namespace HeboTech.ATLib.Modems.Generic
             Dispose();
         }
 
-#region Dispose
+        #region Dispose
         protected virtual void Dispose(bool disposing)
         {
             if (!disposed)
@@ -594,6 +618,6 @@ namespace HeboTech.ATLib.Modems.Generic
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
-#endregion
+        #endregion
     }
 }

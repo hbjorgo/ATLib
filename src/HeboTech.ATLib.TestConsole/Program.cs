@@ -13,6 +13,12 @@ namespace HeboTech.ATLib.TestConsole
     {
         static async Task Main(string[] args)
         {
+            // Set specifically to support more character sets than default
+            Console.InputEncoding = System.Text.Encoding.Unicode;
+            Console.OutputEncoding = System.Text.Encoding.Unicode;
+            Console.WriteLine($"Console input encoding: {Console.InputEncoding}.");
+            Console.WriteLine($"Console output encoding: {Console.OutputEncoding}.");
+
             // Because of multi targeting, print out current framework target for information
             var targetFrameworkAttribute = Assembly.GetExecutingAssembly()
                 .GetCustomAttributes(typeof(TargetFrameworkAttribute), false)
@@ -40,15 +46,15 @@ namespace HeboTech.ATLib.TestConsole
 
             /* ######## UNCOMMENT THIS SECTION TO USE NETWORK SOCKET ######## */
             //using Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            //socket.Connect("192.168.10.144", 7000);
+            //socket.Connect("192.168.1.81", 7000);
             //Console.WriteLine("Network socket opened");
             //Stream stream;
             //stream = new NetworkStream(socket);
 
 
             // ### Choose what to run
-            await FunctionalityTest.Run(stream, pin);
-            //await StressTest.Run(stream, pin);
+            await FunctionalityTest.RunAsync(stream, pin);
+            //await StressTest.RunAsync(stream, pin);
         }
     }
 }

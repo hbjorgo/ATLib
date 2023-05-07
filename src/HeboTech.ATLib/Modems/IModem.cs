@@ -1,4 +1,5 @@
-﻿using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Parsers;
 using System;
@@ -187,13 +188,21 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse> ReInitializeSimAsync();
 
         /// <summary>
-        /// Sends an SMS. Note: Only text format is supported. Make sure to set the message format to text during initialization
+        /// Sends an SMS in text format
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>
         /// <param name="message">The message body</param>
-        /// <param name="smsTextFormat">Text or PDU format</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<ModemResponse<SmsReference>> SendSmsAsync(PhoneNumber phoneNumber, string message, SmsTextFormat smsTextFormat);
+        Task<ModemResponse<SmsReference>> SendSmsInTextFormatAsync(PhoneNumber phoneNumber, string message);
+
+        /// <summary>
+        /// Sends an SMS in PDU format
+        /// </summary>
+        /// <param name="phoneNumber">The number to send to</param>
+        /// <param name="message">The message body</param>
+        /// <param name="codingScheme">Encoding to use</param>
+        /// <returns>Command status with SMS reference</returns>
+        Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event
