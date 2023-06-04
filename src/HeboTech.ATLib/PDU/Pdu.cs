@@ -20,11 +20,11 @@ namespace HeboTech.ATLib.PDU
             // TP-Message-Reference. '00' lets the phone set the message reference number itself
             sb.Append("00");
             // Address length. Length of phone number (number of digits)
-            sb.Append((phoneNumber.ToString().Length).ToString("X2"));
+            sb.Append((phoneNumber.ToString().TrimStart('+').Length).ToString("X2"));
             // Type-of-Address
             sb.Append(GetAddressType(phoneNumber).ToString("X2"));
             // Phone number in semi octets. 12345678 is represented as 21436587
-            sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString()));
+            sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString().TrimStart('+')));
             // TP-PID Protocol identifier
             sb.Append("00");
             // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
@@ -180,7 +180,7 @@ namespace HeboTech.ATLib.PDU
 
         private static byte GetAddressType(PhoneNumber phoneNumber)
         {
-            return (byte)(0b1000_0000 + (byte)phoneNumber.Ton + (byte)phoneNumber.Npi);
+            return (byte)(0b1000_0000 + (byte)phoneNumber.GetTypeOfNumber() + (byte)phoneNumber.GetNumberPlanIdentification());
         }
 
         private static PhoneNumber DecodePhoneNumber(ReadOnlySpan<char> data)
@@ -188,11 +188,11 @@ namespace HeboTech.ATLib.PDU
             if (data.Length < 4)
                 return default;
             TypeOfNumber ton = (TypeOfNumber)((HexToByte(data.Slice(0, 2)) & 0b0111_0000) >> 4);
-            string number = new String(SwapPhoneNumberDigits(data.Slice(2).ToString()));
-            return new PhoneNumber(
-                number,
-                ton,
-                ton == TypeOfNumber.International ? NumberPlanIdentification.ISDN : NumberPlanIdentification.Unknown);
+            string number = string.Empty;
+            if (ton == TypeOfNumber.International)
+                number = "+";
+            number += new String(SwapPhoneNumberDigits(data.Slice(2).ToString()));
+            return new PhoneNumber(number);
         }
 
         private static DateTimeOffset DecodeTimestamp(ReadOnlySpan<char> data, int timestampYearOffset = 2000)
@@ -240,11 +240,11 @@ namespace HeboTech.ATLib.PDU
             // TP-Message-Reference. '00' lets the phone set the message reference number itself
             sb.Append("00");
             // Address length. Length of phone number (number of digits)
-            sb.Append((phoneNumber.ToString().Length).ToString("X2"));
+            sb.Append((phoneNumber.ToString().TrimStart('+').Length).ToString("X2"));
             // Type-of-Address
             sb.Append(GetAddressType(phoneNumber).ToString("X2"));
             // Phone number in semi octets. 12345678 is represented as 21436587
-            sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString()));
+            sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString().TrimStart('+')));
             // TP-PID Protocol identifier
             sb.Append("00");
             // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
@@ -396,7 +396,7 @@ namespace HeboTech.ATLib.PDU
 
         private static byte GetAddressType(PhoneNumber phoneNumber)
         {
-            return (byte)(0b1000_0000 + (byte)phoneNumber.Ton + (byte)phoneNumber.Npi);
+            return (byte)(0b1000_0000 + (byte)phoneNumber.GetTypeOfNumber() + (byte)phoneNumber.GetNumberPlanIdentification());
         }
 
         private static PhoneNumber DecodePhoneNumber(ReadOnlySpan<char> data)
@@ -404,11 +404,11 @@ namespace HeboTech.ATLib.PDU
             if (data.Length < 4)
                 return default;
             TypeOfNumber ton = (TypeOfNumber)((HexToByte(data[0..2]) & 0b0111_0000) >> 4);
-            string number = new String(SwapPhoneNumberDigits(data[2..]));
-            return new PhoneNumber(
-                number,
-                ton,
-                ton == TypeOfNumber.International ? NumberPlanIdentification.ISDN : NumberPlanIdentification.Unknown);
+            string number = string.Empty;
+            if (ton == TypeOfNumber.International)
+                number = "+";
+            number += new String(SwapPhoneNumberDigits(data[2..]));
+            return new PhoneNumber(number);
         }
 
         private static DateTimeOffset DecodeTimestamp(ReadOnlySpan<char> data, int timestampYearOffset = 2000)
