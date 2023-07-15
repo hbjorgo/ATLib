@@ -59,7 +59,7 @@ namespace HeboTech.ATLib.Parsers
         public void Open()
         {
             atReader.Open();
-            readerTask = Task.Factory.StartNew(() => ReaderLoopAsync(cancellationTokenSource.Token), TaskCreationOptions.LongRunning);
+            readerTask = ReaderLoopAsync(cancellationTokenSource.Token);
         }
 
         public void Close()

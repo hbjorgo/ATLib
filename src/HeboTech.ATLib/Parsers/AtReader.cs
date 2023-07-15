@@ -29,7 +29,7 @@ namespace HeboTech.ATLib.Parsers
 
         public void Open()
         {
-            reader = Task.Factory.StartNew(() => ReadPipeAsync(pipe, cancellationTokenSource.Token), TaskCreationOptions.LongRunning);
+            reader = ReadPipeAsync(pipe, cancellationTokenSource.Token);
         }
 
         public void Close()
