@@ -1,4 +1,6 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
+using System;
+using System.Security.Cryptography;
 using Xunit;
 
 namespace HeboTech.ATLib.Tests.PDU
@@ -12,6 +14,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("Google", "C7F7FBCC2E03")]
         [InlineData("SMS Rulz", "D3E61424ADB3F5")]
         [InlineData("Hello.", "C8329BFD7601")]
+        [InlineData("Hello world", "C8329BFD06DDDF723619")]
         [InlineData("This is testdata!", "54747A0E4ACF41F4F29C4E0ED3C321")]
         [InlineData("The quick brown fox jumps over the lazy dog", "54741914AFA7C76B9058FEBEBB41E6371EA4AEB7E173D0DB5E9683E8E832881DD6E741E4F719")]
         [InlineData("Tada :)", "D430390CD2A500")]
@@ -29,6 +32,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("C7F7FBCC2E03", "Google")]
         [InlineData("D3E61424ADB3F5", "SMS Rulz")]
         [InlineData("C8329BFD7601", "Hello.")]
+        [InlineData("C8329BFD06DDDF723619", "Hello world")]
         [InlineData("54747A0E4ACF41F4F29C4E0ED3C321", "This is testdata!")]
         [InlineData("54741914AFA7C76B9058FEBEBB41E6371EA4AEB7E173D0DB5E9683E8E832881DD6E741E4F719", "The quick brown fox jumps over the lazy dog")]
         public void Decoder_returns_decoded_text(string gsm7Bit, string expected)
@@ -36,6 +40,17 @@ namespace HeboTech.ATLib.Tests.PDU
             string result = Gsm7.Decode(gsm7Bit);
 
             Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("Hello world", 0, "C8329BFD06DDDF723619")]
+        [InlineData("Hello world", 1, "906536FB0DBABFE56C32")]
+        [InlineData("Hi", 2, "20D3")]
+        public void Encoder_returns_encoded_text_with_padding(string gsm7Bit, int paddingBits, string expected)
+        {
+            byte[] result = Gsm7.EncodeToBytes(gsm7Bit, paddingBits);
+
+            Assert.Equal(expected, BitConverter.ToString(result).Replace("-", ""));
         }
     }
 }

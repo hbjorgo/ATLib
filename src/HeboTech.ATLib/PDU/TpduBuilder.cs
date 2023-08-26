@@ -1,5 +1,6 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
+using HeboTech.ATLib.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -7,7 +8,7 @@ using System.Text;
 
 namespace HeboTech.ATLib.PDU
 {
-    internal class TpduBuilderBase
+    internal abstract class TpduBuilderBase
     {
         // First octet of the message
         protected byte header = 0x00;
@@ -19,9 +20,9 @@ namespace HeboTech.ATLib.PDU
             header = (byte)messageType;
         }
 
-        protected TpduBuilderBase UserDataHeaderIndicator(bool value)
+        protected TpduBuilderBase EnableUserDataHeaderIndicator()
         {
-            header |= (byte)(Convert.ToByte(value) << 6);
+            header |= 0b0100_0000;
             return this;
         }
 
@@ -48,6 +49,8 @@ namespace HeboTech.ATLib.PDU
                 return new string(swappedData[..^1]);
             return new string(swappedData);
         }
+
+        public abstract string Build();
     }
 
     internal class SmsSubmitBuilder : TpduBuilderBase
@@ -68,10 +71,12 @@ namespace HeboTech.ATLib.PDU
         private List<byte> vp = new List<byte>();
         // User Data Length
         private byte udl;
+        // User Data Header Length
+        private byte udhLength;
         // IEIs
         private List<string> triplets = new List<string>();
         // User Data
-        private string ud = string.Empty;
+        private List<byte> ud = new List<byte>();
 
         protected SmsSubmitBuilder()
             : base(PduType.SMS_SUBMIT)
@@ -111,9 +116,9 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        public new SmsSubmitBuilder UserDataHeaderIndicator(bool value)
+        public new SmsSubmitBuilder EnableUserDataHeaderIndicator()
         {
-            return (SmsSubmitBuilder)base.UserDataHeaderIndicator(value);
+            return (SmsSubmitBuilder)base.EnableUserDataHeaderIndicator();
         }
 
         /// <summary>
@@ -188,23 +193,24 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        public SmsSubmitBuilder AddTriplet(int tag, params int[] values)
+        public SmsSubmitBuilder AddUdhInformationElement(UdhInformationElement element)
         {
-            string triplet = $"{tag.ToString("X2")}{values.Length.ToString("X2")}{string.Join("", values.Select(x => x.ToString("X2")))}";
+            string triplet = element.Build();
             triplets.Add(triplet);
-            udhLength += 2 + values.Length; // IEI + IE Length + Values
+            udhLength += element.Length;
             return this;
         }
 
-        public SmsSubmitBuilder UserData(string value)
+        public SmsSubmitBuilder UserData(byte[] value)
         {
-            if (value.Length > 255)
-                throw new ArgumentOutOfRangeException($"{nameof(value)} must be less than or equal to 255 bytes");
-            ud = value;
+            //if (value.Length > 160)
+            //    throw new ArgumentOutOfRangeException($"{nameof(value)} must be less than or equal to 255 bytes");
+            ud.Clear();
+            ud.AddRange(value);
             return this;
         }
 
-        public string Build()
+        public override string Build()
         {
             StringBuilder sb = new StringBuilder();
 
@@ -218,9 +224,30 @@ namespace HeboTech.ATLib.PDU
             if (vp.Count > 0)
                 sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
 
+            int fillBits = 0;
             if (UserDataHeaderIndicatorIsSet)
             {
+                switch (dcs)
+                {
+                    case CodingScheme.Ansi:
+                        break;
+                    case CodingScheme.Gsm7:
+                        int udhlBits = (udhLength + 1) * 8;
+                        if (udhlBits % 7 > 0)
+                            fillBits = 7 - (udhlBits % 7);
+                        int udlBits = ((udhLength + 1) * 8) + fillBits + ((ud.Count) * 8);
+                        int udlSeptets = udlBits / 7;
+                        sb.Append((udlSeptets).ToString("X2"));
+                        break;
+                    case CodingScheme.UCS2:
+                        sb.Append((ud.Count * 8).ToString("X2"));
+                        break;
+                    default:
+                        break;
+                }
 
+                sb.Append(udhLength.ToHexString());
+                sb.AppendJoin("", triplets);
             }
             else
             {
@@ -229,19 +256,18 @@ namespace HeboTech.ATLib.PDU
                     case CodingScheme.Ansi:
                         break;
                     case CodingScheme.Gsm7:
-                        int messageBitLength = ud.Length / 2 * 7;
-                        int messageLength = messageBitLength % 8 == 0 ? messageBitLength / 8 : (messageBitLength / 8) + 1;
-                        sb.Append((messageLength).ToString("X2"));
+                        int udlBits = (ud.Count) * 8;
+                        int udlSeptets = udlBits / 7;
+                        sb.Append((udlSeptets).ToString("X2"));
                         break;
                     case CodingScheme.UCS2:
-                        sb.Append((ud.Length / 2 * 8 / 7).ToString("X2"));
+                        sb.Append((ud.Count * 8).ToString("X2"));
                         break;
                     default:
                         break;
                 }
-
-                sb.Append(ud);
             }
+            sb.Append(string.Join("", ud.Select(x => x.ToHexString())));
 
             return sb.ToString();
         }

@@ -216,23 +216,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (message is null)
                 throw new ArgumentNullException(nameof(message));
 
-            string encodedMessage;
-            switch (codingScheme)
-            {
-                case CodingScheme.Ansi:
-                    encodedMessage = Ansi.Encode(message);
-                    break;
-                case CodingScheme.Gsm7:
-                    encodedMessage = Gsm7.Encode(message);
-                    break;
-                case CodingScheme.UCS2:
-                    encodedMessage = UCS2.Encode(message);
-                    break;
-                default:
-                    throw new ArgumentException("The encoding scheme is not supported");
-            }
-
-            IEnumerable<string> pdus = Pdu.EncodeSmsSubmit(phoneNumber, encodedMessage, codingScheme, includeEmptySmscLength);
+            IEnumerable<string> pdus = Pdu.EncodeMultipartSmsSubmit(phoneNumber, message, codingScheme, includeEmptySmscLength);
             List<SmsReference> smsReferences = new List<SmsReference>();
             foreach (string pdu in pdus)
             {

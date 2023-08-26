@@ -1,5 +1,6 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
+using HeboTech.ATLib.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -231,11 +232,33 @@ namespace HeboTech.ATLib.PDU
 #elif NETSTANDARD2_1_OR_GREATER
     public class Pdu
     {
-        public static IEnumerable<string> EncodeSmsSubmit(PhoneNumber phoneNumber, string encodedMessage, CodingScheme dataCodingScheme, bool includeEmptySmscLength = true)
+        public static string EncodeSmsSubmit(
+            PhoneNumber phoneNumber,
+            string encodedMessage,
+            CodingScheme dataCodingScheme,
+            bool includeEmptySmscLength = true)
         {
-            var messageParts = SplitByLength(encodedMessage, 160);
+            if (encodedMessage.Length > 160)
+                throw new ArgumentException("Maximum length exceeded (160)", nameof(encodedMessage));
 
-            for (var i = 0; i < messageParts.Count(); i++)
+            //return EncodeMultipartSmsSubmit(phoneNumber, encodedMessage, dataCodingScheme, includeEmptySmscLength).First();
+            return string.Empty;
+        }
+
+        public static IEnumerable<string> EncodeMultipartSmsSubmit(
+            PhoneNumber phoneNumber,
+            string message,
+            CodingScheme dataCodingScheme,
+            bool includeEmptySmscLength = true)
+        {
+            //if (encodedMessage.Length > 160 * 255)
+            //    throw new ArgumentOutOfRangeException(nameof(encodedMessage), "Maximum length exceeded (160 * 255)");
+
+            byte[] encodedMessage = Gsm7.EncodeToBytes(message);
+
+            // Single message
+            // 140 octets equals 160 septets. Because of string representation, double it (two chars per octet)
+            if (message.Length <= 2 * 140)
             {
                 StringBuilder sb = new StringBuilder();
 
@@ -243,22 +266,54 @@ namespace HeboTech.ATLib.PDU
                 if (includeEmptySmscLength)
                     sb.Append("00");
 
-                UserData userData = UserData
-                    .Initialize(dataCodingScheme)
-                    .AddTriplet(0x00, 0x69, messageParts.Count(), i);
-
                 // Build TPDU
                 sb.Append(SmsSubmitBuilder
                     .Initialize()
                     .ValidityPeriodFormat(0x10)
-                    .MessageReference(0x00)
                     .DestinationAddress(phoneNumber)
                     .ValidityPeriod(0xAA)
                     .DataCodingScheme(dataCodingScheme)
-                    .UserData(messageParts.ElementAt(i))
+                    .UserData(encodedMessage)
                     .Build());
 
                 yield return sb.ToString();
+            }
+            // Concatenated messages
+            else
+            {
+                //var messageParts = encodedMessage.SplitByLength(2 * 134); // 140 - 6 = 134. 6 octets for UDH
+                int numberOfMessageParts = (int)Math.Ceiling(encodedMessage.Length / 134d);
+                byte messageReferenceNumber = (byte)new Random(DateTime.UtcNow.Millisecond).Next(255);
+
+                for (var i = 0; i < numberOfMessageParts; i++)
+                {
+                    ConcatenatedShortMessages csms = new ConcatenatedShortMessages(
+                        messageReferenceNumber,
+                        (byte)numberOfMessageParts,
+                        (byte)(i + 1));
+
+                    StringBuilder sb = new StringBuilder();
+
+                    // Length of SMSC information
+                    if (includeEmptySmscLength)
+                        sb.Append("00");
+
+                    // Build TPDU
+                    sb.Append(SmsSubmitBuilder
+                        .Initialize()
+                        .EnableUserDataHeaderIndicator()
+                        .ValidityPeriodFormat(0x10)
+                        .DestinationAddress(phoneNumber)
+                        .ValidityPeriod(0xAA)
+                        .DataCodingScheme(dataCodingScheme)
+                        .AddUdhInformationElement(csms)
+                        .UserData(encodedMessage.Skip(i * numberOfMessageParts * 134).Take(i * numberOfMessageParts * 134).ToArray()) //messageParts.ElementAt(i))
+                        .Build());
+
+                    Console.WriteLine(sb.ToString());
+
+                    yield return sb.ToString();
+                }
             }
         }
 
@@ -434,14 +489,6 @@ namespace HeboTech.ATLib.PDU
             static byte DecimalToByte(ReadOnlySpan<char> text)
             {
                 return (byte)int.Parse(text, NumberStyles.Integer);
-            }
-        }
-
-        private static IEnumerable<string> SplitByLength(string str, int maxLength)
-        {
-            for (int index = 0; index < str.Length; index += maxLength)
-            {
-                yield return str.Substring(index, Math.Min(maxLength, str.Length - index));
             }
         }
     }

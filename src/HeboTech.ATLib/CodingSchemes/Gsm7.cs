@@ -16,15 +16,15 @@ namespace HeboTech.ATLib.CodingSchemes
         /// </summary>
         /// <param name="input">String to encode</param>
         /// <returns>GSM7 encoded string</returns>
-        public static string Encode(string text)
+        public static string Encode(string text, int paddingBits = 0)
         {
-            return Encode(Encoding.ASCII.GetBytes(text));
+            return Encode(Encoding.ASCII.GetBytes(text), paddingBits);
         }
 
-        public static string Encode(byte[] data)
+        public static string Encode(byte[] data, int paddingBits)
         {
             byte[] textBytes = data.Reverse().ToArray();
-            bool[] bits = new bool[textBytes.Length * 7];
+            bool[] bits = new bool[textBytes.Length * 7 + paddingBits];
             for (int i = 0; i < textBytes.Length; i++)
             {
                 for (int j = 0; j < 7; j++)
@@ -46,6 +46,37 @@ namespace HeboTech.ATLib.CodingSchemes
 
             string str = BitConverter.ToString(octets).Replace("-", "");
             return str;
+        }
+
+        public static byte[] EncodeToBytes(string text, int paddingBits = 0)
+        {
+            return EncodeToBytes(Encoding.ASCII.GetBytes(text), paddingBits);
+        }
+
+        public static byte[] EncodeToBytes(byte[] data, int paddingBits)
+        {
+            byte[] textBytes = data.Reverse().ToArray();
+            bool[] bits = new bool[textBytes.Length * 7 + paddingBits];
+            for (int i = 0; i < textBytes.Length; i++)
+            {
+                for (int j = 0; j < 7; j++)
+                {
+                    bits[i * 7 + j] = (textBytes[i] & (0x40 >> j)) != 0;
+                }
+            }
+
+            byte[] octets = new byte[(int)Math.Ceiling(bits.Length / 8.0)];
+            int offset = octets.Length * 8 - bits.Length;
+            int bitShift = 0;
+            for (int i = bits.Length - 1; i >= 0; i--)
+            {
+                octets[(i + offset) / 8] |= (byte)(bits[i] ? 0x01 << bitShift : 0x00);
+                bitShift++;
+                bitShift %= 8;
+            }
+            octets = octets.Reverse().ToArray();
+
+            return octets;
         }
 
         /// <summary>
