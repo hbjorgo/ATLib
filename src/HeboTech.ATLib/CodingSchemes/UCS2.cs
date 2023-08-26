@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -12,7 +11,7 @@ namespace HeboTech.ATLib.CodingSchemes
     /// </summary>
     public class UCS2
     {
-        public const byte DataCodingSchemeCode = 0x08;
+        public const CodingScheme DataCodingSchemeCode = CodingScheme.UCS2;
 
         /// <summary>
         /// Encode to UCS2

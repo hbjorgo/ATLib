@@ -8,7 +8,7 @@ namespace HeboTech.ATLib.CodingSchemes
     /// </summary>
     public class Ansi
     {
-        public const byte DataCodingSchemeCode = 0xF4;
+        public const CodingScheme DataCodingSchemeCode = CodingScheme.Ansi;
 
         /// <summary>
         /// Encode to ANSI 8-bit

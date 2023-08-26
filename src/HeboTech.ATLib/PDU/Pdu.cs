@@ -1,7 +1,9 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
 
 namespace HeboTech.ATLib.PDU
@@ -55,11 +57,11 @@ namespace HeboTech.ATLib.PDU
             PhoneNumber serviceCenterNumber = null;
             if (smsc_length > 0)
             {
-                serviceCenterNumber = DecodePhoneNumber(text.SliceOnIndex(offset,(offset += smsc_length * 2)));
+                serviceCenterNumber = DecodePhoneNumber(text.SliceOnIndex(offset, (offset += smsc_length * 2)));
             }
 
             // SMS-DELIVER start
-            byte header = HexToByte(text.SliceOnIndex(offset,(offset += 2)));
+            byte header = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
 
             int tp_mti = header & 0b0000_0011;
             if (tp_mti != (byte)PduType.SMS_DELIVER)
@@ -229,41 +231,35 @@ namespace HeboTech.ATLib.PDU
 #elif NETSTANDARD2_1_OR_GREATER
     public class Pdu
     {
-        public static string EncodeSmsSubmit(PhoneNumber phoneNumber, string encodedMessage, byte dataCodingScheme, bool includeEmptySmscLength = true)
+        public static IEnumerable<string> EncodeSmsSubmit(PhoneNumber phoneNumber, string encodedMessage, CodingScheme dataCodingScheme, bool includeEmptySmscLength = true)
         {
-            StringBuilder sb = new StringBuilder();
-            // Length of SMSC information
-            if (includeEmptySmscLength)
-                sb.Append("00");
-            // First octed of the SMS-SUBMIT message
-            sb.Append("11");
-            // TP-Message-Reference. '00' lets the phone set the message reference number itself
-            sb.Append("00");
-            // Address length. Length of phone number (number of digits)
-            sb.Append((phoneNumber.ToString().TrimStart('+').Length).ToString("X2"));
-            // Type-of-Address
-            sb.Append(GetAddressType(phoneNumber).ToString("X2"));
-            // Phone number in semi octets. 12345678 is represented as 21436587
-            sb.Append(SwapPhoneNumberDigits(phoneNumber.ToString().TrimStart('+')));
-            // TP-PID Protocol identifier
-            sb.Append("00");
-            // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
-            sb.Append((dataCodingScheme).ToString("X2"));
-            // TP-Validity-Period. 'AA'-4 days
-            sb.Append("AA");
-            // TP-User-Data-Length. If TP-DCS field indicates 7-bit data, the length is the number of septets.
-            // If TP-DCS indicates 8-bit data or Unicode, the length is the number of octets.
-            if (dataCodingScheme == 0)
-            {
-                int messageBitLength = encodedMessage.Length / 2 * 7;
-                int messageLength = messageBitLength % 8 == 0 ? messageBitLength / 8 : (messageBitLength / 8) + 1;
-                sb.Append((messageLength).ToString("X2"));
-            }
-            else
-                sb.Append((encodedMessage.Length / 2 * 8 / 7).ToString("X2"));
-            sb.Append(encodedMessage);
+            var messageParts = SplitByLength(encodedMessage, 160);
 
-            return sb.ToString();
+            for (var i = 0; i < messageParts.Count(); i++)
+            {
+                StringBuilder sb = new StringBuilder();
+
+                // Length of SMSC information
+                if (includeEmptySmscLength)
+                    sb.Append("00");
+
+                UserData userData = UserData
+                    .Initialize(dataCodingScheme)
+                    .AddTriplet(0x00, 0x69, messageParts.Count(), i);
+
+                // Build TPDU
+                sb.Append(SmsSubmitBuilder
+                    .Initialize()
+                    .ValidityPeriodFormat(0x10)
+                    .MessageReference(0x00)
+                    .DestinationAddress(phoneNumber)
+                    .ValidityPeriod(0xAA)
+                    .DataCodingScheme(dataCodingScheme)
+                    .UserData(messageParts.ElementAt(i))
+                    .Build());
+
+                yield return sb.ToString();
+            }
         }
 
         public static SmsDeliver DecodeSmsDeliver(ReadOnlySpan<char> text, int timestampYearOffset = 2000)
@@ -438,6 +434,14 @@ namespace HeboTech.ATLib.PDU
             static byte DecimalToByte(ReadOnlySpan<char> text)
             {
                 return (byte)int.Parse(text, NumberStyles.Integer);
+            }
+        }
+
+        private static IEnumerable<string> SplitByLength(string str, int maxLength)
+        {
+            for (int index = 0; index < str.Length; index += maxLength)
+            {
+                yield return str.Substring(index, Math.Min(maxLength, str.Length - index));
             }
         }
     }

@@ -216,45 +216,47 @@ namespace HeboTech.ATLib.Modems.Generic
             if (message is null)
                 throw new ArgumentNullException(nameof(message));
 
-            byte dataCodingScheme;
             string encodedMessage;
             switch (codingScheme)
             {
                 case CodingScheme.Ansi:
                     encodedMessage = Ansi.Encode(message);
-                    dataCodingScheme = Ansi.DataCodingSchemeCode;
                     break;
                 case CodingScheme.Gsm7:
                     encodedMessage = Gsm7.Encode(message);
-                    dataCodingScheme = Gsm7.DataCodingSchemeCode;
                     break;
                 case CodingScheme.UCS2:
                     encodedMessage = UCS2.Encode(message);
-                    dataCodingScheme = UCS2.DataCodingSchemeCode;
                     break;
                 default:
                     throw new ArgumentException("The encoding scheme is not supported");
             }
 
-            string pdu = Pdu.EncodeSmsSubmit(phoneNumber, encodedMessage, dataCodingScheme, includeEmptySmscLength);
-            string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
-            string cmd2 = pdu;
-            AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
+            IEnumerable<string> pdus = Pdu.EncodeSmsSubmit(phoneNumber, encodedMessage, codingScheme, includeEmptySmscLength);
+            List<SmsReference> smsReferences = new List<SmsReference>();
+            foreach (string pdu in pdus)
+            {
+                string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
+                string cmd2 = pdu;
+                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
 
-            if (response.Success)
-            {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                if (match.Success)
+                if (response.Success)
                 {
-                    int mr = int.Parse(match.Groups["mr"].Value);
-                    return ModemResponse.ResultSuccess(new SmsReference(mr));
+                    string line = response.Intermediates.First();
+                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                    if (match.Success)
+                    {
+                        int mr = int.Parse(match.Groups["mr"].Value);
+                        smsReferences.Add(new SmsReference(mr));
+                        //return ModemResponse.ResultSuccess(new SmsReference(mr));
+                    }
                 }
-            }
-            else
-            {
-                if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                    return ModemResponse.ResultError<SmsReference>(error.ToString());
+                else
+                {
+                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
+                        smsReferences.Add(null);
+                    //return ModemResponse.ResultError<SmsReference>(error.ToString());
+                }
             }
             return ModemResponse.ResultError<SmsReference>();
         }

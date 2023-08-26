@@ -9,7 +9,7 @@ namespace HeboTech.ATLib.CodingSchemes
     /// </summary>
     public class Gsm7
     {
-        public const byte DataCodingSchemeCode = 0x00;
+        public const CodingScheme DataCodingSchemeCode = CodingScheme.Gsm7;
 
         /// <summary>
         /// Encode to GSM7
