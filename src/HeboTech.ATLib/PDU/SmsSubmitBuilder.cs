@@ -169,7 +169,7 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        public string Build(byte[] data)
+        public string Build(MessagePart messagePart)
         {
             StringBuilder sb = new StringBuilder();
 
@@ -191,21 +191,18 @@ namespace HeboTech.ATLib.PDU
                     //sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
                     break;
                 case CodingScheme.Gsm7:
+                    int fillBits = 0;
+                    if (UserDataHeaderIndicatorIsSet)
+                        fillBits = 7 - ((messagePart.Header.Length * 8) % 7);
 
-                    //var udhEncoded = Gsm7.EncodeToBytes(data[..6]);
-                    //var udEncoded = Gsm7.EncodeToBytes(data[6..]);
-                    //int udlBits = (udhEncoded.Length + udEncoded.Length) * 8;
-                    //int udlSeptets = udlBits / 7;
-                    //sb.Append((udlSeptets).ToString("X2"));
-                    //sb.Append(string.Join("", udhEncoded.Select(x => x.ToHexString())));
-                    //sb.Append(string.Join("", udEncoded.Select(x => x.ToHexString())));
+                    var encoded = Gsm7.EncodeToBytes(messagePart.Data, fillBits);
 
-
-
-                    var encoded = Gsm7.EncodeToBytes(data, UserDataHeaderIndicatorIsSet ? 1 : 0);
-                    int udlBits = (encoded.Length) * 8;
+                    int udlBits = (messagePart.Header.Length + encoded.Length) * 8;
                     int udlSeptets = udlBits / 7;
                     sb.Append((udlSeptets).ToString("X2"));
+
+                    sb.Append(string.Join("", messagePart.Header.Select(x => x.ToHexString())));
+
                     sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
                     break;
                 case CodingScheme.UCS2:
@@ -220,45 +217,59 @@ namespace HeboTech.ATLib.PDU
             return sb.ToString();
         }
 
-        public static byte[][] CreateMessageParts(IEnumerable<byte> data, byte messageReferenceNumber)
+        public static Message CreateMessageParts(IEnumerable<byte> data)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));
 
             // The message does not need to be concatenated. Return empty array
             if (data.Count() <= MAX_SINGLE_MESSAGE_SIZE)
-                return new byte[0][];
+                return new Message(0, 1, new MessagePart(Array.Empty<byte>(), data.ToArray()));
+
+            byte messageReferenceNumber = (byte)new Random(DateTime.UtcNow.Millisecond).Next(255);
 
             int numberOfParts = (data.Count() / MAX_MESSAGE_PART_SIZE) + (data.Count() % MAX_MESSAGE_PART_SIZE == 0 ? 0 : 1);
 
-            byte[][] parts = new byte[numberOfParts][];
+            MessagePart[] parts = new MessagePart[numberOfParts];
             for (int i = 0; i < numberOfParts; i++)
             {
-                // UDH (6 bytes) + length of part
-                byte[] part = new byte[6 + MAX_MESSAGE_PART_SIZE];
-
-                // Length of UDH
-                part[0] = 0x05;
-                // IEI (0x00) for concatenated SMS
-                part[1] = 0x00;
-                // Length of header for concatenated SMS (excluding the two first octets)
-                part[2] = 0x03;
-                // CSMS reference number.
-                part[3] = messageReferenceNumber;
-                // Total number of parts
-                part[4] = (byte)numberOfParts;
-                // This part's sequence number, starting at 1
-                part[5] = (byte)(i + 1);
-
-                // Copy message part onto the end
-                byte[] temp = data.Skip(i * MAX_MESSAGE_PART_SIZE).Take(MAX_MESSAGE_PART_SIZE).ToArray();
-                Array.Copy(temp, 0, part, 6, temp.Length);
-
-                parts[i] = part;
+                parts[i] = new MessagePart(
+                            new byte[]
+                            {
+                                // Length of UDH
+                                0x05,
+                                // IEI (0x00) for concatenated SMS
+                                0x00,
+                                // Length of header for concatenated SMS (excluding the two first octets)
+                                0x03,
+                                // CSMS reference number
+                                messageReferenceNumber,
+                                // Total number of parts
+                                (byte)numberOfParts,
+                                // This part's sequence number, starting at 1
+                                (byte)(i + 1)
+                            },
+                            // Each part of the total message
+                            data.Skip(i * MAX_MESSAGE_PART_SIZE).Take(MAX_MESSAGE_PART_SIZE).ToArray());
             }
-
-            return parts;
+            
+            
+            return new Message(messageReferenceNumber, (byte)numberOfParts, parts);
         }
+    }
+
+    internal class Message
+    {
+        public Message(byte messageReferenceNumber, byte numberOfParts, params MessagePart[] parts)
+        {
+            MessageReferenceNumber = messageReferenceNumber;
+            NumberOfParts = numberOfParts;
+            Parts = parts;
+        }
+
+        public byte MessageReferenceNumber { get; }
+        public byte NumberOfParts { get; }
+        public IEnumerable<MessagePart> Parts { get; }
     }
 
     internal class MessagePart
@@ -272,133 +283,4 @@ namespace HeboTech.ATLib.PDU
         public byte[] Header { get; }
         public byte[] Data { get; }
     }
-
-    //internal class SingleSmsSubmitBuilder : SmsSubmitBuilder
-    //{
-    //    public SingleSmsSubmitBuilder(PhoneNumber phoneNumber, byte[] message, CodingScheme codingScheme, byte validityPeriodFormat, byte validityPeriod)
-    //    {
-    //        DestinationAddress(phoneNumber);
-    //        DataCodingScheme(codingScheme);
-    //        ValidityPeriodFormat(validityPeriodFormat);
-    //        ValidityPeriod(validityPeriod);
-    //        UserData(message);
-    //    }
-
-    //    public void UserData(IEnumerable<byte> message)
-    //    {
-    //        if (message.Count() > MAX_MESSAGE_PART_SIZE * MAX_NUMBER_OF_MESSAGE_PARTS)
-    //            throw new ArgumentException($"Too long", nameof(message));
-
-    //        if (message.Count() <= MAX_SINGLE_MESSAGE_SIZE)
-    //        {
-    //            ud.Clear();
-    //            ud.AddRange(message);
-    //        }
-    //    }
-
-    //    public string Build()
-    //    {
-    //        StringBuilder sb = new StringBuilder();
-
-    //        sb.Append(header.ToString("X2"));
-    //        sb.Append(mr.ToString("X2"));
-    //        sb.Append(daLength.ToString("X2"));
-    //        sb.Append(daType.ToString("X2"));
-    //        sb.Append(daNumber);
-    //        sb.Append(pi.ToString("X2"));
-    //        sb.Append(((byte)dcs).ToString("X2"));
-    //        if (vp.Count > 0)
-    //            sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
-
-    //        switch (dcs)
-    //        {
-    //            case CodingScheme.Ansi:
-    //                break;
-    //            case CodingScheme.Gsm7:
-    //                int udlBits = (ud.Count) * 8;
-    //                int udlSeptets = udlBits / 7;
-    //                sb.Append((udlSeptets).ToString("X2"));
-    //                break;
-    //            case CodingScheme.UCS2:
-    //                sb.Append((ud.Count * 8).ToString("X2"));
-    //                break;
-    //            default:
-    //                break;
-    //        }
-    //        sb.Append(string.Join("", ud.Select(x => x.ToHexString())));
-
-    //        return sb.ToString();
-    //    }
-    //}
-
-    //internal class ConcatenatedSmsSubmitBuilder : SmsSubmitBuilder
-    //{
-    //    public ConcatenatedSmsSubmitBuilder(PhoneNumber phoneNumber, byte[] message, byte messageReferenceNumber, CodingScheme codingScheme, byte validityPeriodFormat, byte validityPeriod)
-    //    {
-    //        DestinationAddress(phoneNumber);
-    //        DataCodingScheme(codingScheme);
-    //        ValidityPeriodFormat(validityPeriodFormat);
-    //        ValidityPeriod(validityPeriod);
-    //        UserData(message, messageReferenceNumber);
-    //    }
-
-    //    public void UserData(IEnumerable<byte> message, byte messageReferenceNumber)
-    //    {
-    //        if (message.Count() > MAX_MESSAGE_PART_SIZE * MAX_NUMBER_OF_MESSAGE_PARTS)
-    //            throw new ArgumentException($"Too long", nameof(message));
-
-    //        if (message.Count() <= MAX_SINGLE_MESSAGE_SIZE)
-    //        {
-    //            ud.Clear();
-    //            ud.AddRange(message);
-    //        }
-    //        else
-    //        {
-    //            var parts = CreateMessageParts(message, messageReferenceNumber);
-    //        }
-    //    }
-
-    //    public IEnumerable<string> Build()
-    //    {
-    //        StringBuilder sb = new StringBuilder();
-
-    //        sb.Append(header.ToString("X2"));
-    //        sb.Append(mr.ToString("X2"));
-    //        sb.Append(daLength.ToString("X2"));
-    //        sb.Append(daType.ToString("X2"));
-    //        sb.Append(daNumber);
-    //        sb.Append(pi.ToString("X2"));
-    //        sb.Append(((byte)dcs).ToString("X2"));
-    //        if (vp.Count > 0)
-    //            sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
-
-    //        int fillBits = 0;
-
-    //        switch (dcs)
-    //        {
-    //            case CodingScheme.Ansi:
-    //                break;
-    //            case CodingScheme.Gsm7:
-    //                int udhlBits = (udhLength + 1) * 8;
-    //                if (udhlBits % 7 > 0)
-    //                    fillBits = 7 - (udhlBits % 7);
-    //                int udlBits = ((udhLength + 1) * 8) + fillBits + ((ud.Count) * 8);
-    //                int udlSeptets = udlBits / 7;
-    //                sb.Append((udlSeptets).ToString("X2"));
-    //                break;
-    //            case CodingScheme.UCS2:
-    //                sb.Append((ud.Count * 8).ToString("X2"));
-    //                break;
-    //            default:
-    //                break;
-    //        }
-
-    //        sb.Append(udhLength.ToHexString());
-    //        sb.AppendJoin("", triplets);
-
-    //        sb.Append(string.Join("", ud.Select(x => x.ToHexString())));
-
-    //        return sb.ToString();
-    //    }
-    //}
 }

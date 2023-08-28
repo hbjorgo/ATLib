@@ -5,6 +5,7 @@ using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
+using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -150,21 +151,26 @@ namespace HeboTech.ATLib.TestConsole
                             string smsMessage = Console.ReadLine();
 
                             Console.WriteLine("Sending SMS...");
-                            ModemResponse<SmsReference> smsReference = null;
                             switch (smsTextFormat)
                             {
                                 case SmsTextFormat.PDU:
-                                    smsReference = await modem.SendSmsInPduFormatAsync(phoneNumber, Encoding.UTF8.GetBytes(smsMessage), smsCodingScheme);
+                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, Encoding.UTF8.GetBytes(smsMessage), smsCodingScheme);
+                                    foreach (var smsReference in smsReferences)
+                                    {
+                                        Console.WriteLine($"SMS Reference: {smsReference}");
+                                    }
                                     break;
                                 case SmsTextFormat.Text:
-                                    smsReference = await modem.SendSmsInTextFormatAsync(phoneNumber, smsMessage);
+                                    {
+                                        ModemResponse<SmsReference> smsReference = await modem.SendSmsInTextFormatAsync(phoneNumber, smsMessage);
+                                        if (smsReference is not null)
+                                            Console.WriteLine($"SMS Reference: {smsReference}");
+                                    }
                                     break;
                                 default:
                                     Console.WriteLine("Unsupported SMS text format");
                                     break;
                             }
-                            if (smsReference is not null)
-                                Console.WriteLine($"SMS Reference: {smsReference}");
                         }
                         break;
                     case ConsoleKey.R:

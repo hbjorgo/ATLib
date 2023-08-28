@@ -251,10 +251,9 @@ namespace HeboTech.ATLib.PDU
             CodingScheme dataCodingScheme,
             bool includeEmptySmscLength = true)
         {
-            byte messageReferenceNumber = (byte)new Random(DateTime.UtcNow.Millisecond).Next(255);
-            var parts = SmsSubmitBuilder.CreateMessageParts(message, messageReferenceNumber);
+            var partitionedMessage = SmsSubmitBuilder.CreateMessageParts(message);
             // Single message
-            if (parts.Length == 0)
+            if (partitionedMessage.NumberOfParts == 1)
             {
                 StringBuilder sb = new StringBuilder();
 
@@ -269,7 +268,7 @@ namespace HeboTech.ATLib.PDU
                                     .DataCodingScheme(dataCodingScheme)
                                     .ValidityPeriodFormat(0x10)
                                     .ValidityPeriod(0xAA)
-                                    .Build(message);
+                                    .Build(partitionedMessage.Parts.First());
                 sb.Append(submitData);
 
                 yield return sb.ToString();
@@ -277,7 +276,7 @@ namespace HeboTech.ATLib.PDU
             // Concatenated messages
             else
             {
-                foreach (var part in parts)
+                foreach (var messagePart in partitionedMessage.Parts)
                 {
                     StringBuilder sb = new StringBuilder();
 
@@ -293,7 +292,7 @@ namespace HeboTech.ATLib.PDU
                                         .DataCodingScheme(dataCodingScheme)
                                         .ValidityPeriodFormat(0x10)
                                         .ValidityPeriod(0xAA)
-                                        .Build(part);
+                                        .Build(messagePart);
                     sb.Append(submitData);
 
                     yield return sb.ToString();

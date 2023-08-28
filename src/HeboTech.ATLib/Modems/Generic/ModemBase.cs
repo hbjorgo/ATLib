@@ -207,9 +207,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.ResultError<SmsReference>();
         }
 
-        public abstract Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, byte[] message, CodingScheme codingScheme);
+        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, byte[] message, CodingScheme codingScheme);
 
-        protected virtual async Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, byte[] message, CodingScheme codingScheme, bool includeEmptySmscLength)
+        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, byte[] message, CodingScheme codingScheme, bool includeEmptySmscLength)
         {
             if (phoneNumber is null)
                 throw new ArgumentNullException(nameof(phoneNumber));
@@ -217,7 +217,7 @@ namespace HeboTech.ATLib.Modems.Generic
                 throw new ArgumentNullException(nameof(message));
 
             IEnumerable<string> pdus = Pdu.EncodeMultipartSmsSubmit(phoneNumber, message, codingScheme, includeEmptySmscLength);
-            List<SmsReference> smsReferences = new List<SmsReference>();
+            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
             foreach (string pdu in pdus)
             {
                 string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
@@ -231,18 +231,16 @@ namespace HeboTech.ATLib.Modems.Generic
                     if (match.Success)
                     {
                         int mr = int.Parse(match.Groups["mr"].Value);
-                        smsReferences.Add(new SmsReference(mr));
-                        //return ModemResponse.ResultSuccess(new SmsReference(mr));
+                        references.Add(ModemResponse.ResultSuccess(new SmsReference(mr)));
                     }
                 }
                 else
                 {
                     if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                        smsReferences.Add(null);
-                    //return ModemResponse.ResultError<SmsReference>(error.ToString());
+                        references.Add(ModemResponse.ResultError<SmsReference>(error.ToString()));
                 }
             }
-            return ModemResponse.ResultError<SmsReference>();
+            return references;
         }
 
         public virtual async Task<ModemResponse<SupportedPreferredMessageStorages>> GetSupportedPreferredMessageStoragesAsync()
