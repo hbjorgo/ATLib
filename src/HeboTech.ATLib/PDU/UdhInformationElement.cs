@@ -5,12 +5,13 @@ namespace HeboTech.ATLib.PDU
 {
     internal abstract class UdhInformationElement
     {
-        public byte Length { get; protected set; }
+        public abstract byte Length { get; }
         public abstract string Build();
     }
 
     internal class ConcatenatedShortMessages : UdhInformationElement
     {
+
         private readonly byte messageReferenceNumber;
         private readonly byte numberOfMessageParts;
         private readonly byte partNumber;
@@ -20,8 +21,10 @@ namespace HeboTech.ATLib.PDU
             this.messageReferenceNumber = messageReferenceNumber;
             this.numberOfMessageParts = numberOfMessageParts;
             this.partNumber = partNumber;
-            Length = 5;
         }
+
+        // IEI (1) + IE Length (1) + Data (3)
+        public override byte Length { get; } = 5;
 
         public override string Build()
         {

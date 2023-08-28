@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.Modems.TP_LINK
         {
         }
 
-        public override Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
+        public override Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, byte[] message, CodingScheme codingScheme)
         {
             return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
         }

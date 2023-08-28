@@ -53,7 +53,7 @@ namespace HeboTech.ATLib.CodingSchemes
             return EncodeToBytes(Encoding.ASCII.GetBytes(text), paddingBits);
         }
 
-        public static byte[] EncodeToBytes(byte[] data, int paddingBits)
+        public static byte[] EncodeToBytes(byte[] data, int paddingBits = 0)
         {
             byte[] textBytes = data.Reverse().ToArray();
             bool[] bits = new bool[textBytes.Length * 7 + paddingBits];

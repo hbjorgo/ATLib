@@ -247,18 +247,14 @@ namespace HeboTech.ATLib.PDU
 
         public static IEnumerable<string> EncodeMultipartSmsSubmit(
             PhoneNumber phoneNumber,
-            string message,
+            byte[] message,
             CodingScheme dataCodingScheme,
             bool includeEmptySmscLength = true)
         {
-            //if (encodedMessage.Length > 160 * 255)
-            //    throw new ArgumentOutOfRangeException(nameof(encodedMessage), "Maximum length exceeded (160 * 255)");
-
-            byte[] encodedMessage = Gsm7.EncodeToBytes(message);
-
+            byte messageReferenceNumber = (byte)new Random(DateTime.UtcNow.Millisecond).Next(255);
+            var parts = SmsSubmitBuilder.CreateMessageParts(message, messageReferenceNumber);
             // Single message
-            // 140 octets equals 160 septets. Because of string representation, double it (two chars per octet)
-            if (message.Length <= 2 * 140)
+            if (parts.Length == 0)
             {
                 StringBuilder sb = new StringBuilder();
 
@@ -267,31 +263,22 @@ namespace HeboTech.ATLib.PDU
                     sb.Append("00");
 
                 // Build TPDU
-                sb.Append(SmsSubmitBuilder
-                    .Initialize()
-                    .ValidityPeriodFormat(0x10)
-                    .DestinationAddress(phoneNumber)
-                    .ValidityPeriod(0xAA)
-                    .DataCodingScheme(dataCodingScheme)
-                    .UserData(encodedMessage)
-                    .Build());
+                var submitData = SmsSubmitBuilder
+                                    .Initialize()
+                                    .DestinationAddress(phoneNumber)
+                                    .DataCodingScheme(dataCodingScheme)
+                                    .ValidityPeriodFormat(0x10)
+                                    .ValidityPeriod(0xAA)
+                                    .Build(message);
+                sb.Append(submitData);
 
                 yield return sb.ToString();
             }
             // Concatenated messages
             else
             {
-                //var messageParts = encodedMessage.SplitByLength(2 * 134); // 140 - 6 = 134. 6 octets for UDH
-                int numberOfMessageParts = (int)Math.Ceiling(encodedMessage.Length / 134d);
-                byte messageReferenceNumber = (byte)new Random(DateTime.UtcNow.Millisecond).Next(255);
-
-                for (var i = 0; i < numberOfMessageParts; i++)
+                foreach (var part in parts)
                 {
-                    ConcatenatedShortMessages csms = new ConcatenatedShortMessages(
-                        messageReferenceNumber,
-                        (byte)numberOfMessageParts,
-                        (byte)(i + 1));
-
                     StringBuilder sb = new StringBuilder();
 
                     // Length of SMSC information
@@ -299,18 +286,15 @@ namespace HeboTech.ATLib.PDU
                         sb.Append("00");
 
                     // Build TPDU
-                    sb.Append(SmsSubmitBuilder
-                        .Initialize()
-                        .EnableUserDataHeaderIndicator()
-                        .ValidityPeriodFormat(0x10)
-                        .DestinationAddress(phoneNumber)
-                        .ValidityPeriod(0xAA)
-                        .DataCodingScheme(dataCodingScheme)
-                        .AddUdhInformationElement(csms)
-                        .UserData(encodedMessage.Skip(i * numberOfMessageParts * 134).Take(i * numberOfMessageParts * 134).ToArray()) //messageParts.ElementAt(i))
-                        .Build());
-
-                    Console.WriteLine(sb.ToString());
+                    var submitData = SmsSubmitBuilder
+                                        .Initialize()
+                                        .EnableUserDataHeaderIndicator()
+                                        .DestinationAddress(phoneNumber)
+                                        .DataCodingScheme(dataCodingScheme)
+                                        .ValidityPeriodFormat(0x10)
+                                        .ValidityPeriod(0xAA)
+                                        .Build(part);
+                    sb.Append(submitData);
 
                     yield return sb.ToString();
                 }
@@ -491,6 +475,8 @@ namespace HeboTech.ATLib.PDU
                 return (byte)int.Parse(text, NumberStyles.Integer);
             }
         }
+
+
     }
 #endif
 }

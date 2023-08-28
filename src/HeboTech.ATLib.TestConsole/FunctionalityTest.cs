@@ -5,6 +5,7 @@ using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -153,7 +154,7 @@ namespace HeboTech.ATLib.TestConsole
                             switch (smsTextFormat)
                             {
                                 case SmsTextFormat.PDU:
-                                    smsReference = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage, smsCodingScheme);
+                                    smsReference = await modem.SendSmsInPduFormatAsync(phoneNumber, Encoding.UTF8.GetBytes(smsMessage), smsCodingScheme);
                                     break;
                                 case SmsTextFormat.Text:
                                     smsReference = await modem.SendSmsInTextFormatAsync(phoneNumber, smsMessage);
