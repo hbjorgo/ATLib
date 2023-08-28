@@ -252,8 +252,17 @@ namespace HeboTech.ATLib.PDU
             bool includeEmptySmscLength = true)
         {
             var partitionedMessage = SmsSubmitBuilder.CreateMessageParts(message);
-            // Single message
-            if (partitionedMessage.NumberOfParts == 1)
+            
+            // Build TPDU
+            var messageParts = SmsSubmitBuilder
+                                    .Initialize()
+                                    .DestinationAddress(phoneNumber)
+                                    .DataCodingScheme(dataCodingScheme)
+                                    .ValidityPeriodFormat(0x10)
+                                    .ValidityPeriod(0xAA)
+                                    .Build(partitionedMessage);
+
+            foreach (var messagePart in messageParts)
             {
                 StringBuilder sb = new StringBuilder();
 
@@ -261,42 +270,9 @@ namespace HeboTech.ATLib.PDU
                 if (includeEmptySmscLength)
                     sb.Append("00");
 
-                // Build TPDU
-                var submitData = SmsSubmitBuilder
-                                    .Initialize()
-                                    .DestinationAddress(phoneNumber)
-                                    .DataCodingScheme(dataCodingScheme)
-                                    .ValidityPeriodFormat(0x10)
-                                    .ValidityPeriod(0xAA)
-                                    .Build(partitionedMessage.Parts.First());
-                sb.Append(submitData);
+                sb.Append(messagePart);
 
                 yield return sb.ToString();
-            }
-            // Concatenated messages
-            else
-            {
-                foreach (var messagePart in partitionedMessage.Parts)
-                {
-                    StringBuilder sb = new StringBuilder();
-
-                    // Length of SMSC information
-                    if (includeEmptySmscLength)
-                        sb.Append("00");
-
-                    // Build TPDU
-                    var submitData = SmsSubmitBuilder
-                                        .Initialize()
-                                        .EnableUserDataHeaderIndicator()
-                                        .DestinationAddress(phoneNumber)
-                                        .DataCodingScheme(dataCodingScheme)
-                                        .ValidityPeriodFormat(0x10)
-                                        .ValidityPeriod(0xAA)
-                                        .Build(messagePart);
-                    sb.Append(submitData);
-
-                    yield return sb.ToString();
-                }
             }
         }
 

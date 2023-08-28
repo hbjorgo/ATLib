@@ -44,7 +44,7 @@ namespace HeboTech.ATLib.PDU
 
         protected bool UserDataHeaderIndicatorIsSet => (header & (1 << 6)) != 0x00;
 
-        public SmsSubmitBuilder EnableUserDataHeaderIndicator()
+        protected SmsSubmitBuilder EnableUserDataHeaderIndicator()
         {
             header |= 0b0100_0000;
             return this;
@@ -169,52 +169,58 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        public string Build(MessagePart messagePart)
+        public IEnumerable<string> Build(Message message)
         {
-            StringBuilder sb = new StringBuilder();
+            if (message.Parts.Count() > 1)
+                EnableUserDataHeaderIndicator();
 
-            sb.Append(header.ToString("X2"));
-            sb.Append(mr.ToString("X2"));
-            sb.Append(daLength.ToString("X2"));
-            sb.Append(daType.ToString("X2"));
-            sb.Append(daNumber);
-            sb.Append(pi.ToString("X2"));
-            sb.Append(((byte)dcs).ToString("X2"));
-            if (vp.Count > 0)
-                sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
-
-            switch (dcs)
+            foreach (var part in message.Parts)
             {
-                case CodingScheme.Ansi:
-                    //var encoded = Ansi.EncodeToBytes(data);
-                    //sb.Append((data.Length * 8).ToString("X2"));
-                    //sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
-                    break;
-                case CodingScheme.Gsm7:
-                    int fillBits = 0;
-                    if (UserDataHeaderIndicatorIsSet)
-                        fillBits = 7 - ((messagePart.Header.Length * 8) % 7);
+                StringBuilder sb = new StringBuilder();
 
-                    var encoded = Gsm7.EncodeToBytes(messagePart.Data, fillBits);
+                sb.Append(header.ToString("X2"));
+                sb.Append(mr.ToString("X2"));
+                sb.Append(daLength.ToString("X2"));
+                sb.Append(daType.ToString("X2"));
+                sb.Append(daNumber);
+                sb.Append(pi.ToString("X2"));
+                sb.Append(((byte)dcs).ToString("X2"));
+                if (vp.Count > 0)
+                    sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
 
-                    int udlBits = (messagePart.Header.Length + encoded.Length) * 8;
-                    int udlSeptets = udlBits / 7;
-                    sb.Append((udlSeptets).ToString("X2"));
+                switch (dcs)
+                {
+                    case CodingScheme.Ansi:
+                        //var encoded = Ansi.EncodeToBytes(data);
+                        //sb.Append((data.Length * 8).ToString("X2"));
+                        //sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
+                        break;
+                    case CodingScheme.Gsm7:
+                        int fillBits = 0;
+                        if (UserDataHeaderIndicatorIsSet)
+                            fillBits = 7 - ((part.Header.Length * 8) % 7);
 
-                    sb.Append(string.Join("", messagePart.Header.Select(x => x.ToHexString())));
+                        var encoded = Gsm7.EncodeToBytes(part.Data, fillBits);
 
-                    sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
-                    break;
-                case CodingScheme.UCS2:
-                    //var encoded = UCS2.EncodeToBytes(data);
-                    //sb.Append((data.Length * 8).ToString("X2"));
-                    //sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
-                    break;
-                default:
-                    break;
+                        int udlBits = (part.Header.Length + encoded.Length) * 8;
+                        int udlSeptets = udlBits / 7;
+                        sb.Append((udlSeptets).ToString("X2"));
+
+                        sb.Append(string.Join("", part.Header.Select(x => x.ToHexString())));
+
+                        sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
+                        break;
+                    case CodingScheme.UCS2:
+                        //var encoded = UCS2.EncodeToBytes(data);
+                        //sb.Append((data.Length * 8).ToString("X2"));
+                        //sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
+                        break;
+                    default:
+                        break;
+                }
+
+                yield return sb.ToString();
             }
-
-            return sb.ToString();
         }
 
         public static Message CreateMessageParts(IEnumerable<byte> data)
@@ -252,7 +258,6 @@ namespace HeboTech.ATLib.PDU
                             // Each part of the total message
                             data.Skip(i * MAX_MESSAGE_PART_SIZE).Take(MAX_MESSAGE_PART_SIZE).ToArray());
             }
-            
             
             return new Message(messageReferenceNumber, (byte)numberOfParts, parts);
         }
