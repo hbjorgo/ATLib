@@ -5,7 +5,7 @@ using System.Text;
 namespace HeboTech.ATLib.CodingSchemes
 {
     /// <summary>
-    /// Encode / decode GSM 7-bit strings
+    /// Encode / decode GSM 7-bit strings (GSM 03.38 or 3GPP 23.038)
     /// </summary>
     public class Gsm7
     {

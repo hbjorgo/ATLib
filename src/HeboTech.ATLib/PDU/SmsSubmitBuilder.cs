@@ -169,12 +169,14 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        public IEnumerable<string> Build(Message message)
+        public IEnumerable<string> Build(byte[] message)
         {
-            if (message.Parts.Count() > 1)
+            var partitionedMessage = CreateMessageParts(message);
+
+            if (partitionedMessage.Parts.Count() > 1)
                 EnableUserDataHeaderIndicator();
 
-            foreach (var part in message.Parts)
+            foreach (var part in partitionedMessage.Parts)
             {
                 StringBuilder sb = new StringBuilder();
 
@@ -223,7 +225,7 @@ namespace HeboTech.ATLib.PDU
             }
         }
 
-        public static Message CreateMessageParts(IEnumerable<byte> data)
+        protected static Message CreateMessageParts(IEnumerable<byte> data)
         {
             if (data == null)
                 throw new ArgumentNullException(nameof(data));

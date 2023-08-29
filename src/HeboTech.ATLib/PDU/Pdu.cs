@@ -251,8 +251,6 @@ namespace HeboTech.ATLib.PDU
             CodingScheme dataCodingScheme,
             bool includeEmptySmscLength = true)
         {
-            var partitionedMessage = SmsSubmitBuilder.CreateMessageParts(message);
-            
             // Build TPDU
             var messageParts = SmsSubmitBuilder
                                     .Initialize()
@@ -260,7 +258,7 @@ namespace HeboTech.ATLib.PDU
                                     .DataCodingScheme(dataCodingScheme)
                                     .ValidityPeriodFormat(0x10)
                                     .ValidityPeriod(0xAA)
-                                    .Build(partitionedMessage);
+                                    .Build(message);
 
             foreach (var messagePart in messageParts)
             {
