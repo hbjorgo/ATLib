@@ -21,6 +21,11 @@ namespace HeboTech.ATLib.CodingSchemes
             return BitConverter.ToString(bytes).Replace("-", "");
         }
 
+        public static byte[] EncodeToBytes(string input)
+        {
+            return Encoding.ASCII.GetBytes(input);
+        }
+
         /// <summary>
         /// Decode from ANSI 8-bit
         /// </summary>

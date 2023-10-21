@@ -9,8 +9,10 @@ namespace HeboTech.ATLib.Tests.PDU
     {
 
         [Theory]
-        [InlineData("56840182", "D430390C", CodingScheme.Gsm7, true, "0011000882654810280000AA04D430390C")]
-        [InlineData("56840182", "D430390CD2A500", CodingScheme.Gsm7, true, "0011000882654810280000AA07D430390CD2A500")]
+        //[InlineData("56840182", "D430390C", CodingScheme.Gsm7, true, "0011000882654810280000AA04D430390C")]
+        [InlineData("56840182", "Tada", CodingScheme.Gsm7, true, "0011000882654810280000AA04D430390C")]
+        //[InlineData("56840182", "D430390CD2A500", CodingScheme.Gsm7, true, "0011000882654810280000AA07D430390CD2A500")]
+        [InlineData("56840182", "Tada :)", CodingScheme.Gsm7, true, "0011000882654810280000AA07D430390CD2A500")]
         public void Encode_SmsSubmit_test(string phoneNumber, string encodedMessage, CodingScheme dataCodingScheme, bool includeEmptySmscLength, string answer)
         {
             string encoded = Pdu.EncodeSmsSubmit(new PhoneNumber(phoneNumber), encodedMessage, dataCodingScheme, includeEmptySmscLength);

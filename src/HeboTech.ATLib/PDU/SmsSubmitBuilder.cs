@@ -6,13 +6,18 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Xml.Schema;
 
 namespace HeboTech.ATLib.PDU
 {
     internal class SmsSubmitBuilder
     {
-        protected const int MAX_SINGLE_MESSAGE_SIZE = 134;
-        protected const int MAX_MESSAGE_PART_SIZE = 134;
+        protected const int MAX_SINGLE_MESSAGE_SIZE_GSM7 = 160;
+        protected const int MAX_SINGLE_MESSAGE_SIZE_UCS2 = 70;
+
+        protected const int MAX_MESSAGE_PART_SIZE_GSM7 = 153;
+        protected const int MAX_MESSAGE_PART_SIZE_UCS2 = 67;
+
         protected const int MAX_NUMBER_OF_MESSAGE_PARTS = 255;
 
         // First octet of the message
@@ -31,6 +36,8 @@ namespace HeboTech.ATLib.PDU
         protected CodingScheme dcs;
         // TP-Validity-Period. 'AA'-4 days
         protected List<byte> vp = new List<byte>();
+        // Message
+        protected string message = string.Empty;
 
         protected SmsSubmitBuilder()
         {
@@ -144,17 +151,6 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        /// <summary>
-        /// Mandatory
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public SmsSubmitBuilder DataCodingScheme(CodingScheme value)
-        {
-            dcs = value;
-            return this;
-        }
-
         public SmsSubmitBuilder ValidityPeriod(byte value)
         {
             return ValidityPeriod(new byte[] { value });
@@ -169,9 +165,31 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        public IEnumerable<string> Build(byte[] message)
+        /// <summary>
+        /// Mandatory
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public SmsSubmitBuilder AddDataCodingScheme(CodingScheme dataCodingScheme)
         {
-            var partitionedMessage = CreateMessageParts(message);
+            this.dcs = dataCodingScheme;
+            return this;
+        }
+
+        /// <summary>
+        /// Mandatory
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public SmsSubmitBuilder AddMessage(string message)
+        {
+            this.message = message;
+            return this;
+        }
+
+        public IEnumerable<string> Build()
+        {
+            var partitionedMessage = CreateMessageParts();
 
             if (partitionedMessage.Parts.Count() > 1)
                 EnableUserDataHeaderIndicator();
@@ -193,29 +211,32 @@ namespace HeboTech.ATLib.PDU
                 switch (dcs)
                 {
                     case CodingScheme.Ansi:
-                        //var encoded = Ansi.EncodeToBytes(data);
-                        //sb.Append((data.Length * 8).ToString("X2"));
-                        //sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
+                        var ansiBytes = Ansi.EncodeToBytes(message);
+                        sb.Append((message.Length * 8).ToString("X2"));
+                        sb.Append(string.Join("", ansiBytes.Select(x => x.ToHexString())));
                         break;
                     case CodingScheme.Gsm7:
                         int fillBits = 0;
                         if (UserDataHeaderIndicatorIsSet)
-                            fillBits = 7 - ((part.Header.Length * 8) % 7);
+                            fillBits = 8 - ((part.Data.Length * 7) % 8);
 
-                        var encoded = Gsm7.EncodeToBytes(part.Data, fillBits);
+                        var encoded = Gsm7.EncodeToBytes(string.Concat(part.Data), fillBits); // Todo: don't concatenate to string
 
-                        int udlBits = (part.Header.Length + encoded.Length) * 8;
-                        int udlSeptets = udlBits / 7;
-                        sb.Append((udlSeptets).ToString("X2"));
+                        //int udlBits = (part.Header.Length + encoded.Length) * 8;
+                        //int udlSeptets = udlBits / 7;
+                        //sb.Append((udlSeptets).ToString("X2"));
+                        sb.Append((encoded.Length).ToString("X2"));
 
                         sb.Append(string.Join("", part.Header.Select(x => x.ToHexString())));
 
                         sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
                         break;
                     case CodingScheme.UCS2:
-                        //var encoded = UCS2.EncodeToBytes(data);
-                        //sb.Append((data.Length * 8).ToString("X2"));
-                        //sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
+                        //var ucs2Bytes = UCS2.EncodeToBytes(message);
+                        var ucs2Bytes = Encoding.BigEndianUnicode.GetBytes(part.Data.ToArray());
+                        sb.Append((part.Header.Length + ucs2Bytes.Length).ToString("X2"));
+                        sb.Append(string.Join("", part.Header.Select(x => x.ToHexString())));
+                        sb.Append(string.Join("", ucs2Bytes.Select(x => x.ToHexString())));
                         break;
                     default:
                         break;
@@ -225,18 +246,40 @@ namespace HeboTech.ATLib.PDU
             }
         }
 
-        protected static Message CreateMessageParts(IEnumerable<byte> data)
+        protected Message CreateMessageParts()
         {
-            if (data == null)
-                throw new ArgumentNullException(nameof(data));
+            //IEnumerable<byte> data = Encoding.UTF8.GetBytes(message);
+
+            if (message == null)
+                throw new ArgumentNullException(nameof(message));
+
+            int maxSingleMessageSize = 0;
+            int maxMessagePartSize = 0;
+            switch (dcs)
+            {
+                case CodingScheme.Gsm7:
+                    maxSingleMessageSize = MAX_SINGLE_MESSAGE_SIZE_GSM7;
+                    maxMessagePartSize = MAX_MESSAGE_PART_SIZE_GSM7;
+                    break;
+                case CodingScheme.UCS2:
+                    maxSingleMessageSize = MAX_SINGLE_MESSAGE_SIZE_UCS2;
+                    maxMessagePartSize = MAX_MESSAGE_PART_SIZE_UCS2;
+                    break;
+                case CodingScheme.Ansi:
+                    maxSingleMessageSize = MAX_SINGLE_MESSAGE_SIZE_GSM7;
+                    maxMessagePartSize = MAX_MESSAGE_PART_SIZE_GSM7;
+                    break;
+                default:
+                    break;
+            };
 
             // The message does not need to be concatenated. Return empty array
-            if (data.Count() <= MAX_SINGLE_MESSAGE_SIZE)
-                return new Message(0, 1, new MessagePart(Array.Empty<byte>(), data.ToArray()));
+            if (message.Length <= maxSingleMessageSize)
+                return new Message(0, 1, new MessagePart(Array.Empty<byte>(), message.ToCharArray()));
 
             byte messageReferenceNumber = (byte)new Random(DateTime.UtcNow.Millisecond).Next(255);
 
-            int numberOfParts = (data.Count() / MAX_MESSAGE_PART_SIZE) + (data.Count() % MAX_MESSAGE_PART_SIZE == 0 ? 0 : 1);
+            int numberOfParts = (message.Length / maxMessagePartSize) + (message.Length % maxMessagePartSize == 0 ? 0 : 1);
 
             MessagePart[] parts = new MessagePart[numberOfParts];
             for (int i = 0; i < numberOfParts; i++)
@@ -258,7 +301,7 @@ namespace HeboTech.ATLib.PDU
                                 (byte)(i + 1)
                             },
                             // Each part of the total message
-                            data.Skip(i * MAX_MESSAGE_PART_SIZE).Take(MAX_MESSAGE_PART_SIZE).ToArray());
+                            message.Skip(i * maxMessagePartSize).Take(maxMessagePartSize).ToArray());
             }
             
             return new Message(messageReferenceNumber, (byte)numberOfParts, parts);
@@ -281,13 +324,13 @@ namespace HeboTech.ATLib.PDU
 
     internal class MessagePart
     {
-        public MessagePart(byte[] header, byte[] data)
+        public MessagePart(byte[] header, char[] data)
         {
             Header = header;
             Data = data;
         }
 
         public byte[] Header { get; }
-        public byte[] Data { get; }
+        public char[] Data { get; }
     }
 }

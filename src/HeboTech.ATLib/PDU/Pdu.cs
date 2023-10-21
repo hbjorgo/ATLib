@@ -241,13 +241,12 @@ namespace HeboTech.ATLib.PDU
             if (encodedMessage.Length > 160)
                 throw new ArgumentException("Maximum length exceeded (160)", nameof(encodedMessage));
 
-            //return EncodeMultipartSmsSubmit(phoneNumber, encodedMessage, dataCodingScheme, includeEmptySmscLength).First();
-            return string.Empty;
+            return EncodeMultipartSmsSubmit(phoneNumber, encodedMessage, dataCodingScheme, includeEmptySmscLength).First();
         }
 
         public static IEnumerable<string> EncodeMultipartSmsSubmit(
             PhoneNumber phoneNumber,
-            byte[] message,
+            string message,
             CodingScheme dataCodingScheme,
             bool includeEmptySmscLength = true)
         {
@@ -255,10 +254,11 @@ namespace HeboTech.ATLib.PDU
             var messageParts = SmsSubmitBuilder
                                     .Initialize()
                                     .DestinationAddress(phoneNumber)
-                                    .DataCodingScheme(dataCodingScheme)
                                     .ValidityPeriodFormat(0x10)
                                     .ValidityPeriod(0xAA)
-                                    .Build(message);
+                                    .AddDataCodingScheme(dataCodingScheme)
+                                    .AddMessage(message)
+                                    .Build();
 
             foreach (var messagePart in messageParts)
             {

@@ -24,6 +24,11 @@ namespace HeboTech.ATLib.CodingSchemes
             return BitConverter.ToString(bytes).Replace("-", "");
         }
 
+        public static byte[] EncodeToBytes(string input)
+        {
+            return Encoding.BigEndianUnicode.GetBytes(input);
+        }
+
         /// <summary>
         /// Decode from UCS2
         /// </summary>

@@ -6,7 +6,6 @@ using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -16,7 +15,7 @@ namespace HeboTech.ATLib.TestConsole
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
-            CodingScheme smsCodingScheme = CodingScheme.Gsm7;
+            CodingScheme smsCodingScheme = CodingScheme.UCS2;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
@@ -154,7 +153,20 @@ namespace HeboTech.ATLib.TestConsole
                             switch (smsTextFormat)
                             {
                                 case SmsTextFormat.PDU:
-                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, Encoding.UTF8.GetBytes(smsMessage), smsCodingScheme);
+                                    string smsMessage1 = "A";
+                                    string smsMessage4 = "Test";
+                                    string smsMessage7 = "Test 12";
+                                    string smsMessage14 = "Test 123456789";
+                                    string smsMessage15 = "Test 1234567891";
+                                    string smsMessage122 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua";
+                                    string smsMessage50 = "Lorem ipsum dolor sit amet, consectetur adipiscing";
+                                    string smsMessage70 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmo";
+                                    string smsMessage71 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod";
+                                    string smsMessage159 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostr";
+                                    string smsMessage160 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostru";
+                                    string smsMessage445 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+                                    phoneNumber = new PhoneNumber("41501790");
+                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage445, smsCodingScheme);
                                     foreach (var smsReference in smsReferences)
                                     {
                                         Console.WriteLine($"SMS Reference: {smsReference}");
