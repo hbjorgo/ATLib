@@ -3,6 +3,7 @@ using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.PDU;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using Xunit;
 
 namespace HeboTech.ATLib.Tests.PDU
@@ -63,6 +64,25 @@ namespace HeboTech.ATLib.Tests.PDU
             Assert.NotNull(pduMessage);
             Assert.Equal(serviceCenterNumber, pduMessage.ServiceCenterNumber?.Number ?? "");
             Assert.Equal(senderNumber, pduMessage.SenderNumber.Number);
+            Assert.Equal(message, pduMessage.Message);
+        }
+
+        [Theory]
+        [InlineData("", "56840182", "Tada", CodingScheme.Gsm7, true)]
+        [InlineData("", "56840182", "Tada :)", CodingScheme.Gsm7, true)]
+        [InlineData("", "12345678", "A", CodingScheme.Gsm7, true)]
+        [InlineData("", "12345678", "A", CodingScheme.UCS2, true)]
+        [InlineData("", "12345678", "A", CodingScheme.UCS2, false)]
+        public void Encode_decode_SmsSubmit_returns_original_text(string countryCode, string subscriberNumber, string message, CodingScheme dataCodingScheme, bool includeEmptySmscLength)
+        {
+            IEnumerable<string> encoded = Pdu.EncodeMultipartSmsSubmit(new PhoneNumberV2(countryCode, subscriberNumber), message, dataCodingScheme, includeEmptySmscLength);
+
+#if NETFRAMEWORK
+            SmsSubmit pduMessage = Pdu.DecodeSmsSubmit(encoded.First().AsSpan());
+#else
+            SmsSubmit pduMessage = Pdu.DecodeSmsSubmit(encoded.First());
+#endif
+            
             Assert.Equal(message, pduMessage.Message);
         }
     }
