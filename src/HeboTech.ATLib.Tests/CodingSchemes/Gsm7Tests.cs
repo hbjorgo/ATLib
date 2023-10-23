@@ -74,6 +74,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("The quick brown fox jumps over the lazy dog")]
         [InlineData("Tada :)")]
         [InlineData("hellohello")]
+        [InlineData("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud")]
         public void Encode_decode_returns_original_text(string text)
         {
             byte[] encoded = Gsm7.Pack(Gsm7.EncodeToBytes(text));

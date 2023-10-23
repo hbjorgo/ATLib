@@ -237,7 +237,7 @@ namespace HeboTech.ATLib.PDU
                         var gsm7 = Gsm7.EncodeToBytes(part.Data);
                         var encoded = Gsm7.Pack(gsm7, fillBits);
 
-                        int udlBits = part.Header.Length * 8 + part.Data.Length * 7;
+                        int udlBits = part.Header.Length * 8 + gsm7.Length * 7 + fillBits;
                         int udlSeptets = udlBits / 7;
 
                         sb.Append((udlSeptets).ToString("X2"));
