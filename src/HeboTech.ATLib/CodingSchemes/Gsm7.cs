@@ -37,8 +37,8 @@ namespace HeboTech.ATLib.CodingSchemes
 
             // Return the septets packed as octets
             // If the last character is empty - skip it
-            if (packed[^1] == 0)
-                return packed[..^1];
+            //if (packed[^1] == 0)
+            //    return packed[..^1];
             return packed;
         }
 

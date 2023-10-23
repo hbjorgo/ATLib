@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-using System.Xml.Schema;
 
 namespace HeboTech.ATLib.PDU
 {
@@ -38,6 +37,8 @@ namespace HeboTech.ATLib.PDU
         protected List<byte> vp = new List<byte>();
         // Message
         protected string message = string.Empty;
+        // Message reference number (for multi-part SMS)
+        protected byte messageReferenceNumber;
 
         protected SmsSubmitBuilder()
         {
@@ -189,6 +190,17 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
+        /// <summary>
+        /// Mandatory
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns></returns>
+        public SmsSubmitBuilder MessageReferenceNumber(byte messageReferenceNumber)
+        {
+            this.messageReferenceNumber = messageReferenceNumber;
+            return this;
+        }
+
         public IEnumerable<string> Build()
         {
             var partitionedMessage = CreateMessageParts();
@@ -276,8 +288,6 @@ namespace HeboTech.ATLib.PDU
             // The message does not need to be concatenated. Return empty array
             if (message.Length <= maxSingleMessageSize)
                 return new Message(0, 1, new MessagePart(Array.Empty<byte>(), message.ToCharArray()));
-
-            byte messageReferenceNumber = (byte)new Random(DateTime.UtcNow.Millisecond).Next(255);
 
             int numberOfParts = (message.Length / maxMessagePartSize) + (message.Length % maxMessagePartSize == 0 ? 0 : 1);
 

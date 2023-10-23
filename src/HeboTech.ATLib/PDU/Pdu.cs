@@ -248,16 +248,18 @@ namespace HeboTech.ATLib.PDU
             PhoneNumberV2 phoneNumber,
             string message,
             CodingScheme dataCodingScheme,
-            bool includeEmptySmscLength = true)
+            bool includeEmptySmscLength = true,
+            byte messageReferenceNumber = 0)
         {
             // Build TPDU
             var messageParts = SmsSubmitBuilder
                                     .Initialize()
                                     .DestinationAddress(phoneNumber)
-                                    .ValidityPeriodFormat(0x10)
-                                    .ValidityPeriod(0xAA)
+                                    //.ValidityPeriodFormat(0x10)
+                                    //.ValidityPeriod(0xAA)
                                     .AddDataCodingScheme(dataCodingScheme)
                                     .AddMessage(message)
+                                    .MessageReferenceNumber(messageReferenceNumber)
                                     .Build();
 
             foreach (var messagePart in messageParts)
