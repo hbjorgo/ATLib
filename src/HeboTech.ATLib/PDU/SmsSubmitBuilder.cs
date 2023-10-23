@@ -67,13 +67,15 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        private static byte GetAddressType(PhoneNumber phoneNumber)
+        private static byte GetAddressType(PhoneNumberV2 phoneNumber)
         {
-            return (byte)(0b1000_0000 + (byte)phoneNumber.GetTypeOfNumber() + (byte)phoneNumber.GetNumberPlanIdentification());
+            return (byte)(0b1000_0000 + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
         }
 
-        private static string SwapPhoneNumberDigits(ReadOnlySpan<char> data)
+        private static string SwapPhoneNumberDigits(string data)
         {
+            if (data.Length % 2 != 0)
+                data += 'F';
             char[] swappedData = new char[data.Length];
             for (int i = 0; i < data.Length; i += 2)
             {
@@ -130,13 +132,13 @@ namespace HeboTech.ATLib.PDU
         /// <param name="phoneNumber"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public SmsSubmitBuilder DestinationAddress(PhoneNumber phoneNumber)
+        public SmsSubmitBuilder DestinationAddress(PhoneNumberV2 phoneNumber)
         {
             if (phoneNumber == null)
                 throw new ArgumentNullException(nameof(phoneNumber));
-            daLength = (byte)phoneNumber.ToString().TrimStart('+').Length;
+            daLength = (byte)(phoneNumber.CountryCode.Length + phoneNumber.SubscriberNumber.Length);
             daType = GetAddressType(phoneNumber);
-            daNumber = SwapPhoneNumberDigits(phoneNumber.ToString().TrimStart('+'));
+            daNumber = SwapPhoneNumberDigits(phoneNumber.CountryCode + phoneNumber.SubscriberNumber); // TODO: Old: .TrimStart('+')
             return this;
         }
 
@@ -218,22 +220,20 @@ namespace HeboTech.ATLib.PDU
                     case CodingScheme.Gsm7:
                         int fillBits = 0;
                         if (UserDataHeaderIndicatorIsSet)
-                            fillBits = 8 - ((part.Data.Length * 7) % 8);
+                            fillBits = 7 - ((part.Header.Length * 8) % 7);
 
-                        var encoded = Gsm7.EncodeToBytes(string.Concat(part.Data), fillBits); // Todo: don't concatenate to string
+                        var gsm7 = Gsm7.EncodeToBytes(part.Data);
+                        var encoded = Gsm7.Pack(gsm7, fillBits);
 
-                        //int udlBits = (part.Header.Length + encoded.Length) * 8;
-                        //int udlSeptets = udlBits / 7;
-                        //sb.Append((udlSeptets).ToString("X2"));
-                        sb.Append((encoded.Length).ToString("X2"));
+                        int udlBits = part.Header.Length * 8 + part.Data.Length * 7;
+                        int udlSeptets = udlBits / 7;
 
+                        sb.Append((udlSeptets).ToString("X2"));
                         sb.Append(string.Join("", part.Header.Select(x => x.ToHexString())));
-
                         sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
                         break;
                     case CodingScheme.UCS2:
-                        //var ucs2Bytes = UCS2.EncodeToBytes(message);
-                        var ucs2Bytes = Encoding.BigEndianUnicode.GetBytes(part.Data.ToArray());
+                        var ucs2Bytes = UCS2.EncodeToBytes(part.Data.ToArray());
                         sb.Append((part.Header.Length + ucs2Bytes.Length).ToString("X2"));
                         sb.Append(string.Join("", part.Header.Select(x => x.ToHexString())));
                         sb.Append(string.Join("", ucs2Bytes.Select(x => x.ToHexString())));
@@ -320,6 +320,11 @@ namespace HeboTech.ATLib.PDU
         public byte MessageReferenceNumber { get; }
         public byte NumberOfParts { get; }
         public IEnumerable<MessagePart> Parts { get; }
+
+        public override string ToString()
+        {
+            return $"Msg. ref. no.: {MessageReferenceNumber}, #Parts: {NumberOfParts}";
+        }
     }
 
     internal class MessagePart
@@ -332,5 +337,10 @@ namespace HeboTech.ATLib.PDU
 
         public byte[] Header { get; }
         public char[] Data { get; }
+
+        public override string ToString()
+        {
+            return $"({Data.Length} chars): {new string(Data)}";
+        }
     }
 }

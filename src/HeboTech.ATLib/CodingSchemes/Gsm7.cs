@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
@@ -11,110 +13,136 @@ namespace HeboTech.ATLib.CodingSchemes
     {
         public const CodingScheme DataCodingSchemeCode = CodingScheme.Gsm7;
 
-        /// <summary>
-        /// Encode to GSM7
-        /// </summary>
-        /// <param name="input">String to encode</param>
-        /// <returns>GSM7 encoded string</returns>
-        public static string Encode(string text, int paddingBits = 0)
+        public static byte[] Pack(byte[] data, int paddingBits = 0)
         {
-            return Encode(Encoding.ASCII.GetBytes(text), paddingBits);
+            // Array for all packed bits (n x 7)
+            BitArray packedBits = new BitArray((int)Math.Ceiling(data.Length * 7 / 8.0) * 8 + paddingBits);
+            
+            // Loop through all characters
+            for (int i = 0; i < data.Length; i++)
+            {
+                // Only 7 bits in each byte is data
+                for (int j = 0; j < 7; j++)
+                {
+                    // For each 7 bits in each byte, add it to the bit array
+                    int index = (i * 7) + j + paddingBits;
+                    bool isSet = (data[i] & (1 << j)) != 0;
+                    packedBits.Set(index, isSet);
+                }
+            }
+
+            // Convert the bit array to a byte array
+            byte[] packed = new byte[(int)Math.Ceiling(packedBits.Length / 8.0)];
+            packedBits.CopyTo(packed, 0);
+
+            // Return the septets packed as octets
+            // If the last character is empty - skip it
+            if (packed[^1] == 0)
+                return packed[..^1];
+            return packed;
         }
 
-        public static string Encode(byte[] data, int paddingBits)
+        public static byte[] Unpack(byte[] data)
         {
-            byte[] textBytes = data.Reverse().ToArray();
-            bool[] bits = new bool[textBytes.Length * 7 + paddingBits];
-            for (int i = 0; i < textBytes.Length; i++)
+            BitArray packedBits = new BitArray(data);
+            byte[] unpacked = new byte[packedBits.Length / 7];
+
+            byte value = 0;
+            for (int i = 0; i < unpacked.Length * 7; i += 7)
             {
                 for (int j = 0; j < 7; j++)
                 {
-                    bits[i * 7 + j] = (textBytes[i] & (0x40 >> j)) != 0;
+                    value |= packedBits[i + j] ? (byte)(1 << j) : (byte)(0 << j);
                 }
+                unpacked[i / 7] = value;
+                value = 0;
             }
 
-            byte[] octets = new byte[(int)Math.Ceiling(bits.Length / 8.0)];
-            int offset = octets.Length * 8 - bits.Length;
-            int bitShift = 0;
-            for (int i = bits.Length - 1; i >= 0; i--)
-            {
-                octets[(i + offset) / 8] |= (byte)(bits[i] ? 0x01 << bitShift : 0x00);
-                bitShift++;
-                bitShift %= 8;
-            }
-            octets = octets.Reverse().ToArray();
-
-            string str = BitConverter.ToString(octets).Replace("-", "");
-            return str;
+            // If the last character is empty - skip it.
+            // It means that one bit of the last octet was used by the last character and the last 7 bits weren't used
+            if (unpacked[^1] == 0)
+                return unpacked[..^1];
+            return unpacked;
         }
 
-        public static byte[] EncodeToBytes(string text, int paddingBits = 0)
+        public static string EncodeToString(string plainText)
         {
-            return EncodeToBytes(Encoding.ASCII.GetBytes(text), paddingBits);
-        }
+            // ` is not a conversion, just a untranslatable letter
 
-        public static byte[] EncodeToBytes(byte[] data, int paddingBits = 0)
-        {
-            byte[] textBytes = data.Reverse().ToArray();
-            bool[] bits = new bool[textBytes.Length * 7 + paddingBits];
-            for (int i = 0; i < textBytes.Length; i++)
+            string strGSMTable = "";
+            strGSMTable += "@£$¥èéùìòÇ`Øø`Åå";
+            strGSMTable += "Δ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ";
+            strGSMTable += " !\"#¤%&'()*=,-./";
+            strGSMTable += "0123456789:;<=>?";
+            strGSMTable += "¡ABCDEFGHIJKLMNO";
+            strGSMTable += "PQRSTUVWXYZÄÖÑÜ`";
+            strGSMTable += "¿abcdefghijklmno";
+            strGSMTable += "pqrstuvwxyzäöñüà";
+
+            string strExtendedTable = "";
+            strExtendedTable += "````````````````";
+            strExtendedTable += "````^```````````";
+            strExtendedTable += "````````{}`````\\";
+            strExtendedTable += "````````````[~]`";
+            strExtendedTable += "|```````````````";
+            strExtendedTable += "````````````````";
+            strExtendedTable += "`````€``````````";
+            strExtendedTable += "````````````````";
+
+            string strGSMOutput = "";
+            foreach (char cPlainText in plainText.ToCharArray())
             {
-                for (int j = 0; j < 7; j++)
+                int intGSMTable = strGSMTable.IndexOf(cPlainText);
+                if (intGSMTable != -1)
                 {
-                    bits[i * 7 + j] = (textBytes[i] & (0x40 >> j)) != 0;
+                    strGSMOutput += intGSMTable.ToString("X2");
+                    continue;
                 }
-            }
 
-            byte[] octets = new byte[(int)Math.Ceiling(bits.Length / 8.0)];
-            int offset = octets.Length * 8 - bits.Length;
-            int bitShift = 0;
-            for (int i = bits.Length - 1; i >= 0; i--)
-            {
-                octets[(i + offset) / 8] |= (byte)(bits[i] ? 0x01 << bitShift : 0x00);
-                bitShift++;
-                bitShift %= 8;
-            }
-            octets = octets.Reverse().ToArray();
-
-            return octets;
-        }
-
-        /// <summary>
-        /// Decode from GSM7
-        /// </summary>
-        /// <param name="input">GSM7 encoded string</param>
-        /// <returns>Decoded string</returns>
-        public static string Decode(string strGsm7bit)
-        {
-            return Decode(CodingHelpers.StringToByteArray(strGsm7bit));
-        }
-
-        public static string Decode(byte[] data)
-        {
-            byte[] octets = data.Reverse().ToArray();
-
-            bool[] bits = new bool[octets.Length * 8];
-            for (int i = 0; i < octets.Length; i++)
-            {
-                for (int j = 0; j < 8; j++)
+                int intExtendedTable = strExtendedTable.IndexOf(cPlainText);
+                if (intExtendedTable != -1)
                 {
-                    bits[i * 8 + j] = (octets[i] & (0x80 >> j)) != 0;
+                    strGSMOutput += (27).ToString("X2");
+                    strGSMOutput += intExtendedTable.ToString("X2");
                 }
             }
 
-            byte[] septets = new byte[(int)Math.Floor(bits.Length / 7.0)];
-            int offset = bits.Length - septets.Length * 7;
-            int bitShift = 0;
-            for (int i = bits.Length - 1; i >= 0; i--)
-            {
-                septets[(i - offset) / 7] |= (byte)(bits[i] ? 0x01 << bitShift : 0x00);
-                bitShift++;
-                bitShift %= 7;
-            }
-            septets = septets.Reverse().ToArray();
+            return strGSMOutput;
+        }
 
-            string str = Encoding.ASCII.GetString(septets);
-            return str;
+        public static byte[] EncodeToBytes(string text)
+        {
+            return EncodeToBytes(text.ToCharArray());
+        }
+
+        public static byte[] EncodeToBytes(IEnumerable<char> text)
+        {
+            // ` is not a conversion, just a untranslatable letter
+            const string strGSMTable = "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà";
+            const string strExtendedTable = "````````````````````^```````````````````{}`````\\````````````[~]`|````````````````````````````````````€``````````````````````````";
+
+            List<byte> byteGSMOutput = new List<byte>();
+
+            for (int i = 0; i < text.Count(); i++)
+            {
+                char c = text.ElementAt(i);
+
+                int intGSMTable = strGSMTable.IndexOf(c);
+                if (intGSMTable != -1)
+                {
+                    byteGSMOutput.Add((byte)intGSMTable);
+                    continue;
+                }
+
+                int intExtendedTable = strExtendedTable.IndexOf(c);
+                if (intExtendedTable != -1)
+                {
+                    byteGSMOutput.Add(27);
+                    byteGSMOutput.Add((byte)intExtendedTable);
+                }
+            }
+
+            return byteGSMOutput.ToArray();
         }
     }
 }

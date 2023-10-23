@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.TestConsole
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
-            CodingScheme smsCodingScheme = CodingScheme.UCS2;
+            CodingScheme smsCodingScheme = CodingScheme.Gsm7;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
@@ -144,7 +144,7 @@ namespace HeboTech.ATLib.TestConsole
                         {
                             Console.WriteLine("Please enter phone number:");
                             string phoneNumberString = Console.ReadLine();
-                            PhoneNumber phoneNumber = new(phoneNumberString);
+                            PhoneNumberV2 phoneNumber = new(phoneNumberString);
 
                             Console.WriteLine("Please enter SMS message:");
                             string smsMessage = Console.ReadLine();
@@ -164,9 +164,10 @@ namespace HeboTech.ATLib.TestConsole
                                     string smsMessage71 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod";
                                     string smsMessage159 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostr";
                                     string smsMessage160 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostru";
+                                    string smsMessage161 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud";
                                     string smsMessage445 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
-                                    phoneNumber = new PhoneNumber("41501790");
-                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage445, smsCodingScheme);
+                                    phoneNumber = new PhoneNumberV2("41501790");
+                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage161, smsCodingScheme);
                                     foreach (var smsReference in smsReferences)
                                     {
                                         Console.WriteLine($"SMS Reference: {smsReference}");
@@ -174,7 +175,7 @@ namespace HeboTech.ATLib.TestConsole
                                     break;
                                 case SmsTextFormat.Text:
                                     {
-                                        ModemResponse<SmsReference> smsReference = await modem.SendSmsInTextFormatAsync(phoneNumber, smsMessage);
+                                        ModemResponse<SmsReference> smsReference = await modem.SendSmsInTextFormatAsync(new PhoneNumber(phoneNumberString), smsMessage);
                                         if (smsReference is not null)
                                             Console.WriteLine($"SMS Reference: {smsReference}");
                                     }

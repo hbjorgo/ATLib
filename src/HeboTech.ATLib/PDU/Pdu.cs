@@ -233,7 +233,7 @@ namespace HeboTech.ATLib.PDU
     public class Pdu
     {
         public static string EncodeSmsSubmit(
-            PhoneNumber phoneNumber,
+            PhoneNumberV2 phoneNumber,
             string encodedMessage,
             CodingScheme dataCodingScheme,
             bool includeEmptySmscLength = true)
@@ -245,7 +245,7 @@ namespace HeboTech.ATLib.PDU
         }
 
         public static IEnumerable<string> EncodeMultipartSmsSubmit(
-            PhoneNumber phoneNumber,
+            PhoneNumberV2 phoneNumber,
             string message,
             CodingScheme dataCodingScheme,
             bool includeEmptySmscLength = true)
@@ -315,7 +315,8 @@ namespace HeboTech.ATLib.PDU
             switch (tp_dcs)
             {
                 case 0x00:
-                    message = Gsm7.Decode(new string(tp_ud));
+                    // TODO: Fix
+                    //message = Gsm7.Unpack(new string(tp_ud));
                     break;
                 default:
                     break;
@@ -375,7 +376,8 @@ namespace HeboTech.ATLib.PDU
                 case 0x00:
                     int length = (tp_udl * 7 / 8) + 1;
                     ReadOnlySpan<char> tp_ud = text[offset..(offset += ((length) * 2))];
-                    message = Gsm7.Decode(new string(tp_ud));
+                    // TODO: Fix
+                    //message = Gsm7.Unpack(new string(tp_ud));
                     break;
                 default:
                     break;

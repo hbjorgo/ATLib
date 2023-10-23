@@ -207,9 +207,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.ResultError<SmsReference>();
         }
 
-        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
+        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumberV2 phoneNumber, string message, CodingScheme codingScheme);
 
-        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
+        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumberV2 phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
         {
             if (phoneNumber is null)
                 throw new ArgumentNullException(nameof(phoneNumber));
