@@ -378,10 +378,11 @@ namespace HeboTech.ATLib.PDU
                 case 0x00:
                     int length = (tp_udl * 7 / 8) + 1;
                     ReadOnlySpan<char> tp_ud = text[offset..(offset += ((length) * 2))];
-                    // TODO: Fix
+
                     string tp_ud_asString = new string(tp_ud);
                     byte[] tp_ud_asByteArray = tp_ud_asString.FromHexStringToByteArray();
-                    message = Encoding.ASCII.GetString(tp_ud_asByteArray);
+                    var unpacked = Gsm7.Unpack(tp_ud_asByteArray);
+                    message = Encoding.ASCII.GetString(unpacked);
                     break;
                 default:
                     break;
