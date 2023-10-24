@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.TestConsole
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
-            CodingScheme smsCodingScheme = CodingScheme.Gsm7;
+            CodingScheme smsCodingScheme = CodingScheme.UCS2;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
@@ -166,8 +166,9 @@ namespace HeboTech.ATLib.TestConsole
                                     string smsMessage160 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostru";
                                     string smsMessage161 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud";
                                     string smsMessage445 = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
-                                    phoneNumber = new PhoneNumberV2("41501790");
-                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage161, smsCodingScheme);
+                                    string smsMessageEmoji1 = "💩";
+                                    string smsMessageEmoji2 = "Test 😀🤣😎";
+                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessageEmoji2, smsCodingScheme);
                                     foreach (var smsReference in smsReferences)
                                     {
                                         Console.WriteLine($"SMS Reference: {smsReference}");
