@@ -216,7 +216,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (message is null)
                 throw new ArgumentNullException(nameof(message));
 
-            IEnumerable<string> pdus = Pdu.EncodeMultipartSmsSubmit(phoneNumber, message, codingScheme, includeEmptySmscLength);
+            IEnumerable<string> pdus = Pdu.EncodeSmsSubmit(phoneNumber, message, codingScheme, includeEmptySmscLength);
             List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
             foreach (string pdu in pdus)
             {

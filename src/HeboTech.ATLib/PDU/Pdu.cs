@@ -232,19 +232,7 @@ namespace HeboTech.ATLib.PDU
 #elif NETSTANDARD2_1_OR_GREATER
     public class Pdu
     {
-        public static string EncodeSmsSubmit(
-            PhoneNumberV2 phoneNumber,
-            string encodedMessage,
-            CodingScheme dataCodingScheme,
-            bool includeEmptySmscLength = true)
-        {
-            if (encodedMessage.Length > 160)
-                throw new ArgumentException("Maximum length exceeded (160)", nameof(encodedMessage));
-
-            return EncodeMultipartSmsSubmit(phoneNumber, encodedMessage, dataCodingScheme, includeEmptySmscLength).First();
-        }
-
-        public static IEnumerable<string> EncodeMultipartSmsSubmit(
+        public static IEnumerable<string> EncodeSmsSubmit(
             PhoneNumberV2 phoneNumber,
             string message,
             CodingScheme dataCodingScheme,

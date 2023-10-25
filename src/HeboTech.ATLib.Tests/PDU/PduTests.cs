@@ -25,7 +25,7 @@ namespace HeboTech.ATLib.Tests.PDU
 
         public void Encode_SmsSubmit_test(string countryCode, string subscriberNumber, string encodedMessage, CodingScheme dataCodingScheme, bool includeEmptySmscLength, string[] answer)
         {
-            IEnumerable<string> encoded = Pdu.EncodeMultipartSmsSubmit(new PhoneNumberV2(countryCode, subscriberNumber), encodedMessage, dataCodingScheme, includeEmptySmscLength, 12);
+            IEnumerable<string> encoded = Pdu.EncodeSmsSubmit(new PhoneNumberV2(countryCode, subscriberNumber), encodedMessage, dataCodingScheme, includeEmptySmscLength, 12);
 
             Assert.Equal(answer, encoded.ToArray());
         }
