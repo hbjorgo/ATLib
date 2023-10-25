@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
+using UnitsNet;
 
 namespace HeboTech.ATLib.PDU
 {
@@ -103,10 +104,16 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public SmsSubmitBuilder ValidityPeriodFormat(byte value)
+        public SmsSubmitBuilder ValidityPeriod(ValidityPeriod validityPeriod)
         {
+            // Set format
             byte mask = 0b0001_1000;
-            header = (byte)((header & ~mask) | (value & mask));
+            header = (byte)((header & ~mask) | ((byte)validityPeriod.Format & mask));
+
+            // Set value
+            vp.Clear();
+            vp.AddRange(validityPeriod.Value);
+
             return this;
         }
 
@@ -151,20 +158,6 @@ namespace HeboTech.ATLib.PDU
         public SmsSubmitBuilder ProtocolIdentifier(byte value)
         {
             pi = value;
-            return this;
-        }
-
-        public SmsSubmitBuilder ValidityPeriod(byte value)
-        {
-            return ValidityPeriod(new byte[] { value });
-        }
-
-        public SmsSubmitBuilder ValidityPeriod(IEnumerable<byte> value)
-        {
-            if (!(value.Count() != 0 || value.Count() != 1 || value.Count() != 7))
-                throw new ArgumentOutOfRangeException($"{nameof(value)} must either be 0, 1 or 7 bytes");
-            vp.Clear();
-            vp.AddRange(value);
             return this;
         }
 

@@ -9,9 +9,13 @@ namespace HeboTech.ATLib.CodingSchemes
     /// <summary>
     /// Encode / decode GSM 7-bit strings (GSM 03.38 or 3GPP 23.038)
     /// </summary>
-    public class Gsm7
+    public static class Gsm7
     {
         public const CodingScheme DataCodingSchemeCode = CodingScheme.Gsm7;
+
+        // ` is not a conversion, just a untranslatable letter
+        private const string strGSMTable = "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà";
+        private const string strExtendedTable = "````````````````````^```````````````````{}`````\\````````````[~]`|````````````````````````````````````€``````````````````````````";
 
         public static byte[] Pack(byte[] data, int paddingBits = 0)
         {
@@ -65,62 +69,31 @@ namespace HeboTech.ATLib.CodingSchemes
             return unpacked;
         }
 
-        public static string EncodeToString(string plainText)
-        {
-            // ` is not a conversion, just a untranslatable letter
-
-            string strGSMTable = "";
-            strGSMTable += "@£$¥èéùìòÇ`Øø`Åå";
-            strGSMTable += "Δ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ";
-            strGSMTable += " !\"#¤%&'()*=,-./";
-            strGSMTable += "0123456789:;<=>?";
-            strGSMTable += "¡ABCDEFGHIJKLMNO";
-            strGSMTable += "PQRSTUVWXYZÄÖÑÜ`";
-            strGSMTable += "¿abcdefghijklmno";
-            strGSMTable += "pqrstuvwxyzäöñüà";
-
-            string strExtendedTable = "";
-            strExtendedTable += "````````````````";
-            strExtendedTable += "````^```````````";
-            strExtendedTable += "````````{}`````\\";
-            strExtendedTable += "````````````[~]`";
-            strExtendedTable += "|```````````````";
-            strExtendedTable += "````````````````";
-            strExtendedTable += "`````€``````````";
-            strExtendedTable += "````````````````";
-
-            string strGSMOutput = "";
-            foreach (char cPlainText in plainText.ToCharArray())
-            {
-                int intGSMTable = strGSMTable.IndexOf(cPlainText);
-                if (intGSMTable != -1)
-                {
-                    strGSMOutput += intGSMTable.ToString("X2");
-                    continue;
-                }
-
-                int intExtendedTable = strExtendedTable.IndexOf(cPlainText);
-                if (intExtendedTable != -1)
-                {
-                    strGSMOutput += (27).ToString("X2");
-                    strGSMOutput += intExtendedTable.ToString("X2");
-                }
-            }
-
-            return strGSMOutput;
-        }
-
         public static byte[] EncodeToBytes(string text)
         {
             return EncodeToBytes(text.ToCharArray());
         }
 
+        public static bool IsGsm7Compatible(IEnumerable<char> text)
+        {
+            for (int i = 0; i < text.Count(); i++)
+            {
+                char c = text.ElementAt(i);
+
+                int intGSMTable = strGSMTable.IndexOf(c);
+                if (intGSMTable != -1)
+                    continue;
+
+                int intExtendedTable = strExtendedTable.IndexOf(c);
+                if (intExtendedTable == -1)
+                    return false;
+            }
+
+            return true;
+        }
+
         public static byte[] EncodeToBytes(IEnumerable<char> text)
         {
-            // ` is not a conversion, just a untranslatable letter
-            const string strGSMTable = "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà";
-            const string strExtendedTable = "````````````````````^```````````````````{}`````\\````````````[~]`|````````````````````````````````````€``````````````````````````";
-
             List<byte> byteGSMOutput = new List<byte>();
 
             for (int i = 0; i < text.Count(); i++)

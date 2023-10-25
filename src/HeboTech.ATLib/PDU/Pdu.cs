@@ -232,22 +232,16 @@ namespace HeboTech.ATLib.PDU
 #elif NETSTANDARD2_1_OR_GREATER
     public class Pdu
     {
-        public static IEnumerable<string> EncodeSmsSubmit(
-            PhoneNumberV2 phoneNumber,
-            string message,
-            CodingScheme dataCodingScheme,
-            bool includeEmptySmscLength = true,
-            byte messageReferenceNumber = 0)
+        public static IEnumerable<string> EncodeSmsSubmit(SmsSubmitRequest smsSubmit)
         {
             // Build TPDU
             var messageParts = SmsSubmitBuilder
                                     .Initialize()
-                                    .DestinationAddress(phoneNumber)
-                                    //.ValidityPeriodFormat(0x10)
-                                    //.ValidityPeriod(0xAA)
-                                    .AddDataCodingScheme(dataCodingScheme)
-                                    .AddMessage(message)
-                                    .MessageReferenceNumber(messageReferenceNumber)
+                                    .DestinationAddress(smsSubmit.PhoneNumber)
+                                    .ValidityPeriod(smsSubmit.ValidityPeriod)
+                                    .AddDataCodingScheme(smsSubmit.CodingScheme)
+                                    .AddMessage(smsSubmit.Message)
+                                    .MessageReferenceNumber(smsSubmit.MessageReferenceNumber)
                                     .Build();
 
             foreach (var messagePart in messageParts)
@@ -255,7 +249,7 @@ namespace HeboTech.ATLib.PDU
                 StringBuilder sb = new StringBuilder();
 
                 // Length of SMSC information
-                if (includeEmptySmscLength)
+                if (smsSubmit.IncludeEmptySmscLength)
                     sb.Append("00");
 
                 sb.Append(messagePart);

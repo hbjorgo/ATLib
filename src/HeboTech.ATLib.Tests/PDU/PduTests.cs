@@ -3,7 +3,6 @@ using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.PDU;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using Xunit;
 
 namespace HeboTech.ATLib.Tests.PDU
@@ -25,7 +24,15 @@ namespace HeboTech.ATLib.Tests.PDU
 
         public void Encode_SmsSubmit_test(string countryCode, string subscriberNumber, string encodedMessage, CodingScheme dataCodingScheme, bool includeEmptySmscLength, string[] answer)
         {
-            IEnumerable<string> encoded = Pdu.EncodeSmsSubmit(new PhoneNumberV2(countryCode, subscriberNumber), encodedMessage, dataCodingScheme, includeEmptySmscLength, 12);
+            IEnumerable<string> encoded = Pdu.EncodeSmsSubmit(
+                new SmsSubmitRequest(
+                    new PhoneNumberV2(countryCode, subscriberNumber),
+                    encodedMessage,
+                    dataCodingScheme)
+                {
+                    IncludeEmptySmscLength = includeEmptySmscLength,
+                    MessageReferenceNumber = 12
+                });
 
             Assert.Equal(answer, encoded.ToArray());
         }
