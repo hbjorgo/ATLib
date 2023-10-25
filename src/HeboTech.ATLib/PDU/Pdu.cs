@@ -318,7 +318,11 @@ namespace HeboTech.ATLib.PDU
             {
                 case 0x00:
                     // TODO: Fix
-                    //message = Gsm7.Unpack(new string(tp_ud));
+
+                    string tp_ud_asString = new string(tp_ud);
+                    byte[] tp_ud_asByteArray = tp_ud_asString.FromHexStringToByteArray();
+                    var unpacked = Gsm7.Unpack(tp_ud_asByteArray);
+                    message = Encoding.ASCII.GetString(unpacked);
                     break;
                 default:
                     break;
