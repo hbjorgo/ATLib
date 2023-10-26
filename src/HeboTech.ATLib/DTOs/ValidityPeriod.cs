@@ -28,7 +28,7 @@ namespace HeboTech.ATLib.DTOs
         /// 
         /// </summary>
         /// <param name="value">
-        /// Value 0-143: (Value + 1) x 5 minutes. Possible values: 5, 10, 15 minutes ... 11:55, 12:00 hours
+        /// Value   0-143: (Value + 1) x 5 minutes. Possible values: 5, 10, 15 minutes ... 11:55, 12:00 hours
         /// Value 144-167: (12 + (Value - 143) / 2) hours. Possible values: 12:30, 13:00, ... 23:30, 24:00 hours
         /// Value 168-196: (Value - 166) days. Possible values: 2, 3, 4, ... 30 days
         /// Value 197-255: (Value - 192) weeks. Possible values: 5, 6, 7, ... 63 weeks

@@ -30,7 +30,7 @@ namespace HeboTech.ATLib.Tests.DTOs
         }
 
         [Theory]
-        [InlineData("2013-03-25 23:01:56 +07:00", new byte[] { 31, 30, 52, 32, 10, 65, 82 })]
+        [InlineData("2013-03-25 23:01:56 +07:00", new byte[] { 0x31, 0x30, 0x52, 0x32, 0x10, 0x65, 0x82 })]
         public void Absolute_with_positive_timezone_is_correct(string dateTimeString, byte[] value)
         {
             DateTimeOffset dateTime = DateTimeOffset.Parse(dateTimeString);
@@ -41,7 +41,7 @@ namespace HeboTech.ATLib.Tests.DTOs
         }
 
         [Theory]
-        [InlineData("2013-03-25 23:01:56 -07:00", new byte[] { 31, 30, 52, 32, 10, 65, 90 })]
+        [InlineData("2013-03-25 23:01:56 -07:00", new byte[] { 0x31, 0x30, 0x52, 0x32, 0x10, 0x65, 0x8A })]
         public void Absolute_with_negative_timezone_is_correct(string dateTimeString, byte[] value)
         {
             DateTimeOffset dateTime = DateTimeOffset.Parse(dateTimeString);
@@ -54,6 +54,17 @@ namespace HeboTech.ATLib.Tests.DTOs
         [Theory]
         [InlineData("2013-03-25 23:01:56 +07:00", "31305232106582")]
         public void Absolute_with_positive_timezone_is_correct_as_string(string dateTimeString, string value)
+        {
+            DateTimeOffset dateTime = DateTimeOffset.Parse(dateTimeString);
+            ValidityPeriod dut = ValidityPeriod.Absolute(dateTime);
+
+            Assert.Equal(ValidityPeriodFormat.Absolute, dut.Format);
+            Assert.Equal(value, String.Join("", dut.Value.Select(x => x.BcdToString())));
+        }
+
+        [Theory]
+        [InlineData("2013-03-25 23:01:56 -07:00", "3130523210658A")]
+        public void Absolute_with_negative_timezone_is_correct_as_string(string dateTimeString, string value)
         {
             DateTimeOffset dateTime = DateTimeOffset.Parse(dateTimeString);
             ValidityPeriod dut = ValidityPeriod.Absolute(dateTime);
