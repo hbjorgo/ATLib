@@ -38,28 +38,18 @@ namespace HeboTech.ATLib.DTOs
 
         public static ValidityPeriod Absolute(DateTimeOffset value)
         {
-            byte year = SwapDecimalDigits((byte)(value.Year % 100));
-            byte month = SwapDecimalDigits((byte)value.Month);
-            byte day = SwapDecimalDigits((byte)value.Day);
-            byte hour = SwapDecimalDigits((byte)value.Hour);
-            byte minute = SwapDecimalDigits((byte)value.Minute);
-            byte second = SwapDecimalDigits((byte)value.Second);
+            byte year = ((byte)(value.Year % 100)).SwapNibbles();
+            byte month = ((byte)value.Month).SwapNibbles();
+            byte day = ((byte)value.Day).SwapNibbles();
+            byte hour = ((byte)value.Hour).SwapNibbles();
+            byte minute = ((byte)value.Minute).SwapNibbles();
+            byte second = ((byte)value.Second).SwapNibbles();
 
-            byte timeZoneQuarters = SwapNibbles((byte)(Math.Abs(value.Offset.TotalMinutes) / 15));
+            byte timeZoneQuarters = ((byte)(Math.Abs(value.Offset.TotalMinutes) / 15)).SwapNibbles();
             if (value.Offset.TotalMinutes < 0)
                 timeZoneQuarters |= 0b0000_1000;
 
             return new ValidityPeriod(ValidityPeriodFormat.Absolute, new byte[] { year, month, day, hour, minute, second, timeZoneQuarters });
-        }
-
-        private static byte SwapDecimalDigits(byte value)
-        {
-            return (byte)(((value % 10) * 10) + (value / 10));
-        }
-
-        private static byte SwapNibbles(byte x)
-        {
-            return (byte)((x & 0x0F) << 4 | (x & 0xF0) >> 4);
         }
     }
 }

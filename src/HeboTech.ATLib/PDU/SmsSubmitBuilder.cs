@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Linq;
 using System.Text;
-using UnitsNet;
 
 namespace HeboTech.ATLib.PDU
 {
@@ -213,7 +212,7 @@ namespace HeboTech.ATLib.PDU
                 sb.Append(pi.ToString("X2"));
                 sb.Append(((byte)dcs).ToString("X2"));
                 if (vp.Count > 0)
-                    sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
+                    sb.Append(String.Join("", vp.Select(x => x.BcdToString())));
 
                 switch (dcs)
                 {
