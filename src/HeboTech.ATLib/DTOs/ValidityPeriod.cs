@@ -22,10 +22,14 @@ namespace HeboTech.ATLib.DTOs
         public ValidityPeriodFormat Format { get; }
         public byte[] Value { get; }
 
+        /// <summary>
+        /// No validity period
+        /// </summary>
+        /// <returns></returns>
         public static ValidityPeriod NotPresent() => new ValidityPeriod(ValidityPeriodFormat.NotPresent, Array.Empty<byte>());
 
         /// <summary>
-        /// 
+        /// A realative validity period.
         /// </summary>
         /// <param name="value">
         /// Value   0-143: (Value + 1) x 5 minutes. Possible values: 5, 10, 15 minutes ... 11:55, 12:00 hours
@@ -36,6 +40,11 @@ namespace HeboTech.ATLib.DTOs
         /// <returns></returns>
         public static ValidityPeriod Relative(byte value) => new ValidityPeriod(ValidityPeriodFormat.Relative, new byte[] { value });
 
+        /// <summary>
+        /// An absolute validity period
+        /// </summary>
+        /// <param name="value">The date and time the validity expires</param>
+        /// <returns></returns>
         public static ValidityPeriod Absolute(DateTimeOffset value)
         {
             byte year = ((byte)(value.Year % 100)).SwapNibbles();
