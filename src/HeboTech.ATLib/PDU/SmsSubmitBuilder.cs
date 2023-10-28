@@ -165,7 +165,7 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public SmsSubmitBuilder AddDataCodingScheme(CodingScheme dataCodingScheme)
+        public SmsSubmitBuilder DataCodingScheme(CodingScheme dataCodingScheme)
         {
             this.dcs = dataCodingScheme;
             return this;
@@ -176,7 +176,7 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public SmsSubmitBuilder AddMessage(string message)
+        public SmsSubmitBuilder Message(string message)
         {
             this.message = message;
             return this;
@@ -252,8 +252,6 @@ namespace HeboTech.ATLib.PDU
 
         protected Message CreateMessageParts()
         {
-            //IEnumerable<byte> data = Encoding.UTF8.GetBytes(message);
-
             if (message == null)
                 throw new ArgumentNullException(nameof(message));
 

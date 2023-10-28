@@ -4,7 +4,6 @@ using HeboTech.ATLib.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 using System.Text;
 
 namespace HeboTech.ATLib.PDU
@@ -98,66 +97,7 @@ namespace HeboTech.ATLib.PDU
             DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
             return new SmsDeliver(serviceCenterNumber, oa, message, scts);
         }
-        /*
-        public static SmsSubmit DecodeSmsSubmit(ReadOnlySpan<char> text, int timestampYearOffset = 2000)
-        {
-            int offset = 0;
-
-            // SMSC information
-            byte smsc_length = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
-            PhoneNumber serviceCenterNumber = null;
-            if (smsc_length > 0)
-            {
-                serviceCenterNumber = DecodePhoneNumber(text.SliceOnIndex(offset, (offset += smsc_length * 2)));
-            }
-
-            // SMS-DELIVER start
-            byte header = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
-
-            int tp_mti = header & 0b0000_0011;
-            if (tp_mti != (byte)PduType.SMS_SUBMIT)
-                throw new ArgumentException("Invalid SMS-SUBMIT data");
-
-            int tp_rd = header & 0b0000_0100;
-            int tp_vpf = header & 0b0001_1000;
-            int tp_rp = header & 0b1000_0000;
-
-            byte tp_mr = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
-            byte tp_oa_length = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
-            tp_oa_length = (byte)(tp_oa_length % 2 == 0 ? tp_oa_length : tp_oa_length + 1);
-            PhoneNumber oa = null;
-            if (tp_oa_length > 0)
-            {
-                int oa_digits = tp_oa_length + 2; // Add 2 for TON
-                oa = DecodePhoneNumber(text.SliceOnIndex(offset, (offset += oa_digits)));
-            }
-            byte tp_pid = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
-            byte tp_dcs = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
-            byte tp_vp = 0;
-            if (tp_vpf == 0x00)
-                tp_vp = HexToByte(text.SliceOnIndex(offset, (offset += 0)));
-            else if (tp_vpf == 0x01)
-                tp_vp = HexToByte(text.SliceOnIndex(offset, (offset += 14)));
-            else if (tp_vpf == 0x10)
-                tp_vp = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
-            else if (tp_vpf == 0x11)
-                tp_vp = HexToByte(text.SliceOnIndex(offset, (offset += 14)));
-            byte tp_udl = HexToByte(text.SliceOnIndex(offset, (offset += 2)));
-
-            string message = null;
-            switch (tp_dcs)
-            {
-                case 0x00:
-                    int length = (tp_udl * 7 / 8) + 1;
-                    ReadOnlySpan<char> tp_ud = text.SliceOnIndex(offset, (offset += ((length) * 2)));
-                    message = Gsm7.Decode(tp_ud.ToString());
-                    break;
-                default:
-                    break;
-            }
-            return new SmsSubmit(serviceCenterNumber, oa, message);
-        }
-        */
+        
         private static byte HexToByte(ReadOnlySpan<char> text)
         {
             byte retVal = (byte)int.Parse(text.ToString(), NumberStyles.HexNumber);
@@ -239,8 +179,8 @@ namespace HeboTech.ATLib.PDU
                                     .Initialize()
                                     .DestinationAddress(smsSubmit.PhoneNumber)
                                     .ValidityPeriod(smsSubmit.ValidityPeriod)
-                                    .AddDataCodingScheme(smsSubmit.CodingScheme)
-                                    .AddMessage(smsSubmit.Message)
+                                    .DataCodingScheme(smsSubmit.CodingScheme)
+                                    .Message(smsSubmit.Message)
                                     .MessageReferenceNumber(smsSubmit.MessageReferenceNumber)
                                     .Build();
 
@@ -312,70 +252,7 @@ namespace HeboTech.ATLib.PDU
             DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
             return new SmsDeliver(serviceCenterNumber, oa, message, scts);
         }
-        /*
-        public static SmsSubmit DecodeSmsSubmit(ReadOnlySpan<char> text, int timestampYearOffset = 2000)
-        {
-            int offset = 0;
 
-            // SMSC information
-            byte smsc_length = HexToByte(text[offset..(offset += 2)]);
-            PhoneNumber serviceCenterNumber = null;
-            if (smsc_length > 0)
-            {
-                serviceCenterNumber = DecodePhoneNumber(text[offset..(offset += smsc_length * 2)]);
-            }
-
-            // SMS-DELIVER start
-            byte header = HexToByte(text[offset..(offset += 2)]);
-
-            int tp_mti = header & 0b0000_0011;
-            if (tp_mti != (byte)PduType.SMS_SUBMIT)
-                throw new ArgumentException("Invalid SMS-SUBMIT data");
-
-            int tp_rd = header & 0b0000_0100;
-            int tp_vpf = header & 0b0001_1000;
-            int tp_rp = header & 0b1000_0000;
-
-            byte tp_mr = HexToByte(text[offset..(offset += 2)]);
-            byte tp_oa_length = HexToByte(text[offset..(offset += 2)]);
-            tp_oa_length = (byte)(tp_oa_length % 2 == 0 ? tp_oa_length : tp_oa_length + 1);
-            PhoneNumber oa = null;
-            if (tp_oa_length > 0)
-            {
-                int oa_digits = tp_oa_length + 2; // Add 2 for TON
-                oa = DecodePhoneNumber(text[offset..(offset += oa_digits)]);
-            }
-            byte tp_pid = HexToByte(text[offset..(offset += 2)]);
-            byte tp_dcs = HexToByte(text[offset..(offset += 2)]);
-            byte tp_vp = 0;
-            if (tp_vpf == 0x00)
-                tp_vp = HexToByte(text[offset..(offset += 0)]);
-            else if (tp_vpf == 0x01)
-                tp_vp = HexToByte(text[offset..(offset += 14)]);
-            else if (tp_vpf == 0x10)
-                tp_vp = HexToByte(text[offset..(offset += 2)]);
-            else if (tp_vpf == 0x11)
-                tp_vp = HexToByte(text[offset..(offset += 14)]);
-            byte tp_udl = HexToByte(text[offset..(offset += 2)]);
-
-            string message = null;
-            switch (tp_dcs)
-            {
-                case 0x00:
-                    int length = (tp_udl * 7 / 8) + 1;
-                    ReadOnlySpan<char> tp_ud = text[offset..(offset += ((length) * 2))];
-
-                    string tp_ud_asString = new string(tp_ud);
-                    byte[] tp_ud_asByteArray = tp_ud_asString.FromHexStringToByteArray();
-                    var unpacked = Gsm7.Unpack(tp_ud_asByteArray);
-                    message = Encoding.ASCII.GetString(unpacked);
-                    break;
-                default:
-                    break;
-            }
-            return new SmsSubmit(serviceCenterNumber, oa, message);
-        }
-        */
         private static byte HexToByte(ReadOnlySpan<char> text)
         {
             byte retVal = (byte)int.Parse(text, NumberStyles.HexNumber);
@@ -393,11 +270,6 @@ namespace HeboTech.ATLib.PDU
             if (swappedData[^1] == 'F')
                 return swappedData[..^1];
             return swappedData;
-        }
-
-        private static byte GetAddressType(PhoneNumber phoneNumber)
-        {
-            return (byte)(0b1000_0000 + (byte)phoneNumber.GetTypeOfNumber() + (byte)phoneNumber.GetNumberPlanIdentification());
         }
 
         private static PhoneNumberDTO DecodePhoneNumber(ReadOnlySpan<char> data)
@@ -441,8 +313,6 @@ namespace HeboTech.ATLib.PDU
                 return (byte)int.Parse(text, NumberStyles.Integer);
             }
         }
-
-
     }
 #endif
 }
