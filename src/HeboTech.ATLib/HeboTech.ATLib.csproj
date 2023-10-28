@@ -19,9 +19,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.IO.Pipelines" Version="6.0.3" />
-    <PackageReference Include="System.Threading.Channels" Version="6.0.0" />
-    <PackageReference Include="UnitsNet" Version="5.11.0" />
+    <PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+    <PackageReference Include="System.Threading.Channels" Version="7.0.0" />
+    <PackageReference Include="UnitsNet" Version="5.35.0" />
   </ItemGroup>
 
 </Project>
