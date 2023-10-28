@@ -5,7 +5,7 @@ namespace HeboTech.ATLib.DTOs
     public class SmsSubmitRequest
     {
         public SmsSubmitRequest(
-            PhoneNumberV2 phoneNumber,
+            PhoneNumber phoneNumber,
             string message)
             : this(
                   phoneNumber,
@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.DTOs
         }
 
         public SmsSubmitRequest(
-            PhoneNumberV2 phoneNumber,
+            PhoneNumber phoneNumber,
             string message,
             CodingScheme codingScheme)
             : this(
@@ -27,7 +27,7 @@ namespace HeboTech.ATLib.DTOs
         }
 
         public SmsSubmitRequest(
-            PhoneNumberV2 phoneNumber,
+            PhoneNumber phoneNumber,
             string message,
             CodingScheme codingScheme,
             ValidityPeriod validityPeriod)
@@ -38,7 +38,7 @@ namespace HeboTech.ATLib.DTOs
             ValidityPeriod = validityPeriod;
         }
 
-        public PhoneNumberV2 PhoneNumber { get; }
+        public PhoneNumber PhoneNumber { get; }
         public string Message { get; }
         public CodingScheme CodingScheme { get; }
         public bool IncludeEmptySmscLength { get; set; }

@@ -207,9 +207,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.ResultError<SmsReference>();
         }
 
-        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumberV2 phoneNumber, string message, CodingScheme codingScheme);
+        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
 
-        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumberV2 phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
+        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
         {
             if (phoneNumber is null)
                 throw new ArgumentNullException(nameof(phoneNumber));
@@ -351,7 +351,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         if (match.Success)
                         {
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
                             int year = int.Parse(match.Groups["year"].Value);
                             int month = int.Parse(match.Groups["month"].Value);
                             int day = int.Parse(match.Groups["day"].Value);
@@ -391,7 +391,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         {
                             int index = int.Parse(match.Groups["index"].Value);
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
                             int year = int.Parse(match.Groups["year"].Value);
                             int month = int.Parse(match.Groups["month"].Value);
                             int day = int.Parse(match.Groups["day"].Value);

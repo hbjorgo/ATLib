@@ -5,21 +5,21 @@ namespace HeboTech.ATLib.PDU
 {
     public abstract class PduMessage
     {
-        public PduMessage(PhoneNumber serviceCenterNumber, PhoneNumber senderNumber, string message)
+        public PduMessage(PhoneNumberDTO serviceCenterNumber, PhoneNumberDTO senderNumber, string message)
         {
             ServiceCenterNumber = serviceCenterNumber;
             SenderNumber = senderNumber;
             Message = message;
         }
 
-        public PhoneNumber ServiceCenterNumber { get; }
-        public PhoneNumber SenderNumber { get; }
+        public PhoneNumberDTO ServiceCenterNumber { get; }
+        public PhoneNumberDTO SenderNumber { get; }
         public string Message { get; }
     }
 
     public class SmsDeliver : PduMessage
     {
-        public SmsDeliver(PhoneNumber serviceCenterNumber, PhoneNumber senderNumber, string message, DateTimeOffset timestamp)
+        public SmsDeliver(PhoneNumberDTO serviceCenterNumber, PhoneNumberDTO senderNumber, string message, DateTimeOffset timestamp)
             : base(serviceCenterNumber, senderNumber, message)
         {
             Timestamp = timestamp;
@@ -30,7 +30,7 @@ namespace HeboTech.ATLib.PDU
 
     public class SmsSubmit : PduMessage
     {
-        public SmsSubmit(PhoneNumber serviceCenterNumber, PhoneNumber senderNumber, string message)
+        public SmsSubmit(PhoneNumberDTO serviceCenterNumber, PhoneNumberDTO senderNumber, string message)
             : base(serviceCenterNumber, senderNumber, message)
         {
         }

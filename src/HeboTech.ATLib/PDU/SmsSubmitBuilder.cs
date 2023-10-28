@@ -68,7 +68,7 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        private static byte GetAddressType(PhoneNumberV2 phoneNumber)
+        private static byte GetAddressType(PhoneNumber phoneNumber)
         {
             return (byte)(0b1000_0000 + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
         }
@@ -139,13 +139,13 @@ namespace HeboTech.ATLib.PDU
         /// <param name="phoneNumber"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public SmsSubmitBuilder DestinationAddress(PhoneNumberV2 phoneNumber)
+        public SmsSubmitBuilder DestinationAddress(PhoneNumber phoneNumber)
         {
             if (phoneNumber == null)
                 throw new ArgumentNullException(nameof(phoneNumber));
-            daLength = (byte)(phoneNumber.CountryCode.Length + phoneNumber.SubscriberNumber.Length);
+            daLength = (byte)(phoneNumber.CountryCode.Length + phoneNumber.NationalNumber.Length);
             daType = GetAddressType(phoneNumber);
-            daNumber = SwapPhoneNumberDigits(phoneNumber.CountryCode + phoneNumber.SubscriberNumber); // TODO: Old: .TrimStart('+')
+            daNumber = SwapPhoneNumberDigits(phoneNumber.CountryCode + phoneNumber.NationalNumber); // TODO: Old: .TrimStart('+')
             return this;
         }
 

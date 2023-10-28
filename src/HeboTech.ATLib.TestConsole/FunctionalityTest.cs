@@ -144,7 +144,7 @@ namespace HeboTech.ATLib.TestConsole
                         {
                             Console.WriteLine("Please enter phone number:");
                             string phoneNumberString = Console.ReadLine();
-                            PhoneNumberV2 phoneNumber = new(phoneNumberString);
+                            PhoneNumber phoneNumber = new(phoneNumberString);
 
                             Console.WriteLine("Please enter SMS message:");
                             string smsMessage = Console.ReadLine();

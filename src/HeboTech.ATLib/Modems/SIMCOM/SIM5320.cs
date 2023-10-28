@@ -42,7 +42,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumberV2 phoneNumber, string message, CodingScheme codingScheme)
+        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
         {
             return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
         }
@@ -85,7 +85,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                         if (match.Success)
                         {
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
                             int year = int.Parse(match.Groups["year"].Value);
                             int month = int.Parse(match.Groups["month"].Value);
                             int day = int.Parse(match.Groups["day"].Value);
@@ -119,7 +119,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                     {
                         int index = int.Parse(match.Groups["index"].Value);
                         SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                        PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                        PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
                         int year = int.Parse(match.Groups["year"].Value);
                         int month = int.Parse(match.Groups["month"].Value);
                         int day = int.Parse(match.Groups["day"].Value);

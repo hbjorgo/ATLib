@@ -98,7 +98,7 @@ namespace HeboTech.ATLib.PDU
             DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
             return new SmsDeliver(serviceCenterNumber, oa, message, scts);
         }
-
+        /*
         public static SmsSubmit DecodeSmsSubmit(ReadOnlySpan<char> text, int timestampYearOffset = 2000)
         {
             int offset = 0;
@@ -157,7 +157,7 @@ namespace HeboTech.ATLib.PDU
             }
             return new SmsSubmit(serviceCenterNumber, oa, message);
         }
-
+        */
         private static byte HexToByte(ReadOnlySpan<char> text)
         {
             byte retVal = (byte)int.Parse(text.ToString(), NumberStyles.HexNumber);
@@ -264,7 +264,7 @@ namespace HeboTech.ATLib.PDU
 
             // SMSC information
             byte smsc_length = HexToByte(text[offset..(offset += 2)]);
-            PhoneNumber serviceCenterNumber = null;
+            PhoneNumberDTO serviceCenterNumber = null;
             if (smsc_length > 0)
             {
                 serviceCenterNumber = DecodePhoneNumber(text[offset..(offset += smsc_length * 2)]);
@@ -282,7 +282,7 @@ namespace HeboTech.ATLib.PDU
 
             byte tp_oa_length = HexToByte(text[offset..(offset += 2)]);
             tp_oa_length = (byte)(tp_oa_length % 2 == 0 ? tp_oa_length : tp_oa_length + 1);
-            PhoneNumber oa = null;
+            PhoneNumberDTO oa = null;
             if (tp_oa_length > 0)
             {
                 int oa_digits = tp_oa_length + 2; // Add 2 for TON
@@ -312,7 +312,7 @@ namespace HeboTech.ATLib.PDU
             DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
             return new SmsDeliver(serviceCenterNumber, oa, message, scts);
         }
-
+        /*
         public static SmsSubmit DecodeSmsSubmit(ReadOnlySpan<char> text, int timestampYearOffset = 2000)
         {
             int offset = 0;
@@ -375,7 +375,7 @@ namespace HeboTech.ATLib.PDU
             }
             return new SmsSubmit(serviceCenterNumber, oa, message);
         }
-
+        */
         private static byte HexToByte(ReadOnlySpan<char> text)
         {
             byte retVal = (byte)int.Parse(text, NumberStyles.HexNumber);
@@ -400,7 +400,7 @@ namespace HeboTech.ATLib.PDU
             return (byte)(0b1000_0000 + (byte)phoneNumber.GetTypeOfNumber() + (byte)phoneNumber.GetNumberPlanIdentification());
         }
 
-        private static PhoneNumber DecodePhoneNumber(ReadOnlySpan<char> data)
+        private static PhoneNumberDTO DecodePhoneNumber(ReadOnlySpan<char> data)
         {
             if (data.Length < 4)
                 return default;
@@ -409,7 +409,7 @@ namespace HeboTech.ATLib.PDU
             if (ton == TypeOfNumber.International)
                 number = "+";
             number += new String(SwapPhoneNumberDigits(data[2..]));
-            return new PhoneNumber(number);
+            return new PhoneNumberDTO(number);
         }
 
         private static DateTimeOffset DecodeTimestamp(ReadOnlySpan<char> data, int timestampYearOffset = 2000)
