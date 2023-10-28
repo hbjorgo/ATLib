@@ -24,8 +24,4 @@
     <PackageReference Include="UnitsNet" Version="5.11.0" />
   </ItemGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="Nerdbank.Streams" Version="2.9.91-alpha" />
-	</ItemGroup>
-
 </Project>

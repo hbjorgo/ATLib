@@ -66,11 +66,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                             string alphabet = line1Match.Groups["alphabet"].Value;
                             int length = int.Parse(line1Match.Groups["length"].Value);
                             string pdu = line2Match.Groups["pdu"].Value;
-#if NETSTANDARD2_0
-                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu.AsSpan());
-#elif NETSTANDARD2_1_OR_GREATER
                             SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
-#endif
                             return ModemResponse.ResultSuccess(new Sms((SmsStatus)status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
                     }
