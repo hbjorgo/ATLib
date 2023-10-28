@@ -196,6 +196,14 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse<SmsReference>> SendSmsInTextFormatAsync(PhoneNumber phoneNumber, string message);
 
         /// <summary>
+        /// Sends an SMS in PDU format. This will automatically select the Data Coding Scheme that will result in the fewest messages being sent in case of a concatenated SMS based on the content of the message.
+        /// </summary>
+        /// <param name="phoneNumber">The number to send to</param>
+        /// <param name="message">The message body</param>
+        /// <returns>Command status with SMS reference</returns>
+        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message);
+
+        /// <summary>
         /// Sends an SMS in PDU format
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>

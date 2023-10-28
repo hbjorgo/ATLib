@@ -14,6 +14,11 @@ namespace HeboTech.ATLib.Modems.Qualcomm
         {
         }
 
+        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message)
+        {
+            return base.SendSmsInPduFormatAsync(phoneNumber, message, false);
+        }
+
         public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
         {
             return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);

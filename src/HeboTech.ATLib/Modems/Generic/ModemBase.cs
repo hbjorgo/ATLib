@@ -203,6 +203,42 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.ResultError<SmsReference>();
         }
 
+        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message);
+
+        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, bool includeEmptySmscLength)
+        {
+            if (phoneNumber is null)
+                throw new ArgumentNullException(nameof(phoneNumber));
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+
+            IEnumerable<string> pdus = Pdu.EncodeSmsSubmit(new SmsSubmitRequest(phoneNumber, message) { IncludeEmptySmscLength = includeEmptySmscLength });
+            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
+            foreach (string pdu in pdus)
+            {
+                string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
+                string cmd2 = pdu;
+                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
+
+                if (response.Success)
+                {
+                    string line = response.Intermediates.First();
+                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                    if (match.Success)
+                    {
+                        int mr = int.Parse(match.Groups["mr"].Value);
+                        references.Add(ModemResponse.ResultSuccess(new SmsReference(mr)));
+                    }
+                }
+                else
+                {
+                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
+                        references.Add(ModemResponse.ResultError<SmsReference>(error.ToString()));
+                }
+            }
+            return references;
+        }
+
         public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
 
         protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
