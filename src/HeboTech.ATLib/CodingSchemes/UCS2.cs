@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HeboTech.ATLib.Extensions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -36,7 +37,7 @@ namespace HeboTech.ATLib.CodingSchemes
         /// <returns>Decoded string</returns>
         public static string Decode(string input)
         {
-            IEnumerable<byte> bytes = CodingHelpers.StringToByteArray(input);
+            IEnumerable<byte> bytes = input.ToByteArray();
             return Encoding.BigEndianUnicode.GetString(bytes.ToArray());
         }
     }

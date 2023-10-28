@@ -14,8 +14,8 @@ namespace HeboTech.ATLib.TestConsole
     {
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
-            SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
-            CodingScheme smsCodingScheme = CodingScheme.UCS2;
+            SmsTextFormat smsTextFormat = SmsTextFormat.Text;
+            CodingScheme smsCodingScheme = CodingScheme.Gsm7;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));

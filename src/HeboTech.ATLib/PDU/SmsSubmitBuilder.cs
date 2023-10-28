@@ -216,11 +216,6 @@ namespace HeboTech.ATLib.PDU
 
                 switch (dcs)
                 {
-                    case CodingScheme.Ansi:
-                        var ansiBytes = Ansi.EncodeToBytes(message);
-                        sb.Append((message.Length * 8).ToString("X2"));
-                        sb.Append(string.Join("", ansiBytes.Select(x => x.ToHexString())));
-                        break;
                     case CodingScheme.Gsm7:
                         int fillBits = 0;
                         if (UserDataHeaderIndicatorIsSet)
@@ -243,7 +238,7 @@ namespace HeboTech.ATLib.PDU
                         sb.Append(string.Join("", ucs2Bytes.Select(x => x.ToHexString())));
                         break;
                     default:
-                        break;
+                        throw new ArgumentException($"Coding scheme {nameof(dcs)} is not supported");
                 }
 
                 yield return sb.ToString();
@@ -255,8 +250,8 @@ namespace HeboTech.ATLib.PDU
             if (message == null)
                 throw new ArgumentNullException(nameof(message));
 
-            int maxSingleMessageSize = 0;
-            int maxMessagePartSize = 0;
+            int maxMessagePartSize;
+            int maxSingleMessageSize;
             switch (dcs)
             {
                 case CodingScheme.Gsm7:
@@ -267,12 +262,8 @@ namespace HeboTech.ATLib.PDU
                     maxSingleMessageSize = MAX_SINGLE_MESSAGE_SIZE_UCS2;
                     maxMessagePartSize = MAX_MESSAGE_PART_SIZE_UCS2;
                     break;
-                case CodingScheme.Ansi:
-                    maxSingleMessageSize = MAX_SINGLE_MESSAGE_SIZE_GSM7;
-                    maxMessagePartSize = MAX_MESSAGE_PART_SIZE_GSM7;
-                    break;
                 default:
-                    break;
+                    throw new ArgumentException($"Coding scheme {nameof(dcs)} is not supported");
             };
 
             // The message does not need to be concatenated. Return empty array
@@ -280,6 +271,9 @@ namespace HeboTech.ATLib.PDU
                 return new Message(0, 1, new MessagePart(Array.Empty<byte>(), message.ToCharArray()));
 
             int numberOfParts = (message.Length / maxMessagePartSize) + (message.Length % maxMessagePartSize == 0 ? 0 : 1);
+
+            if (numberOfParts > MAX_NUMBER_OF_MESSAGE_PARTS)
+                throw new ArgumentException("Message is too large!");
 
             MessagePart[] parts = new MessagePart[numberOfParts];
             for (int i = 0; i < numberOfParts; i++)
