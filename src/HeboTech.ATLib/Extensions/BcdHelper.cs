@@ -22,10 +22,5 @@ namespace HeboTech.ATLib.Extensions
         {
             return (byte)(((value & 0xF0) >> 4) * 10 + (value & 0x0F));
         }
-
-        public static string BcdToString(this byte value)
-        {
-            return value.ToString("X2");
-        }
     }
 }

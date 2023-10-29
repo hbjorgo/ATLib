@@ -128,7 +128,7 @@ namespace HeboTech.ATLib.PDU
             string number = string.Empty;
             if (ton == TypeOfNumber.International)
                 number = "+";
-            number += string.Join("", data[1..].ToArray().Select(x => x.SwapNibbles().BcdToString()));
+            number += string.Join("", data[1..].ToArray().Select(x => x.SwapNibbles().ToString("X2")));
             if (number[^1] == 'F')
                 number = number[..^1];
             return new PhoneNumberDTO(number);

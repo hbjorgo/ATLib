@@ -34,15 +34,5 @@ namespace HeboTech.ATLib.Tests.Extensions
         {
             Assert.Equal(expected, input.BcdToDecimal());
         }
-
-        [Theory]
-        [InlineData(0x00, "00")]
-        [InlineData(0x01, "01")]
-        [InlineData(0x12, "12")]
-        [InlineData(0x98, "98")]
-        public void BcdToString_test(byte input, string expected)
-        {
-            Assert.Equal(expected, input.BcdToString());
-        }
     }
 }

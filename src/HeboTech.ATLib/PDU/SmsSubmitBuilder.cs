@@ -212,7 +212,7 @@ namespace HeboTech.ATLib.PDU
                 sb.Append(pi.ToString("X2"));
                 sb.Append(((byte)dcs).ToString("X2"));
                 if (vp.Count > 0)
-                    sb.Append(String.Join("", vp.Select(x => x.BcdToString())));
+                    sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
 
                 switch (dcs)
                 {

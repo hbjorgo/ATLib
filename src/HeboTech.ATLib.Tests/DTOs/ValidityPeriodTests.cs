@@ -59,7 +59,7 @@ namespace HeboTech.ATLib.Tests.DTOs
             ValidityPeriod dut = ValidityPeriod.Absolute(dateTime);
 
             Assert.Equal(ValidityPeriodFormat.Absolute, dut.Format);
-            Assert.Equal(value, String.Join("", dut.Value.Select(x => x.BcdToString())));
+            Assert.Equal(value, String.Join("", dut.Value.Select(x => x.ToString("X2"))));
         }
 
         [Theory]
@@ -70,7 +70,7 @@ namespace HeboTech.ATLib.Tests.DTOs
             ValidityPeriod dut = ValidityPeriod.Absolute(dateTime);
 
             Assert.Equal(ValidityPeriodFormat.Absolute, dut.Format);
-            Assert.Equal(value, String.Join("", dut.Value.Select(x => x.BcdToString())));
+            Assert.Equal(value, String.Join("", dut.Value.Select(x => x.ToString("X2"))));
         }
     }
 }
