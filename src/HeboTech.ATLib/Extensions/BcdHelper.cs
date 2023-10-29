@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace HeboTech.ATLib.Extensions
+﻿namespace HeboTech.ATLib.Extensions
 {
-    public static class BcdHelper
+    internal static class BcdHelper
     {
         // 0x28 => 0x82
         // 0x35 => 0x53

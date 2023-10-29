@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace HeboTech.ATLib.PDU
 {
-    public static class TpduTime
+    internal static class TpduTime
     {
         public static byte[] EncodeTimestamp(DateTimeOffset value)
         {
@@ -42,7 +42,7 @@ namespace HeboTech.ATLib.PDU
                 hour,
                 minute,
                 second,
-                TimeSpan.FromMinutes(offsetQuarters * 15)); // Offset in quarter of hours
+                TimeSpan.FromMinutes((offsetQuarters * 15) * (isOffsetPositive ? 1 : -1))); // Offset in quarter of hours
             return timestamp;
         }
     }

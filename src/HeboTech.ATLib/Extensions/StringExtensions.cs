@@ -1,10 +1,9 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace HeboTech.ATLib.Extensions
 {
-    public static class StringExtensions
+    internal static class StringExtensions
     {
         public static byte[] ToByteArray(this string hexString)
         {

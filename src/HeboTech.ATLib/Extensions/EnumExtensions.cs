@@ -3,7 +3,7 @@ using System.ComponentModel;
 
 namespace HeboTech.ATLib.Extensions
 {
-    public static class EnumExtensions
+    internal static class EnumExtensions
     {
         public static string GetDescription(this Enum enumerationValue)
         {
