@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.TestConsole
     {
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
-            SmsTextFormat smsTextFormat = SmsTextFormat.Text;
+            SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
             CodingScheme smsCodingScheme = CodingScheme.Gsm7;
 
             using AtChannel atChannel = AtChannel.Create(stream);
@@ -111,8 +111,8 @@ namespace HeboTech.ATLib.TestConsole
                 foreach (var sms in smss.Result)
                 {
                     Console.WriteLine($"SMS: {sms}");
-                    var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
-                    Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
+                    //var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
+                    //Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
                 }
             }
 
