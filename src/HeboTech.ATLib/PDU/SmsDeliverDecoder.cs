@@ -87,36 +87,50 @@ namespace HeboTech.ATLib.PDU
             ReadOnlySpan<byte> tp_scts = bytes[offset..(offset += 7)];
 
             byte tp_udl = bytes[offset++];
-            int udlBytes = (int)Math.Ceiling(tp_udl * 7 / 8.0);
+            int udlBytes = 0;
+            switch (tp_dcs)
+            {
+                case CodingScheme.Gsm7:
+                    udlBytes = (int)Math.Ceiling(tp_udl * 7 / 8.0);
+                    break;
+                case CodingScheme.UCS2:
+                    udlBytes = tp_udl;
+                    break;
+                default:
+                    throw new ArgumentException($"DCS with value {tp_dcs} is not supported");
+            }
 
             ReadOnlySpan<byte> tp_ud = bytes[offset..(offset += udlBytes)];
+            byte udhl = 0;
+            ReadOnlySpan<byte> udh;
+            ReadOnlySpan<byte> payload;
+            if (header.UDHI)
+            {
+                udhl = tp_ud[0];
+                udh = tp_ud[1..(udhl + 1)];
+                payload = tp_ud[(udhl + 1)..];
+            }
+            else
+            {
+                payload = tp_ud;
+            }
+
             string message = null;
             switch (tp_dcs)
             {
                 case CodingScheme.Gsm7:
-                    // TODO: Fix
-                    ReadOnlySpan<byte> payload;
                     int fillBits = 0;
                     if (header.UDHI)
-                    {
-                        byte udhl = tp_ud[0];
-                        ReadOnlySpan<byte> udh = tp_ud[1..(udhl + 1)];
-                        payload = tp_ud[(udhl + 1)..];
                         fillBits = 7 - (((1 + udhl) * 8) % 7);
-                    }
-                    else
-                    {
-                        payload = tp_ud;
-                    }
 
                     var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
                     message = Gsm7.DecodeFromBytes(unpacked);
                     break;
                 case CodingScheme.UCS2:
-
+                    message = UCS2.Decode(payload.ToArray());
                     break;
                 default:
-                    break;
+                    throw new ArgumentException($"DCS with value {tp_dcs} is not supported");
             }
             DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
             return new SmsDeliver(serviceCenterNumber, oa, message, scts);

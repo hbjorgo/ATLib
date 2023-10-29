@@ -40,5 +40,10 @@ namespace HeboTech.ATLib.CodingSchemes
             IEnumerable<byte> bytes = input.ToByteArray();
             return Encoding.BigEndianUnicode.GetString(bytes.ToArray());
         }
+
+        public static string Decode(IEnumerable<byte> input)
+        {
+            return Encoding.BigEndianUnicode.GetString(input.ToArray());
+        }
     }
 }
