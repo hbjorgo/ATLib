@@ -2,11 +2,7 @@
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Extensions;
 using System;
-using System.Globalization;
 using System.Linq;
-using System.Text;
-using System.Linq;
-using UnitsNet;
 
 namespace HeboTech.ATLib.PDU
 {
