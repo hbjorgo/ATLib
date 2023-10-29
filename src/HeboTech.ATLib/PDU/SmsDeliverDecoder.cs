@@ -85,6 +85,7 @@ namespace HeboTech.ATLib.PDU
             CodingScheme tp_dcs = (CodingScheme)tp_dcs_byte;
 
             ReadOnlySpan<byte> tp_scts = bytes[offset..(offset += 7)];
+            DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
 
             byte tp_udl = bytes[offset++];
             int udlBytes = 0;
@@ -132,7 +133,7 @@ namespace HeboTech.ATLib.PDU
                 default:
                     throw new ArgumentException($"DCS with value {tp_dcs} is not supported");
             }
-            DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
+            
             return new SmsDeliver(serviceCenterNumber, oa, message, scts);
         }
 
