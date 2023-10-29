@@ -85,7 +85,7 @@ namespace HeboTech.ATLib.PDU
             CodingScheme tp_dcs = (CodingScheme)tp_dcs_byte;
 
             ReadOnlySpan<byte> tp_scts = bytes[offset..(offset += 7)];
-            DateTimeOffset scts = DecodeTimestamp(tp_scts, timestampYearOffset);
+            DateTimeOffset scts = TpduTime.DecodeTimestamp(tp_scts, timestampYearOffset);
 
             byte tp_udl = bytes[offset++];
             int udlBytes = 0;
@@ -102,27 +102,28 @@ namespace HeboTech.ATLib.PDU
             }
 
             ReadOnlySpan<byte> tp_ud = bytes[offset..(offset += udlBytes)];
-            byte udhl = 0;
-            ReadOnlySpan<byte> udh;
+            UDH udh;
             ReadOnlySpan<byte> payload;
             if (header.UDHI)
             {
-                udhl = tp_ud[0];
-                udh = tp_ud[1..(udhl + 1)];
+                byte udhl = tp_ud[0];
+                ReadOnlySpan<byte> udh_bytes = tp_ud[1..(udhl + 1)];
+                udh = UDH.Parse(udhl, udh_bytes);
                 payload = tp_ud[(udhl + 1)..];
             }
             else
             {
+                udh = UDH.Empty();
                 payload = tp_ud;
             }
 
-            string message = null;
+            string message;
             switch (tp_dcs)
             {
                 case CodingScheme.Gsm7:
                     int fillBits = 0;
                     if (header.UDHI)
-                        fillBits = 7 - (((1 + udhl) * 8) % 7);
+                        fillBits = 7 - (((1 + udh.Length) * 8) % 7);
 
                     var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
                     message = Gsm7.DecodeFromBytes(unpacked);
@@ -133,7 +134,7 @@ namespace HeboTech.ATLib.PDU
                 default:
                     throw new ArgumentException($"DCS with value {tp_dcs} is not supported");
             }
-            
+
             return new SmsDeliver(serviceCenterNumber, oa, message, scts);
         }
 
@@ -149,30 +150,6 @@ namespace HeboTech.ATLib.PDU
             if (number[^1] == 'F')
                 number = number[..^1];
             return new PhoneNumberDTO(number);
-        }
-
-        private static DateTimeOffset DecodeTimestamp(ReadOnlySpan<byte> data, int timestampYearOffset = 2000)
-        {
-            byte[] swappedData = data.ToArray().Select(x => x.SwapNibbles()).ToArray();
-
-            byte year = swappedData[0].BcdToDecimal();
-            byte month = swappedData[1].BcdToDecimal();
-            byte day = swappedData[2].BcdToDecimal();
-            byte hour = swappedData[3].BcdToDecimal();
-            byte minute = swappedData[4].BcdToDecimal();
-            byte second = swappedData[5].BcdToDecimal();
-            byte offsetQuarters = ((byte)(swappedData[6] & 0b0111_1111)).BcdToDecimal();
-            bool isOffsetPositive = (swappedData[6] & 0b1000_0000) == 0;
-
-            DateTimeOffset timestamp = new DateTimeOffset(
-                year + timestampYearOffset,
-                month,
-                day,
-                hour,
-                minute,
-                second,
-                TimeSpan.FromMinutes(offsetQuarters * 15)); // Offset in quarter of hours
-            return timestamp;
         }
     }
 }
