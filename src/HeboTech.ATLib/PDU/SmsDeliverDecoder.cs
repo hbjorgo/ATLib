@@ -96,18 +96,20 @@ namespace HeboTech.ATLib.PDU
                 case CodingScheme.Gsm7:
                     // TODO: Fix
                     ReadOnlySpan<byte> payload;
+                    int fillBits = 0;
                     if (header.UDHI)
                     {
                         byte udhl = tp_ud[0];
                         ReadOnlySpan<byte> udh = tp_ud[1..(udhl + 1)];
                         payload = tp_ud[(udhl + 1)..];
+                        fillBits = 7 - (((1 + udhl) * 8) % 7);
                     }
                     else
                     {
                         payload = tp_ud;
                     }
 
-                    var unpacked = Gsm7.Unpack(payload.ToArray());
+                    var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
                     message = Gsm7.DecodeFromBytes(unpacked);
                     break;
                 case CodingScheme.UCS2:

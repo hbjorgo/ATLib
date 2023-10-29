@@ -28,24 +28,24 @@ namespace HeboTech.ATLib.Tests.PDU
         }
 
         [Theory]
-        [InlineData("41", "A")]
-        [InlineData("4121", "AB")]
-        [InlineData("C834", "Hi")]
-        [InlineData("41E110", "ABC")]
-        [InlineData("C7F7FBCC2E03", "Google")]
-        [InlineData("D430390CD2A500", "Tada :)")]
-        [InlineData("D3E61424ADB3F5", "SMS Rulz")]
-        [InlineData("C8329BFD7601", "Hello.")]
-        [InlineData("C8329BFD06DDDF723619", "Hello world")]
-        [InlineData("54747A0E4ACF41F4F29C4E0ED3C321", "This is testdata!")]
-        [InlineData("54741914AFA7C76B9058FEBEBB41E6371EA4AEB7E173D0DB5E9683E8E832881DD6E741E4F719", "The quick brown fox jumps over the lazy dog")]
+        [InlineData("41", 0, "A")]
+        [InlineData("4121", 0, "AB")]
+        [InlineData("C834", 0, "Hi")]
+        [InlineData("41E110", 0, "ABC")]
+        [InlineData("C7F7FBCC2E03", 0, "Google")]
+        [InlineData("D430390CD2A500", 0, "Tada :)")]
+        [InlineData("D3E61424ADB3F5", 0, "SMS Rulz")]
+        [InlineData("C8329BFD7601", 0, "Hello.")]
+        [InlineData("C8329BFD06DDDF723619", 0, "Hello world")]
+        [InlineData("54747A0E4ACF41F4F29C4E0ED3C321", 0, "This is testdata!")]
+        [InlineData("54741914AFA7C76B9058FEBEBB41E6371EA4AEB7E173D0DB5E9683E8E832881DD6E741E4F719", 0, "The quick brown fox jumps over the lazy dog")]
         [InlineData(
-            "986F79B90D4AC3E7F53688FC66BFE5A0799A0E0AB7CB741668FC76CFCB637A995E9783C2E4343C3D1FA7DD6750999DA6B340F33219447E83CAE9FABCFD2683E8E536FC2D07A5DDE334394DAEBBE9A03A1DC40E8BDFF232A84C0791DFECB7BC0C6A87CFEE3028CC4EC7EB6117A84A0795DDE936284C06B5D3EE741B642FBBD3E1360B14AFA7E7",
+            "986F79B90D4AC3E7F53688FC66BFE5A0799A0E0AB7CB741668FC76CFCB637A995E9783C2E4343C3D1FA7DD6750999DA6B340F33219447E83CAE9FABCFD2683E8E536FC2D07A5DDE334394DAEBBE9A03A1DC40E8BDFF232A84C0791DFECB7BC0C6A87CFEE3028CC4EC7EB6117A84A0795DDE936284C06B5D3EE741B642FBBD3E1360B14AFA7E7", 1,
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis")]
-        public void Decoder_returns_decoded_text(string gsm7Bit, string expected)
+        public void Decoder_returns_decoded_text(string gsm7Bit, int paddingBits, string expected)
         {
             byte[] bytes = Convert.FromHexString(gsm7Bit);
-            byte[] result = Gsm7.Unpack(bytes);
+            byte[] result = Gsm7.Unpack(bytes, paddingBits);
 
             Assert.Equal(expected, Gsm7.DecodeFromBytes(result));
         }

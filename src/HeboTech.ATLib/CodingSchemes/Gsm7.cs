@@ -46,9 +46,11 @@ namespace HeboTech.ATLib.CodingSchemes
             return packed;
         }
 
-        public static byte[] Unpack(byte[] data)
+        public static byte[] Unpack(byte[] data, int paddingBits = 0)
         {
             BitArray packedBits = new BitArray(data);
+            packedBits.Length += paddingBits;
+            packedBits.RightShift(paddingBits);
             byte[] unpacked = new byte[packedBits.Length / 7];
 
             byte value = 0;
