@@ -117,5 +117,36 @@ namespace HeboTech.ATLib.CodingSchemes
 
             return byteGSMOutput.ToArray();
         }
+
+        public static string DecodeFromBytes(IEnumerable<byte> bytes)
+        {
+            StringBuilder sb = new StringBuilder(bytes.Count());
+
+            bool isExtended = false;
+            for (int i = 0; i < bytes.Count(); i++)
+            {
+                byte b = bytes.ElementAt(i);
+
+                if (isExtended)
+                {
+                    sb.Append(strExtendedTable[b]);
+                    isExtended = false;
+                    continue;
+                }
+
+                if (b < strGSMTable.Length)
+                {
+                    sb.Append(strGSMTable[b]);
+                    continue;
+                }
+
+                if (b == 27)
+                {
+                    isExtended = true;
+                }
+            }
+
+            return sb.ToString();
+        }
     }
 }

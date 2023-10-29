@@ -42,7 +42,7 @@ namespace HeboTech.ATLib.PDU
 
         protected SmsSubmitBuilder()
         {
-            header = (byte)PduType.SMS_SUBMIT;
+            header = (byte)MTI.SMS_SUBMIT;
         }
 
         public static SmsSubmitBuilder Initialize()
@@ -228,14 +228,14 @@ namespace HeboTech.ATLib.PDU
                         int udlSeptets = udlBits / 7;
 
                         sb.Append((udlSeptets).ToString("X2"));
-                        sb.Append(string.Join("", part.Header.Select(x => x.ToHexString())));
-                        sb.Append(string.Join("", encoded.Select(x => x.ToHexString())));
+                        sb.Append(string.Join("", part.Header.Select(x => x.ToString("X2"))));
+                        sb.Append(string.Join("", encoded.Select(x => x.ToString("X2"))));
                         break;
                     case CodingScheme.UCS2:
                         var ucs2Bytes = UCS2.EncodeToBytes(part.Data.ToArray());
                         sb.Append((part.Header.Length + ucs2Bytes.Length).ToString("X2"));
-                        sb.Append(string.Join("", part.Header.Select(x => x.ToHexString())));
-                        sb.Append(string.Join("", ucs2Bytes.Select(x => x.ToHexString())));
+                        sb.Append(string.Join("", part.Header.Select(x => x.ToString("X2"))));
+                        sb.Append(string.Join("", ucs2Bytes.Select(x => x.ToString("X2"))));
                         break;
                     default:
                         throw new ArgumentException($"Coding scheme {nameof(dcs)} is not supported");

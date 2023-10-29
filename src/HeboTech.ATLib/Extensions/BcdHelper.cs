@@ -1,4 +1,7 @@
-﻿namespace HeboTech.ATLib.Extensions
+﻿using System;
+using System.Collections.Generic;
+
+namespace HeboTech.ATLib.Extensions
 {
     public static class BcdHelper
     {
@@ -7,12 +10,22 @@
         // etc.
         public static byte SwapNibbles(this byte value)
         {
-            return (byte)(((value % 10) << 4) | (value / 10));
+            return (byte)((value & 0x0F) << 4 | (value & 0xF0) >> 4);
+        }
+
+        public static byte DecimalToBcd(this byte value)
+        {
+            return (byte)((value / 10 << 4) | (value % 10));
+        }
+
+        public static byte BcdToDecimal(this byte value)
+        {
+            return (byte)(((value & 0xF0) >> 4) * 10 + (value & 0x0F));
         }
 
         public static string BcdToString(this byte value)
         {
-            return (value >> 4).ToString("X1") + (value & 0x0F).ToString("X1");
+            return value.ToString("X2");
         }
     }
 }

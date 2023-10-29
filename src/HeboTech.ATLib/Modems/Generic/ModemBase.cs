@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
+using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.PDU;
 using System;
@@ -363,7 +364,7 @@ namespace HeboTech.ATLib.Modems.Generic
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(statusCode);
 
                             string pdu = line2Match.Groups["status"].Value;
-                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
+                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu.ToByteArray());
 
                             return ModemResponse.ResultSuccess(new Sms(status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }

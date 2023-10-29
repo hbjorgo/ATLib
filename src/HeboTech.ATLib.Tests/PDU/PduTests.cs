@@ -1,5 +1,6 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
+using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.PDU;
 using System;
 using System.Collections.Generic;
@@ -68,11 +69,8 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("07911326040000F0040B911346610089F60000208062917314800CC8F71D14969741F977FD07", "+31624000000", "+31641600986", "02-08-26-19-37-41-+02", "How are you?")]
         public void Decode_SmsDeliver_tests(string data, string serviceCenterNumber, string senderNumber, string timestamp, string message)
         {
-#if NETFRAMEWORK
-            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(data.AsSpan());
-#else
-            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(data);
-#endif
+            var bytes = data.ToByteArray();
+            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(bytes);
 
             Assert.NotNull(pduMessage);
             Assert.Equal(serviceCenterNumber, pduMessage.ServiceCenterNumber.ToString());

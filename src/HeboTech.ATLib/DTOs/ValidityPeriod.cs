@@ -47,14 +47,14 @@ namespace HeboTech.ATLib.DTOs
         /// <returns></returns>
         public static ValidityPeriod Absolute(DateTimeOffset value)
         {
-            byte year = ((byte)(value.Year % 100)).SwapNibbles();
-            byte month = ((byte)value.Month).SwapNibbles();
-            byte day = ((byte)value.Day).SwapNibbles();
-            byte hour = ((byte)value.Hour).SwapNibbles();
-            byte minute = ((byte)value.Minute).SwapNibbles();
-            byte second = ((byte)value.Second).SwapNibbles();
+            byte year = ((byte)(value.Year % 100)).DecimalToBcd().SwapNibbles();
+            byte month = ((byte)value.Month).DecimalToBcd().SwapNibbles();
+            byte day = ((byte)value.Day).DecimalToBcd().SwapNibbles();
+            byte hour = ((byte)value.Hour).DecimalToBcd().SwapNibbles();
+            byte minute = ((byte)value.Minute).DecimalToBcd().SwapNibbles();
+            byte second = ((byte)value.Second).DecimalToBcd().SwapNibbles();
 
-            byte timeZoneQuarters = ((byte)(Math.Abs(value.Offset.TotalMinutes) / 15)).SwapNibbles();
+            byte timeZoneQuarters = ((byte)(Math.Abs(value.Offset.TotalMinutes) / 15)).DecimalToBcd().SwapNibbles();
             if (value.Offset.TotalMinutes < 0)
                 timeZoneQuarters |= 0b0000_1000;
 
