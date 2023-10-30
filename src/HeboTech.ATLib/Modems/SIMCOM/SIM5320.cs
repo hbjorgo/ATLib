@@ -72,7 +72,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                             string alphabet = line1Match.Groups["alphabet"].Value;
                             int length = int.Parse(line1Match.Groups["length"].Value);
                             string pdu = line2Match.Groups["pdu"].Value;
-                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu.ToByteArray());
+                            SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());
                             return ModemResponse.ResultSuccess(new Sms((SmsStatus)status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
                     }

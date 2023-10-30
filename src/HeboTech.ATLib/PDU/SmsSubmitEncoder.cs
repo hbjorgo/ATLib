@@ -1,6 +1,5 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -9,7 +8,7 @@ using System.Text;
 
 namespace HeboTech.ATLib.PDU
 {
-    internal class SmsSubmitBuilder
+    internal class SmsSubmitEncoder
     {
         protected const int MAX_SINGLE_MESSAGE_SIZE_GSM7 = 160;
         protected const int MAX_SINGLE_MESSAGE_SIZE_UCS2 = 70;
@@ -36,23 +35,45 @@ namespace HeboTech.ATLib.PDU
         // TP-Validity-Period. 'AA'-4 days
         protected List<byte> vp = new List<byte>();
         // Message
-        protected string message = string.Empty;
-        // Message reference number (for multi-part SMS)
-        protected byte messageReferenceNumber;
+        protected Message partitionedMessage;
 
-        protected SmsSubmitBuilder()
+        protected SmsSubmitEncoder()
         {
             header = (byte)MessageTypeIndicator.SMS_SUBMIT;
         }
 
-        public static SmsSubmitBuilder Initialize()
+        protected static SmsSubmitEncoder Initialize()
         {
-            return new SmsSubmitBuilder();
+            return new SmsSubmitEncoder();
+        }
+
+        public static IEnumerable<string> Encode(SmsSubmitRequest smsSubmit)
+        {
+            // Build TPDU
+            var messageParts = SmsSubmitEncoder
+                                    .Initialize()
+                                    .DestinationAddress(smsSubmit.PhoneNumber)
+                                    .ValidityPeriod(smsSubmit.ValidityPeriod)
+                                    .Message(smsSubmit.Message, smsSubmit.CodingScheme, smsSubmit.MessageReferenceNumber)
+                                    .Build();
+
+            foreach (var messagePart in messageParts)
+            {
+                StringBuilder sb = new StringBuilder();
+
+                // Length of SMSC information
+                if (smsSubmit.IncludeEmptySmscLength)
+                    sb.Append("00");
+
+                sb.Append(messagePart);
+
+                yield return sb.ToString();
+            }
         }
 
         protected bool UserDataHeaderIndicatorIsSet => (header & (1 << 6)) != 0x00;
 
-        protected SmsSubmitBuilder EnableUserDataHeaderIndicator()
+        protected SmsSubmitEncoder EnableUserDataHeaderIndicator()
         {
             header |= 0b0100_0000;
             return this;
@@ -62,18 +83,18 @@ namespace HeboTech.ATLib.PDU
         /// Mandatory
         /// </summary>
         /// <returns></returns>
-        public SmsSubmitBuilder EnableReplyPath()
+        protected SmsSubmitEncoder EnableReplyPath()
         {
             header |= 0b1000_0000;
             return this;
         }
 
-        private static byte GetAddressType(PhoneNumber phoneNumber)
+        protected static byte GetAddressType(PhoneNumber phoneNumber)
         {
             return (byte)(0b1000_0000 + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
         }
 
-        private static string SwapPhoneNumberDigits(string data)
+        protected static string SwapPhoneNumberDigits(string data)
         {
             if (data.Length % 2 != 0)
                 data += 'F';
@@ -92,7 +113,7 @@ namespace HeboTech.ATLib.PDU
         /// Mandatory
         /// </summary>
         /// <returns></returns>
-        public SmsSubmitBuilder RejectDuplicates()
+        protected SmsSubmitEncoder RejectDuplicates()
         {
             header |= 0b0000_0100;
             return this;
@@ -103,7 +124,7 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public SmsSubmitBuilder ValidityPeriod(ValidityPeriod validityPeriod)
+        protected SmsSubmitEncoder ValidityPeriod(ValidityPeriod validityPeriod)
         {
             // Set format
             byte mask = 0b0001_1000;
@@ -116,7 +137,7 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        public SmsSubmitBuilder EnableStatusReportRequest()
+        protected SmsSubmitEncoder EnableStatusReportRequest()
         {
             header |= 0b0010_0000;
             return this;
@@ -127,7 +148,7 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        protected SmsSubmitBuilder MessageReference(byte value)
+        protected SmsSubmitEncoder MessageReference(byte value)
         {
             mr = value;
             return this;
@@ -139,7 +160,7 @@ namespace HeboTech.ATLib.PDU
         /// <param name="phoneNumber"></param>
         /// <returns></returns>
         /// <exception cref="ArgumentNullException"></exception>
-        public SmsSubmitBuilder DestinationAddress(PhoneNumber phoneNumber)
+        protected SmsSubmitEncoder DestinationAddress(PhoneNumber phoneNumber)
         {
             if (phoneNumber == null)
                 throw new ArgumentNullException(nameof(phoneNumber));
@@ -154,7 +175,7 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public SmsSubmitBuilder ProtocolIdentifier(byte value)
+        protected SmsSubmitEncoder ProtocolIdentifier(byte value)
         {
             pi = value;
             return this;
@@ -165,38 +186,15 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        public SmsSubmitBuilder DataCodingScheme(CodingScheme dataCodingScheme)
+        protected SmsSubmitEncoder Message(string message, CodingScheme dataCodingScheme, byte messageReferenceNumber)
         {
-            this.dcs = dataCodingScheme;
+            dcs = dataCodingScheme;
+            partitionedMessage = CreateMessageParts(message, dataCodingScheme, messageReferenceNumber);
             return this;
         }
 
-        /// <summary>
-        /// Mandatory
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public SmsSubmitBuilder Message(string message)
+        protected IEnumerable<string> Build()
         {
-            this.message = message;
-            return this;
-        }
-
-        /// <summary>
-        /// Mandatory
-        /// </summary>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        public SmsSubmitBuilder MessageReferenceNumber(byte messageReferenceNumber)
-        {
-            this.messageReferenceNumber = messageReferenceNumber;
-            return this;
-        }
-
-        public IEnumerable<string> Build()
-        {
-            var partitionedMessage = CreateMessageParts();
-
             if (partitionedMessage.Parts.Count() > 1)
                 EnableUserDataHeaderIndicator();
 
@@ -245,7 +243,7 @@ namespace HeboTech.ATLib.PDU
             }
         }
 
-        protected Message CreateMessageParts()
+        protected static Message CreateMessageParts(string message, CodingScheme dcs, byte messageReferenceNumber)
         {
             if (message == null)
                 throw new ArgumentNullException(nameof(message));
@@ -284,7 +282,7 @@ namespace HeboTech.ATLib.PDU
                                 // Length of UDH
                                 0x05,
                                 // IEI (0x00) for concatenated SMS
-                                0x00,
+                                (byte)IEI.ConcatenatedShortMessages,
                                 // Length of header for concatenated SMS (excluding the two first octets)
                                 0x03,
                                 // CSMS reference number

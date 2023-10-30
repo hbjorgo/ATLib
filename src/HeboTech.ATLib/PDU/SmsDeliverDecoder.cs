@@ -48,7 +48,7 @@ namespace HeboTech.ATLib.PDU
             }
         }
 
-        public static SmsDeliver DecodeSmsDeliver(ReadOnlySpan<byte> bytes, int timestampYearOffset = 2000)
+        public static SmsDeliver Decode(ReadOnlySpan<byte> bytes, int timestampYearOffset = 2000)
         {
             int offset = 0;
 
