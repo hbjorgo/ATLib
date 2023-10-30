@@ -48,6 +48,13 @@ namespace HeboTech.ATLib.PDU
             }
         }
 
+        /// <summary>
+        /// Decodes SMS-Deliver bytes in PDU format
+        /// </summary>
+        /// <param name="bytes">Data</param>
+        /// <param name="timestampYearOffset">Year offset</param>
+        /// <returns>A decoded SMS-Deliver object</returns>
+        /// <exception cref="ArgumentException"></exception>
         public static SmsDeliver Decode(ReadOnlySpan<byte> bytes, int timestampYearOffset = 2000)
         {
             int offset = 0;

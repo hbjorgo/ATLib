@@ -153,7 +153,7 @@ namespace HeboTech.ATLib.TestConsole
                             switch (smsTextFormat)
                             {
                                 case SmsTextFormat.PDU:
-                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage, smsCodingScheme);
+                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage);
                                     foreach (var smsReference in smsReferences)
                                         Console.WriteLine($"SMS Reference: {smsReference}");
                                     break;

@@ -47,6 +47,11 @@ namespace HeboTech.ATLib.PDU
             return new SmsSubmitEncoder();
         }
 
+        /// <summary>
+        /// Encode a message in PDU format
+        /// </summary>
+        /// <param name="smsSubmit">Data object</param>
+        /// <returns>PDUs</returns>
         public static IEnumerable<string> Encode(SmsSubmitRequest smsSubmit)
         {
             // Build TPDU
