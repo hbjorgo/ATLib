@@ -3,9 +3,16 @@ using System.Collections.Generic;
 
 namespace HeboTech.ATLib.PDU
 {
-    public class UDH
+    public enum IEI : byte
     {
-        private UDH(byte length, IEnumerable<InformationElement> informationElements)
+        ConcatenatedShortMessages = 0x00,
+        NationalLanguageSingleShift = 0x24,
+        NationalLanguageLockingShift = 0x25,
+    }
+
+    public class Udh
+    {
+        private Udh(byte length, IEnumerable<InformationElement> informationElements)
         {
             Length = length;
             InformationElements = informationElements;
@@ -14,9 +21,9 @@ namespace HeboTech.ATLib.PDU
         public byte Length { get; }
         public IEnumerable<InformationElement> InformationElements { get; }
 
-        public static UDH Empty() => new UDH(0, Array.Empty<InformationElement>());
+        public static Udh Empty() => new Udh(0, Array.Empty<InformationElement>());
 
-        public static UDH Parse(byte totalLength, ReadOnlySpan<byte> data)
+        public static Udh Parse(byte totalLength, ReadOnlySpan<byte> data)
         {
             List<InformationElement> informationElements = new List<InformationElement>();
             for (int i = 0; i < totalLength;)
@@ -28,7 +35,7 @@ namespace HeboTech.ATLib.PDU
                 i += 2 + length;
             }
 
-            return new UDH(totalLength, informationElements);
+            return new Udh(totalLength, informationElements);
         }
     }
 

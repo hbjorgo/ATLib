@@ -1,12 +1,59 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using System;
-using System.Text;
 using Xunit;
 
 namespace HeboTech.ATLib.Tests.PDU
 {
     public class Gsm7Tests
     {
+        [Theory]
+        [InlineData("41", "41")]
+        [InlineData("4142", "4121")]
+        [InlineData("54616461203A29", "D430390CD2A500")]
+        [InlineData("54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67", "54741914AFA7C76B9058FEBEBB41E6371EA4AEB7E173D0DB5E9683E8E832881DD6E741E4F719")]
+        public void Pack_returns_packed_bytes(string gsm7Bit, string expected)
+        {
+            byte[] result = Gsm7.Pack(Convert.FromHexString(gsm7Bit));
+
+            Assert.Equal(Convert.FromHexString(expected), result);
+        }
+
+        [Theory]
+        [InlineData("41" , "41")]
+        [InlineData("4121", "4142")]
+        [InlineData("D430390CD2A500", "54616461203A29")]
+        [InlineData("54741914AFA7C76B9058FEBEBB41E6371EA4AEB7E173D0DB5E9683E8E832881DD6E741E4F719", "54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67")]
+        public void Unpack_returns_unpacked_bytes(string gsm7Bit, string expected)
+        {
+            byte[] result = Gsm7.Unpack(Convert.FromHexString(gsm7Bit));
+
+            Assert.Equal(Convert.FromHexString(expected), result);
+        }
+
+        [Theory]
+        [InlineData("A", "41")]
+        [InlineData("AB", "4142")]
+        [InlineData("The quick brown fox jumps over the lazy dog", "54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67")]
+        [InlineData("Tada :)", "54616461203A29")]
+        public void EncodeToBytes_returns_encoded_bytes(string gsm7Bit, string expected)
+        {
+            byte[] result = Gsm7.EncodeToBytes(gsm7Bit.ToCharArray());
+
+            Assert.Equal(Convert.FromHexString(expected), result);
+        }
+
+        [Theory]
+        [InlineData("41", "A")]
+        [InlineData("4142", "AB")]
+        [InlineData("54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67", "The quick brown fox jumps over the lazy dog")]
+        [InlineData("54616461203A29", "Tada :)")]
+        public void DecodeFromBytes_returns_decoded_text(string gsm7Bit, string expected)
+        {
+            string result = Gsm7.DecodeFromBytes(Convert.FromHexString(gsm7Bit));
+
+            Assert.Equal(expected, result);
+        }
+
         [Theory]
         [InlineData("A", "41")]
         [InlineData("AB", "4121")]
@@ -20,9 +67,9 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("Tada :)", "D430390CD2A500")]
         [InlineData("hellohello", "E8329BFD4697D9EC37")]
         [InlineData("Hi", "C834")]
-        public void Encoder_returns_encoded_text(string gsm7Bit, string expected)
+        public void Encode_and_pack_returns_encoded_text(string gsm7Bit, string expected)
         {
-            byte[] result = Gsm7.Pack(Gsm7.EncodeToBytes(gsm7Bit.ToCharArray()));
+            byte[] result = Gsm7.Pack(Gsm7.EncodeToBytes(gsm7Bit));
 
             Assert.Equal(Convert.FromHexString(expected), result);
         }
@@ -42,12 +89,57 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData(
             "986F79B90D4AC3E7F53688FC66BFE5A0799A0E0AB7CB741668FC76CFCB637A995E9783C2E4343C3D1FA7DD6750999DA6B340F33219447E83CAE9FABCFD2683E8E536FC2D07A5DDE334394DAEBBE9A03A1DC40E8BDFF232A84C0791DFECB7BC0C6A87CFEE3028CC4EC7EB6117A84A0795DDE936284C06B5D3EE741B642FBBD3E1360B14AFA7E7", 1,
             "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis")]
-        public void Decoder_returns_decoded_text(string gsm7Bit, int paddingBits, string expected)
+        public void Unpack_and_decode_returns_decoded_text(string gsm7Bit, int paddingBits, string expected)
         {
-            byte[] bytes = Convert.FromHexString(gsm7Bit);
-            byte[] result = Gsm7.Unpack(bytes, paddingBits);
+            byte[] unpacked = Gsm7.Unpack(Convert.FromHexString(gsm7Bit), paddingBits);
+            string result = Gsm7.DecodeFromBytes(unpacked);
 
-            Assert.Equal(expected, Gsm7.DecodeFromBytes(result));
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("{", "1B28")]
+        [InlineData("{}", "1B281B29")]
+        [InlineData("()", "2829")]
+        public void EncodeToBytes_returns_encoded_bytes_with_default_extension_table(string gsm7Bit, string expected)
+        {
+            byte[] result = Gsm7.EncodeToBytes(gsm7Bit);
+
+            Assert.Equal(Convert.FromHexString(expected), result);
+        }
+
+        [Theory]
+        [InlineData("À", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "14")]
+        [InlineData("Φ", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "1B12")]
+        [InlineData("ΦΣ", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "1B121B18")]
+        public void EncodeToBytes_returns_encoded_bytes_with_extension_table(string gsm7Bit, Gsm7.Extension singleShift, Gsm7.Extension lockingShift, string expected)
+        {
+            byte[] result = Gsm7.EncodeToBytes(gsm7Bit, singleShift, lockingShift);
+
+            Assert.Equal(Convert.FromHexString(expected), result);
+        }
+
+        [Theory]
+        [InlineData(new byte[] { 0x1B }, " ")]
+        [InlineData(new byte[] { 0x1B, 0x28 }, "{")]
+        [InlineData(new byte[] { 0x1B, 0x28, 0x1B, 0x29 }, "{}")]
+        [InlineData(new byte[] { 0x28, 0x29 }, "()")]
+        public void DecodeFromBytes_returns_decoded_text_with_default_extension_table(byte[] gsm7Bit, string expected)
+        {
+            string result = Gsm7.DecodeFromBytes(gsm7Bit);
+
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData("14", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "À")]
+        [InlineData("1B", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, " ")]
+        [InlineData("1B12", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "Φ")]
+        public void DecodeFromBytes_returns_decoded_text_with_extension_table(string gsm7Bit, Gsm7.Extension singleShift, Gsm7.Extension lockingShift, string expected)
+        {
+            string result = Gsm7.DecodeFromBytes(Convert.FromHexString(gsm7Bit), singleShift, lockingShift);
+
+            Assert.Equal(expected, result);
         }
 
         [Theory]
@@ -81,11 +173,12 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud")]
         public void Encode_decode_returns_original_text(string text)
         {
-            byte[] encoded = Gsm7.Pack(Gsm7.EncodeToBytes(text));
-            byte[] decoded = Gsm7.Unpack(encoded);
-            string receivedText = Encoding.ASCII.GetString(decoded);
+            byte[] encoded = Gsm7.EncodeToBytes(text);
+            byte[] packed = Gsm7.Pack(encoded);
+            byte[] decoded = Gsm7.Unpack(packed);
+            string result = Gsm7.DecodeFromBytes(decoded);
 
-            Assert.Equal(text, receivedText);
+            Assert.Equal(text, result);
         }
     }
 }

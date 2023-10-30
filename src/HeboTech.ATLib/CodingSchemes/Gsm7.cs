@@ -11,17 +11,155 @@ namespace HeboTech.ATLib.CodingSchemes
     /// </summary>
     public static class Gsm7
     {
-        public const CodingScheme DataCodingSchemeCode = CodingScheme.Gsm7;
+        public enum Extension : byte
+        {
+            Default = 0x00,
+            Turkish = 0x01,
+            Spanish = 0x02,
+            Portugese = 0x03,
+            BengaliAndAssamese = 0x04,
+            Gujarati = 0x05,
+            Hindi = 0x06,
+            Kannada = 0x07,
+            Malayalam = 0x08,
+            Oriya = 0x09,
+            Punjabi = 0x0A,
+            Tamil = 0x0B,
+            Telugu = 0x0C,
+            Urdu = 0x0D,
+        }
 
         // ` is not a conversion, just a untranslatable letter
-        private const string strGSMTable = "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà";
-        private const string strExtendedTable = "````````````````````^```````````````````{}`````\\````````````[~]`|````````````````````````````````````€``````````````````````````";
+        private static readonly Dictionary<Extension, string> regularTable = new Dictionary<Extension, string>()
+        {
+            { Extension.Default, "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
+            { Extension.Turkish, "@£$¥€éùıòÇLĞğCÅåΔ_ΦΓΛΩΠΨΣΘFEŞRßÉ !\"#¤%&'()ΞS,ş./0123456789*C<->?İABCDEFGHI:+L=NOPQRSTUVWXYJ;ÖMÜ§çabcdefghiZKlÑnopqrstuvwxyjÄömüà" },
+            { Extension.Spanish, "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
+            { Extension.Portugese, "@£$¥êéúíóçLÔôCÁáΔ_ªÇÀ∞^\\€ÓFEÂRÊÉ !\"#º%&'()|S,â./0123456789*C<->?ÍABCDEFGHI:+L=NOPQRSTUVWXYJ;ÕMÜ§~abcdefghiZKlÚnopqrstuvwxyjÃõmüà" },
+            { Extension.BengaliAndAssamese, "◌◌◌অআইঈউঊঋLঌ`C`এঁংঃওঔকখগঘঙFEছRঝঞঐ``ঠডঢণত)(চS,জ.ন !ট3456789থC`ধফ?012যর`ল```:দসপ◌ঽ◌ভম◌◌◌◌``◌শ;`হ়◌ব◌◌ুূৃৄghে◌ষl◌◌্ািীcdefwxiৈ`ডোৌo" },
+            { Extension.Gujarati, "◌◌◌અઆઇઈઉઊઋLઌઍC`એઁંઃઓઔકખગઘઙFEછRઝઞઐઑ`ઠડઢણત)(ચS,જ.ન !ટ3456789થC`ધફ?012યર`લળ`વ:દસપ◌ઽબભમ◌◌◌◌◌`◌શ;`હ઼◌◌◌◌ુૂૃૄૅhે◌ષl◌◌્ાિીcdefgxiૈ◌ૡોૌo" },
+            { Extension.Hindi, "◌◌◌अआइईउऊऋLऌऍCऎएँंःओऔकखगघङFEछRझञऐऑऒठडढणत)(चS,ज.न !ट3456789थCऩधफ?012यरऱलळऴव:दसप◌ऽबभम◌◌◌◌◌◌◌श;◌ह़◌◌◌◌ुूृॄॅॆे◌षॊ◌◌्ािीcdefghiै◌lोौo" },
+            { Extension.Kannada, "`ಂಃಅಆಇಈಉಊಋLಌ`Cಎಏಐ`ಒಓಔಕಖಗಘಙFEಛRಝಞ !ಟಠಪಢಣತ)(ಚS,ಜ.ನ0123456789ಥC`ಧಫ?ಬಭಮಯರಱಲಳ`ವ:ದಸಪ಼ಽಾಿೀುೂೃೄ`ೆೇಶ;ೊಹೌ್ೕabcdefghiೈಷlೋnopqrstuvwxyj`ೠmೢೣ" },
+            { Extension.Malayalam, "`ംഃഅആഇഈഉഊഋLഌ`Cഎഏഐ`ഒഓഔകഖഗഘങFEഛRഝഞ !ടഠഡഢണത)(ചS,ജ.ന0123456789ഥC`ധഫ?ബഭമയരറലളഴവ:ദസപ`ഽാിീുൂൃൄ`െേശ;ൊഹൌ്ൗabcdefghiൈഷlോnopqrstuvwxyj`ൡmൣ൹" },
+            { Extension.Oriya, "◌◌◌ଅଆଇଈଉଊଋLଌ`C`ଏଁଂଃଓଔକଖଗଘଙFEଛRଝଞଐ``ଠଡଢଣତ)(ଚS,ଜ.ନ !ଟ3456789ଥC`ଧଫ?012ଯର`ଲଳ`ଵ:ଦସପ◌ଽବଭମ◌◌◌ୄ``◌ଶ;`ହ଼◌◌◌◌ୁୂୃfghେ◌ଷl◌◌୍ାିୀcdevwxiୈ`ୠୋୌo" },
+            { Extension.Punjabi, "◌◌◌ਅਆਇਈਉਊ`L``C`ਏਁਂਃਓਔਕਖਗਘਙFEਛRਝਞਐ``ਠਡਢਣਤ)(ਚS,ਜ.ਨ !ਟ3456789ਥC`ਧਫ?012ਯਰ`ਲਲ`ਵ:ਦਸਪ◌`ਬਭਮ◌◌``਼`◌ਸ;`ਹ਼◌◌◌◌ੁੂef`hੇ਼`l◌◌੍ਾਿੀcduvgxi◌`◌ੋੌo" },
+            { Extension.Tamil, "`◌◌அஆஇஈஉஊ`L``Cஎஏஐஂஃஓஔக```ஙFE`R`ஞ `ஒ```ணத)(சS,ஜ.ந0!ட3456789`Cன``?`12யரறலளழவ:`ஸப``◌`ம◌◌```◌◌ஶ;◌ஹ◌◌ா◌◌ுூefgெே◌ஷொ◌ௌ்ௐிீcduvwhiை`lோno" },
+            { Extension.Telugu, "◌◌◌అఆఇఈఉఊఋLఌ`CఎఏఁంఃఓఔకఖగఘఙFEఛRఝఞఐ`ఒఠడఢణత)(చS,జ.న !ట3456789థC`ధఫ?012యరఱలళ`వ:దసప`ఽబభమ◌◌◌◌`◌◌శ;◌హ◌◌◌◌◌ుూృౄgెే◌షొ◌ౌ్ాిీcdefwhiై`lోno" },
+            { Extension.Urdu, "اآبٻڀپڦتۂٿLٹٽCٺټثجځڄڃڅچڇحخFEڌRډڊ !ڏڍذرڑړ)(دS,ڈ.ژ0123456789ڙCښږش?صضطظعفقکڪګ:زڱسمنںڻڼوۄەہھءیگ;◌ل◌◌◌abcdefghiېڳٍ◌ُٗٔqrstuvwxyjےlِno" },
+        };
+        private static readonly Dictionary<Extension, string> extendedTable = new Dictionary<Extension, string>()
+        {
+            { Extension.Default, "````````````````````^```````````````````{}`````\\````````````[~]`|````````````````````````````````````€``````````````````````````" },
+            { Extension.Turkish, "````````````````````^```````````````````{}`````\\````````````[~]`|``````Ğ`İ`````````Ş```````````````ç`€`ğ`ı`````````ş````````````" },
+            { Extension.Spanish, "`````````ç``````````^```````````````````{}`````\\````````````[~]`|Á```````Í`````Ó`````Ú```````````á```€```í`````ó`````ú``````````" },
+            { Extension.Portugese, "`````ê```ç`Ôô`Áá``ΦΓ^ΩΠΨΣΘ`````Ê````````{}`````\\````````````[~]`|À```````Í`````Ó`````Ú`````ÃÕ````Â```€```í`````ó`````ú`````ãõ``â" },
+            { Extension.BengaliAndAssamese, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*০১`২৩৪৫৬৭৮৯যৠৡ◌{}◌৲৳৴৵\\৶৷৸৹়``ৢ``ৣ`[~]`|ABC৺EF`HI`KLMNOPQRSDUVGXYJ`````````T€`W``Z`````````````````````" },
+            { Extension.Gujarati, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`૦૧૨૩૪૫૬૭૮૯``{}`````\\````````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
+            { Extension.Hindi, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`०१२३४५६७८९◌◌{}◌◌कखग\\जडढफयॠ॒॑◌॰़़़॓॔`़़़़़Eॡ◌ॣIॱ`[~]O|ABCDUFॢHYJKLMN`PQRST€VGX`Z````````````W````````" },
+            { Extension.Kannada, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`೦೧೨೩೪೫೬೭೮೯ೞೱ{}ೲ````\\````````````]~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
+            { Extension.Malayalam, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`൦൧൨൩൪൫൬൭൮൯൰൱{}൲൳൴൵ൺ\\ൻർൽൾൿ```````[~]`-ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
+            { Extension.Oriya, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`୦୧୨୩୪୫୬୭୮୯ଡଢ{}ୟ୰ୱ``\\``````଼଼````[~]`|ABCDE``HIJKLMNOPQRSTUFGXYZ``````````€VW````````````````````````" },
+            { Extension.Punjabi, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`੦੧੨੩੪੫੬੭੮੯ਖਗ{}ਜੜਫ◌`\\``````਼਼``਼`਼ੵ]`|ABCDE``HI`K[~NOPQRSTUFGXYJ`LM```````€VW``Z`````````````````````" },
+            { Extension.Tamil, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`௦௧௨௩௪௫௬௭௮௯௳௴{}௵௶௷௸௺\\````````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
+            { Extension.Telugu, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*```౦౧౨౩౪౫౬౭౮౯ౘౙ{}౸౹౺౻౼\\౽౾౿`````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ`````````````````````````````````````" },
+            { Extension.Urdu, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*؀؁`۰۱۲۳۴۵۶۷۸۹،؍{}؎؏◌◌◌\\◌◌؛؟ـ◌◌٫٬ٲٳۍؐؑؒ۔ؓؔBCDْ٘GHIJK[~]O|ARSTEFWXYZ`LMN`PQ```UV``````````````€``````````" },
+        };
+
+        public static bool IsGsm7Compatible(IEnumerable<char> text, Extension lockingShift = Extension.Default, Extension singleShift = Extension.Default)
+        {
+            string defaultString = regularTable[lockingShift];
+            string extendedString = extendedTable[singleShift];
+
+            for (int i = 0; i < text.Count(); i++)
+            {
+                char c = text.ElementAt(i);
+
+                int intGSMTable = defaultString.IndexOf(c);
+                if (intGSMTable != -1)
+                    continue;
+
+                int intExtendedTable = extendedString.IndexOf(c);
+                if (intExtendedTable == -1)
+                    return false;
+            }
+
+            return true;
+        }
+
+        public static byte[] EncodeToBytes(IEnumerable<char> text, Extension lockingShift = Extension.Default, Extension singleShift = Extension.Default)
+        {
+            string defaultString = regularTable[lockingShift];
+            string extendedString = extendedTable[singleShift];
+
+            List<byte> byteGSMOutput = new List<byte>();
+
+            for (int i = 0; i < text.Count(); i++)
+            {
+                char c = text.ElementAt(i);
+
+                int intGSMTable = defaultString.IndexOf(c);
+                if (intGSMTable != -1)
+                {
+                    byteGSMOutput.Add((byte)intGSMTable);
+                    continue;
+                }
+
+                int intExtendedTable = extendedString.IndexOf(c);
+                if (intExtendedTable != -1)
+                {
+                    byteGSMOutput.Add(27);
+                    byteGSMOutput.Add((byte)intExtendedTable);
+                }
+            }
+
+            return byteGSMOutput.ToArray();
+        }
+
+        public static string DecodeFromBytes(IEnumerable<byte> bytes, Extension lockingShift = Extension.Default, Extension singleShift = Extension.Default)
+        {
+            string defaultString = regularTable[lockingShift];
+            string extendedString = extendedTable[singleShift];
+
+            StringBuilder sb = new StringBuilder(bytes.Count());
+
+            bool isExtended = false;
+            for (int i = 0; i < bytes.Count(); i++)
+            {
+                byte b = bytes.ElementAt(i);
+
+                if (b == 27)
+                {
+                    if (i == bytes.Count() - 1) // If the ESC character is the last character for some reason - treat it as a space
+                    {
+                        sb.Append(' ');
+                        continue;
+                    }
+                    isExtended = true;
+                    continue;
+                }
+
+                if (isExtended)
+                {
+                    sb.Append(extendedString[b]);
+                    isExtended = false;
+                    continue;
+                }
+
+                if (b < defaultString.Length)
+                {
+                    sb.Append(defaultString[b]);
+                    continue;
+                }
+            }
+
+            return sb.ToString();
+        }
 
         public static byte[] Pack(byte[] data, int paddingBits = 0)
         {
             // Array for all packed bits (n x 7)
             BitArray packedBits = new BitArray((int)Math.Ceiling(data.Length * 7 / 8.0) * 8 + paddingBits);
-            
+
             // Loop through all characters
             for (int i = 0; i < data.Length; i++)
             {
@@ -69,86 +207,6 @@ namespace HeboTech.ATLib.CodingSchemes
             if (unpacked[^1] == 0)
                 return unpacked[..^1];
             return unpacked;
-        }
-
-        public static byte[] EncodeToBytes(string text)
-        {
-            return EncodeToBytes(text.ToCharArray());
-        }
-
-        public static bool IsGsm7Compatible(IEnumerable<char> text)
-        {
-            for (int i = 0; i < text.Count(); i++)
-            {
-                char c = text.ElementAt(i);
-
-                int intGSMTable = strGSMTable.IndexOf(c);
-                if (intGSMTable != -1)
-                    continue;
-
-                int intExtendedTable = strExtendedTable.IndexOf(c);
-                if (intExtendedTable == -1)
-                    return false;
-            }
-
-            return true;
-        }
-
-        public static byte[] EncodeToBytes(IEnumerable<char> text)
-        {
-            List<byte> byteGSMOutput = new List<byte>();
-
-            for (int i = 0; i < text.Count(); i++)
-            {
-                char c = text.ElementAt(i);
-
-                int intGSMTable = strGSMTable.IndexOf(c);
-                if (intGSMTable != -1)
-                {
-                    byteGSMOutput.Add((byte)intGSMTable);
-                    continue;
-                }
-
-                int intExtendedTable = strExtendedTable.IndexOf(c);
-                if (intExtendedTable != -1)
-                {
-                    byteGSMOutput.Add(27);
-                    byteGSMOutput.Add((byte)intExtendedTable);
-                }
-            }
-
-            return byteGSMOutput.ToArray();
-        }
-
-        public static string DecodeFromBytes(IEnumerable<byte> bytes)
-        {
-            StringBuilder sb = new StringBuilder(bytes.Count());
-
-            bool isExtended = false;
-            for (int i = 0; i < bytes.Count(); i++)
-            {
-                byte b = bytes.ElementAt(i);
-
-                if (isExtended)
-                {
-                    sb.Append(strExtendedTable[b]);
-                    isExtended = false;
-                    continue;
-                }
-
-                if (b < strGSMTable.Length)
-                {
-                    sb.Append(strGSMTable[b]);
-                    continue;
-                }
-
-                if (b == 27)
-                {
-                    isExtended = true;
-                }
-            }
-
-            return sb.ToString();
         }
     }
 }

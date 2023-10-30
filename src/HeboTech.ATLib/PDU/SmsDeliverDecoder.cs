@@ -98,18 +98,18 @@ namespace HeboTech.ATLib.PDU
             }
 
             ReadOnlySpan<byte> tp_ud = bytes[offset..(offset += udlBytes)];
-            UDH udh;
+            Udh udh;
             ReadOnlySpan<byte> payload;
             if (header.UDHI)
             {
                 byte udhl = tp_ud[0];
                 ReadOnlySpan<byte> udh_bytes = tp_ud[1..(udhl + 1)];
-                udh = UDH.Parse(udhl, udh_bytes);
+                udh = Udh.Parse(udhl, udh_bytes);
                 payload = tp_ud[(udhl + 1)..];
             }
             else
             {
-                udh = UDH.Empty();
+                udh = Udh.Empty();
                 payload = tp_ud;
             }
 
@@ -122,7 +122,18 @@ namespace HeboTech.ATLib.PDU
                         fillBits = 7 - (((1 + udh.Length) * 8) % 7);
 
                     var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
-                    message = Gsm7.DecodeFromBytes(unpacked);
+
+                    var lockingShiftIE = udh.InformationElements.FirstOrDefault(x => x.IEI == (byte)IEI.NationalLanguageLockingShift);
+                    var singleShiftIE = udh.InformationElements.FirstOrDefault(x => x.IEI == (byte)IEI.NationalLanguageSingleShift);
+
+                    Gsm7.Extension lockingShift = Gsm7.Extension.Default;
+                    if (lockingShiftIE != null)
+                        lockingShift = (Gsm7.Extension)lockingShiftIE?.Data[1];
+                    Gsm7.Extension singleShift = Gsm7.Extension.Default;
+                    if (singleShiftIE != null)
+                        singleShift = (Gsm7.Extension)singleShiftIE?.Data[1];
+
+                    message = Gsm7.DecodeFromBytes(unpacked, lockingShift, singleShift);
                     break;
                 case CodingScheme.UCS2:
                     message = UCS2.Decode(payload.ToArray());
