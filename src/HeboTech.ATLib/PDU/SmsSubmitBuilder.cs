@@ -42,7 +42,7 @@ namespace HeboTech.ATLib.PDU
 
         protected SmsSubmitBuilder()
         {
-            header = (byte)MTI.SMS_SUBMIT;
+            header = (byte)MessageTypeIndicator.SMS_SUBMIT;
         }
 
         public static SmsSubmitBuilder Initialize()

@@ -6,8 +6,8 @@ namespace HeboTech.ATLib.PDU
     public enum IEI : byte
     {
         ConcatenatedShortMessages = 0x00,
-        NationalLanguageSingleShift = 0x24,
-        NationalLanguageLockingShift = 0x25,
+        //NationalLanguageSingleShift = 0x24,
+        //NationalLanguageLockingShift = 0x25,
     }
 
     public class Udh

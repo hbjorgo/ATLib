@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.PDU
             {
             }
 
-            public SmsDeliverHeader(MTI mti, bool mms, bool lp, bool sri, bool udhi, bool rp)
+            public SmsDeliverHeader(MessageTypeIndicator mti, bool mms, bool lp, bool sri, bool udhi, bool rp)
             {
                 MTI = mti;
                 MMS = mms;
@@ -24,7 +24,7 @@ namespace HeboTech.ATLib.PDU
                 RP = rp;
             }
 
-            public MTI MTI { get; private set; }
+            public MessageTypeIndicator MTI { get; private set; }
             public bool MMS { get; private set; }
             public bool LP { get; private set; }
             public bool SRI { get; private set; }
@@ -35,8 +35,8 @@ namespace HeboTech.ATLib.PDU
             {
                 SmsDeliverHeader parsedHeader = new SmsDeliverHeader();
 
-                parsedHeader.MTI = (MTI)(header & 0b0000_0011);
-                if (parsedHeader.MTI != (byte)MTI.SMS_DELIVER)
+                parsedHeader.MTI = (MessageTypeIndicator)(header & 0b0000_0011);
+                if (parsedHeader.MTI != (byte)MessageTypeIndicator.SMS_DELIVER)
                     throw new ArgumentException("Invalid SMS-DELIVER data");
 
                 parsedHeader.MMS = (header & 0b0000_0100) != 0;
@@ -122,18 +122,7 @@ namespace HeboTech.ATLib.PDU
                         fillBits = 7 - (((1 + udh.Length) * 8) % 7);
 
                     var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
-
-                    var lockingShiftIE = udh.InformationElements.FirstOrDefault(x => x.IEI == (byte)IEI.NationalLanguageLockingShift);
-                    var singleShiftIE = udh.InformationElements.FirstOrDefault(x => x.IEI == (byte)IEI.NationalLanguageSingleShift);
-
-                    Gsm7.Extension lockingShift = Gsm7.Extension.Default;
-                    if (lockingShiftIE != null)
-                        lockingShift = (Gsm7.Extension)lockingShiftIE?.Data[1];
-                    Gsm7.Extension singleShift = Gsm7.Extension.Default;
-                    if (singleShiftIE != null)
-                        singleShift = (Gsm7.Extension)singleShiftIE?.Data[1];
-
-                    message = Gsm7.DecodeFromBytes(unpacked, lockingShift, singleShift);
+                    message = Gsm7.DecodeFromBytes(unpacked);
                     break;
                 case CodingScheme.UCS2:
                     message = UCS2.Decode(payload.ToArray());
