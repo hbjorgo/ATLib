@@ -12,11 +12,13 @@ Feedback is very much welcome and please request features 🙂
 [HeboTech.GsmApi](https://github.com/hbjorgo/GsmApi) is a REST API wrapping this library.
 
 ## Supported commands:
-- Send SMS (text and PDU (GSM7bit, UCS2, ANSI))
+- Send SMS in text or PDU (GSM 7 bit or UCS2) format.
+- Send concatenated SMS (message that spans over multiple SMSs) in PDU (GSM 7 bit or UCS2) format
+- SMS supports emojies
 - List SMSs
-- Read SMS (text and PDU)
+- Read SMS (text or PDU (GSM 7 bit or UCS2)
 - Delete SMS
-- Set SMS message format (text and PDU (GSM7bit, UCS2, ANSI))
+- Set SMS message format (text or PDU (GSM 7 bit or UCS2))
 - Dial number
 - Answer incoming call
 - Hang up call
@@ -93,7 +95,7 @@ if (simStatus == SimStatus.SIM_PIN)
 var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
 
 // Send SMS to the specified number
-var smsReference = await modem.SendSMSAsync(new PhoneNumber("0123456789"), "Hello ATLib!");
+var smsReference = await modem.SendSmsInTextFormatAsync(new PhoneNumber("123456789"), "Hello ATLib!");
 Console.WriteLine($"SMS Reference: {smsReference}");
 ```
 Because it relies on a stream, you can even control a modem over a network! Either use a network attached modem, or forward a modem serial port to a network port.
