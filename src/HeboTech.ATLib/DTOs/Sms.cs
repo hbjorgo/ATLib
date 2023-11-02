@@ -4,7 +4,7 @@ namespace HeboTech.ATLib.DTOs
 {
     public class Sms
     {
-        public Sms(SmsStatus status, PhoneNumber sender, DateTimeOffset receiveTime, string message)
+        public Sms(SmsStatus status, PhoneNumberDTO sender, DateTimeOffset receiveTime, string message)
         {
             Status = status;
             Sender = sender;
@@ -13,7 +13,7 @@ namespace HeboTech.ATLib.DTOs
         }
 
         public SmsStatus Status { get; }
-        public PhoneNumber Sender { get; }
+        public PhoneNumberDTO Sender { get; }
         public DateTimeOffset ReceiveTime { get;}
         public string Message { get; }
 

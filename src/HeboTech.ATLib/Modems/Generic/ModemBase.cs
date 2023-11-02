@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
+using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.PDU;
 using System;
@@ -123,11 +124,7 @@ namespace HeboTech.ATLib.Modems.Generic
                 var match = Regex.Match(line, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)");
                 if (match.Success)
                 {
-#if NETSTANDARD2_0
-                    return ModemResponse.ResultSuccess(match.Groups["characterSet"].Captures.Cast<Capture>().Select(x => x.Value));
-#elif NETSTANDARD2_1_OR_GREATER
                     return ModemResponse.ResultSuccess(match.Groups["characterSet"].Captures.Select(x => x.Value));
-#endif
                 }
             }
             return ModemResponse.ResultError<IEnumerable<string>>();
@@ -207,56 +204,76 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.ResultError<SmsReference>();
         }
 
-        public abstract Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
+        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message);
 
-        protected virtual async Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
+        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, bool includeEmptySmscLength)
         {
             if (phoneNumber is null)
                 throw new ArgumentNullException(nameof(phoneNumber));
             if (message is null)
                 throw new ArgumentNullException(nameof(message));
 
-            byte dataCodingScheme;
-            string encodedMessage;
-            switch (codingScheme)
+            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message) { IncludeEmptySmscLength = includeEmptySmscLength });
+            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
+            foreach (string pdu in pdus)
             {
-                case CodingScheme.Ansi:
-                    encodedMessage = Ansi.Encode(message);
-                    dataCodingScheme = Ansi.DataCodingSchemeCode;
-                    break;
-                case CodingScheme.Gsm7:
-                    encodedMessage = Gsm7.Encode(message);
-                    dataCodingScheme = Gsm7.DataCodingSchemeCode;
-                    break;
-                case CodingScheme.UCS2:
-                    encodedMessage = UCS2.Encode(message);
-                    dataCodingScheme = UCS2.DataCodingSchemeCode;
-                    break;
-                default:
-                    throw new ArgumentException("The encoding scheme is not supported");
-            }
+                string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
+                string cmd2 = pdu;
+                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
 
-            string pdu = Pdu.EncodeSmsSubmit(phoneNumber, encodedMessage, dataCodingScheme, includeEmptySmscLength);
-            string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
-            string cmd2 = pdu;
-            AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
-
-            if (response.Success)
-            {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                if (match.Success)
+                if (response.Success)
                 {
-                    int mr = int.Parse(match.Groups["mr"].Value);
-                    return ModemResponse.ResultSuccess(new SmsReference(mr));
+                    string line = response.Intermediates.First();
+                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                    if (match.Success)
+                    {
+                        int mr = int.Parse(match.Groups["mr"].Value);
+                        references.Add(ModemResponse.ResultSuccess(new SmsReference(mr)));
+                    }
+                }
+                else
+                {
+                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
+                        references.Add(ModemResponse.ResultError<SmsReference>(error.ToString()));
                 }
             }
-            else
+            return references;
+        }
+
+        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
+
+        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
+        {
+            if (phoneNumber is null)
+                throw new ArgumentNullException(nameof(phoneNumber));
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+
+            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message, codingScheme) { IncludeEmptySmscLength = includeEmptySmscLength });
+            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
+            foreach (string pdu in pdus)
             {
-                if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                    return ModemResponse.ResultError<SmsReference>(error.ToString());
+                string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
+                string cmd2 = pdu;
+                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
+
+                if (response.Success)
+                {
+                    string line = response.Intermediates.First();
+                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                    if (match.Success)
+                    {
+                        int mr = int.Parse(match.Groups["mr"].Value);
+                        references.Add(ModemResponse.ResultSuccess(new SmsReference(mr)));
+                    }
+                }
+                else
+                {
+                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
+                        references.Add(ModemResponse.ResultError<SmsReference>(error.ToString()));
+                }
             }
-            return ModemResponse.ResultError<SmsReference>();
+            return references;
         }
 
         public virtual async Task<ModemResponse<SupportedPreferredMessageStorages>> GetSupportedPreferredMessageStoragesAsync()
@@ -347,11 +364,7 @@ namespace HeboTech.ATLib.Modems.Generic
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(statusCode);
 
                             string pdu = line2Match.Groups["status"].Value;
-#if NETSTANDARD2_0
-                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu.AsSpan());
-#elif NETSTANDARD2_1_OR_GREATER
-                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
-#endif
+                            SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());
 
                             return ModemResponse.ResultSuccess(new Sms(status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
@@ -367,7 +380,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         if (match.Success)
                         {
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
                             int year = int.Parse(match.Groups["year"].Value);
                             int month = int.Parse(match.Groups["month"].Value);
                             int day = int.Parse(match.Groups["day"].Value);
@@ -407,7 +420,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         {
                             int index = int.Parse(match.Groups["index"].Value);
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
                             int year = int.Parse(match.Groups["year"].Value);
                             int month = int.Parse(match.Groups["month"].Value);
                             int day = int.Parse(match.Groups["day"].Value);
@@ -463,16 +476,6 @@ namespace HeboTech.ATLib.Modems.Generic
             if (match.Success)
             {
                 string cpinResult = match.Groups["pinresult"].Value;
-#if NETSTANDARD2_0
-                switch (cpinResult)
-                {
-                    case "SIM PIN": return ModemResponse.ResultSuccess(SimStatus.SIM_PIN);
-                    case "SIM PUK": return ModemResponse.ResultSuccess(SimStatus.SIM_PUK);
-                    case "PH-NET PIN": return ModemResponse.ResultSuccess(SimStatus.SIM_NETWORK_PERSONALIZATION);
-                    case "READY": return ModemResponse.ResultSuccess(SimStatus.SIM_READY);
-                    default: return ModemResponse.ResultSuccess(SimStatus.SIM_ABSENT);// Treat unsupported lock types as "sim absent"
-                };
-#elif NETSTANDARD2_1_OR_GREATER
                 return cpinResult switch
                 {
                     "SIM PIN" => ModemResponse.ResultSuccess(SimStatus.SIM_PIN),
@@ -481,7 +484,6 @@ namespace HeboTech.ATLib.Modems.Generic
                     "READY" => ModemResponse.ResultSuccess(SimStatus.SIM_READY),
                     _ => ModemResponse.ResultSuccess(SimStatus.SIM_ABSENT),// Treat unsupported lock types as "sim absent"
                 };
-#endif
             }
 
             return ModemResponse.ResultError<SimStatus>();

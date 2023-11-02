@@ -1,5 +1,6 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
+using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.PDU;
@@ -42,7 +43,12 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public override Task<ModemResponse<SmsReference>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
+        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message)
+        {
+            return base.SendSmsInPduFormatAsync(phoneNumber, message, false);
+        }
+
+        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
         {
             return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
         }
@@ -66,11 +72,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                             string alphabet = line1Match.Groups["alphabet"].Value;
                             int length = int.Parse(line1Match.Groups["length"].Value);
                             string pdu = line2Match.Groups["pdu"].Value;
-#if NETSTANDARD2_0
-                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu.AsSpan());
-#elif NETSTANDARD2_1_OR_GREATER
-                            SmsDeliver pduMessage = Pdu.DecodeSmsDeliver(pdu);
-#endif
+                            SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());
                             return ModemResponse.ResultSuccess(new Sms((SmsStatus)status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
                     }
@@ -85,7 +87,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                         if (match.Success)
                         {
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                            PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                            PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
                             int year = int.Parse(match.Groups["year"].Value);
                             int month = int.Parse(match.Groups["month"].Value);
                             int day = int.Parse(match.Groups["day"].Value);
@@ -119,7 +121,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                     {
                         int index = int.Parse(match.Groups["index"].Value);
                         SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                        PhoneNumber sender = new PhoneNumber(match.Groups["sender"].Value);
+                        PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
                         int year = int.Parse(match.Groups["year"].Value);
                         int month = int.Parse(match.Groups["month"].Value);
                         int day = int.Parse(match.Groups["day"].Value);

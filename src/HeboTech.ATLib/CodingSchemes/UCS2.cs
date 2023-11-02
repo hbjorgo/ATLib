@@ -1,6 +1,6 @@
-﻿using System;
+﻿using HeboTech.ATLib.Extensions;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Text;
 
@@ -12,7 +12,7 @@ namespace HeboTech.ATLib.CodingSchemes
     /// </summary>
     public class UCS2
     {
-        public const byte DataCodingSchemeCode = 0x08;
+        public const CodingScheme DataCodingSchemeCode = CodingScheme.UCS2;
 
         /// <summary>
         /// Encode to UCS2
@@ -25,6 +25,11 @@ namespace HeboTech.ATLib.CodingSchemes
             return BitConverter.ToString(bytes).Replace("-", "");
         }
 
+        public static byte[] EncodeToBytes(char[] input)
+        {
+            return Encoding.BigEndianUnicode.GetBytes(input);
+        }
+
         /// <summary>
         /// Decode from UCS2
         /// </summary>
@@ -32,8 +37,13 @@ namespace HeboTech.ATLib.CodingSchemes
         /// <returns>Decoded string</returns>
         public static string Decode(string input)
         {
-            IEnumerable<byte> bytes = CodingHelpers.StringToByteArray(input);
+            IEnumerable<byte> bytes = input.ToByteArray();
             return Encoding.BigEndianUnicode.GetString(bytes.ToArray());
+        }
+
+        public static string Decode(IEnumerable<byte> input)
+        {
+            return Encoding.BigEndianUnicode.GetString(input.ToArray());
         }
     }
 }

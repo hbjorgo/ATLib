@@ -1,9 +1,8 @@
 ﻿namespace HeboTech.ATLib.CodingSchemes
 {
-    public enum CodingScheme
+    public enum CodingScheme : byte
     {
-        Ansi,
-        Gsm7,
-        UCS2
+        Gsm7 = 0x00,
+        UCS2 = 0x08,
     }
 }

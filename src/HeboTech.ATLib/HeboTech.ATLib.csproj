@@ -1,31 +1,35 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.1;netstandard2.0</TargetFrameworks>
-    <Authors>HeboTech</Authors>
-    <Product>HeboTech ATLib</Product>
-    <Version>6.0.2</Version>
-    <PackageId>HeboTech.ATLib</PackageId>
-    <PackageTags>atcommand at command gsm sms hayes simcom d-link tp-link dwm-222 ma260 sim5320</PackageTags>
-    <Description>AT command library that makes it easy to communicate with modems.</Description>
-    <RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
-    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/hbjorgo/ATLib</PackageProjectUrl>
-    <PackageReleaseNotes>https://github.com/hbjorgo/ATLib/releases</PackageReleaseNotes>
-    <AssemblyVersion>6.0.2.0</AssemblyVersion>
-    <FileVersion>6.0.2.0</FileVersion>
-    <UserSecretsId>b8328b1a-795d-4e26-9238-43eee2160ffc</UserSecretsId>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>netstandard2.1</TargetFramework>
+		<Authors>HeboTech</Authors>
+		<Product>HeboTech ATLib</Product>
+		<Version>7.0.0-RC1</Version>
+		<PackageVersion>7.0.0-RC1</PackageVersion>
+		<AssemblyVersion>7.0.0.0</AssemblyVersion>
+		<FileVersion>7.0.0.0</FileVersion>
+		<PackageId>HeboTech.ATLib</PackageId>
+		<Title>AT command library that makes it easy to communicate with modems.</Title>
+		<Description>AT command library that makes it easy to communicate with modems.</Description>
+		<PackageTags>atcommand at command gsm sms hayes simcom d-link tp-link dwm-222 ma260 sim5320</PackageTags>
+		<RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageProjectUrl>https://github.com/hbjorgo/ATLib</PackageProjectUrl>
+		<PackageReleaseNotes>https://github.com/hbjorgo/ATLib/releases</PackageReleaseNotes>
+		<UserSecretsId>b8328b1a-795d-4e26-9238-43eee2160ffc</UserSecretsId>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="System.IO.Pipelines" Version="6.0.3" />
-    <PackageReference Include="System.Threading.Channels" Version="6.0.0" />
-    <PackageReference Include="UnitsNet" Version="5.11.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="System.IO.Pipelines" Version="7.0.0" />
+		<PackageReference Include="System.Threading.Channels" Version="7.0.0" />
+		<PackageReference Include="UnitsNet" Version="5.35.0" />
+	</ItemGroup>
 
-	<ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
-    <PackageReference Include="Nerdbank.Streams" Version="2.9.91-alpha" />
+	<ItemGroup>
+		<AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+			<_Parameter1>HeboTech.ATLib.Tests</_Parameter1>
+		</AssemblyAttribute>
 	</ItemGroup>
 
 </Project>
