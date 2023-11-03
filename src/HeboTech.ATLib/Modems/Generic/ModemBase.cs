@@ -555,17 +555,24 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CCLK:\s""(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d)""");
+                var match = Regex.Match(line, @"\+CCLK:\s""(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d)?""");
                 if (match.Success)
                 {
+                    DateTimeOffset time;
+
                     int year = int.Parse(match.Groups["year"].Value);
                     int month = int.Parse(match.Groups["month"].Value);
                     int day = int.Parse(match.Groups["day"].Value);
                     int hour = int.Parse(match.Groups["hour"].Value);
                     int minute = int.Parse(match.Groups["minute"].Value);
                     int second = int.Parse(match.Groups["second"].Value);
-                    int zone = int.Parse(match.Groups["zone"].Value);
-                    DateTimeOffset time = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+                    if (match.Groups["zone"].Success)
+                    {
+                        int zone = int.Parse(match.Groups["zone"].Value);
+                        time = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+                    }
+                    else
+                        time = new DateTimeOffset(new DateTime(2000 + year, month, day, hour, minute, second));
                     return ModemResponse.ResultSuccess(time);
                 }
             }
