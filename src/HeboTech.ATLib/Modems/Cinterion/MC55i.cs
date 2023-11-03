@@ -1,9 +1,9 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.PDU;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -19,50 +19,79 @@ namespace HeboTech.ATLib.Modems.Cinterion
         /// Cinterion MC55i chipset
         /// 
         /// Serial port settings:
-        /// 9600 8N1 Handshake.None
+        /// 115200 8N1 Handshake.None
         /// </summary>
         public MC55i(AtChannel channel)
             : base(channel)
         {
         }
 
-        protected async Task SetSmsTextModeParameters(MessageTypeIndicator mti, ValidityPeriod vp, CodingScheme dcs)
-        {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSMP=\"{(byte)mti}\",\"{0}\",\"{(byte)dcs}\"", "+CSMP:");
-
-            if (response.Success && response.Intermediates.Count > 0)
-            {
-                string line = response.Intermediates.First();
-                //var match = Regex.Match(line, @"\+CSMP:\s(?<s1Used>\d+),(?<s1Total>\d+),(?<s2Used>\d+),(?<s2Total>\d+),(?<s3Used>\d+),(?<s3Total>\d+)");
-                //if (match.Success)
-                //{
-                //    int s1Used = int.Parse(match.Groups["s1Used"].Value);
-                //    int s1Total = int.Parse(match.Groups["s1Total"].Value);
-                //    int s2Used = int.Parse(match.Groups["s2Used"].Value);
-                //    int s2Total = int.Parse(match.Groups["s2Total"].Value);
-                //    int s3Used = int.Parse(match.Groups["s3Used"].Value);
-                //    int s3Total = int.Parse(match.Groups["s3Total"].Value);
-
-                //    return ModemResponse.ResultSuccess(new PreferredMessageStorages(
-                //        new PreferredMessageStorage(storage1Name, s1Used, s1Total),
-                //        new PreferredMessageStorage(storage2Name, s2Used, s2Total),
-                //        new PreferredMessageStorage(storage3Name, s3Used, s3Total)));
-                //}
-            }
-            //return ModemResponse.ResultError<PreferredMessageStorages>();
-            return;
-        }
-
         public override async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message)
         {
-            //await SetSmsTextModeParameters(MessageTypeIndicator.SMS_SUBMIT, ValidityPeriod.NotPresent(), CodingScheme.UCS2);
-            return await base.SendSmsInPduFormatAsync(phoneNumber, message, false);
+            if (phoneNumber is null)
+                throw new ArgumentNullException(nameof(phoneNumber));
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+
+            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message) { IncludeEmptySmscLength = true });
+            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
+            foreach (string pdu in pdus)
+            {
+                string cmd1 = $"AT+CMGS={(pdu.Length - 2) / 2}"; // Subtract 2 (one octet) for SMSC.
+                string cmd2 = pdu;
+                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
+
+                if (response.Success)
+                {
+                    string line = response.Intermediates.First();
+                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                    if (match.Success)
+                    {
+                        int mr = int.Parse(match.Groups["mr"].Value);
+                        references.Add(ModemResponse.ResultSuccess(new SmsReference(mr)));
+                    }
+                }
+                else
+                {
+                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
+                        references.Add(ModemResponse.ResultError<SmsReference>(error.ToString()));
+                }
+            }
+            return references;
         }
 
         public override async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
         {
-            //await SetSmsTextModeParameters(MessageTypeIndicator.SMS_SUBMIT, ValidityPeriod.NotPresent(), CodingScheme.UCS2);
-            return await base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
+            if (phoneNumber is null)
+                throw new ArgumentNullException(nameof(phoneNumber));
+            if (message is null)
+                throw new ArgumentNullException(nameof(message));
+
+            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message, codingScheme) { IncludeEmptySmscLength = true });
+            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
+            foreach (string pdu in pdus)
+            {
+                string cmd1 = $"AT+CMGS={(pdu.Length - 2) / 2}"; // Subtract 2 (one octet) for SMSC.
+                string cmd2 = pdu;
+                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
+
+                if (response.Success)
+                {
+                    string line = response.Intermediates.First();
+                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                    if (match.Success)
+                    {
+                        int mr = int.Parse(match.Groups["mr"].Value);
+                        references.Add(ModemResponse.ResultSuccess(new SmsReference(mr)));
+                    }
+                }
+                else
+                {
+                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
+                        references.Add(ModemResponse.ResultError<SmsReference>(error.ToString()));
+                }
+            }
+            return references;
         }
 
         public override async Task<ModemResponse<BatteryStatus>> GetBatteryStatusAsync()
