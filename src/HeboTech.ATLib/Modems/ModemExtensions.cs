@@ -9,7 +9,8 @@ namespace HeboTech.ATLib.Modems
         {
             ModemResponse echo = await modem.DisableEchoAsync();
             ModemResponse errorFormat = await modem.SetErrorFormat(1);
-            return echo.Success && errorFormat.Success;
+            ModemResponse detailedTextModeResultCodes = await modem.ShowSmsTextModeParameters(true);
+            return echo.Success && errorFormat.Success && detailedTextModeResultCodes.Success;
         }
     }
 }

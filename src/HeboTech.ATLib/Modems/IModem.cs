@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
+using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
@@ -160,7 +161,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="storage2Name"></param>
         /// <param name="storage3Name"></param>
         /// <returns>Command status with set preferred message storages</returns>
-        Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(string storage1Name, string storage2Name, string storage3Name);
+        Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(MessageStorage storage1Name, MessageStorage storage2Name, MessageStorage storage3Name);
 
         /// <summary>
         /// Get supported preferred message storages
@@ -258,5 +259,12 @@ namespace HeboTech.ATLib.Modems
         /// <param name="format">The format</param>
         /// <returns>Command status</returns>
         Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format);
+
+        /// <summary>
+        /// Sets whether or not detailed header information is shown in text mode result codes
+        /// </summary>
+        /// <param name="activate">True to activate, false to deactivate</param>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> ShowSmsTextModeParameters(bool activate);
     }
 }

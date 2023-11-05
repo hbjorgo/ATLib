@@ -17,8 +17,16 @@ namespace HeboTech.ATLib.Modems.Generic
 {
     public abstract class ModemBase : IDisposable
     {
+        protected enum CurrentSmsTextFormat
+        {
+            PDU = 0,
+            Text = 1,
+            Unknown
+        }
+
         protected readonly AtChannel channel;
         private bool disposed;
+        protected CurrentSmsTextFormat currentSmsTextFormat = CurrentSmsTextFormat.Unknown;
 
         public ModemBase(AtChannel channel)
         {
@@ -160,6 +168,10 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format)
         {
             AtResponse response = await channel.SendCommand($"AT+CMGF={(int)format}");
+
+            if (response.Success)
+                currentSmsTextFormat = (CurrentSmsTextFormat)format;
+
             return ModemResponse.IsSuccess(response.Success);
         }
 
@@ -313,9 +325,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     string[] s3Split = match.Groups["storage3"].Value.Split(',');
 
                     return ModemResponse.IsResultSuccess(new PreferredMessageStorages(
-                        new PreferredMessageStorage(s1Split[0].Trim('"'), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
-                        new PreferredMessageStorage(s2Split[0].Trim('"'), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
-                        new PreferredMessageStorage(s3Split[0].Trim('"'), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
+                        new PreferredMessageStorage(MessageStorage.Parse(s1Split[0].Trim('"')), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
+                        new PreferredMessageStorage(MessageStorage.Parse(s2Split[0].Trim('"')), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
+                        new PreferredMessageStorage(MessageStorage.Parse(s3Split[0].Trim('"')), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
                 }
             }
             if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
@@ -323,7 +335,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasResultError<PreferredMessageStorages>();
         }
 
-        public virtual async Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(string storage1Name, string storage2Name, string storage3Name)
+        public virtual async Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(MessageStorage storage1Name, MessageStorage storage2Name, MessageStorage storage3Name)
         {
             AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=\"{storage1Name}\",\"{storage2Name}\",\"{storage3Name}\"", "+CPMS:");
 
@@ -375,6 +387,8 @@ namespace HeboTech.ATLib.Modems.Generic
 
                             return ModemResponse.IsResultSuccess(new Sms(status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
+                        if (AtErrorParsers.TryGetError(pduResponse.FinalResponse, out Error pduError))
+                            return ModemResponse.HasResultError<Sms>(pduError);
                     }
                     break;
                 case SmsTextFormat.Text:
@@ -383,7 +397,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     if (textResponse.Success && textResponse.Intermediates.Count > 0)
                     {
                         string line = textResponse.Intermediates.First();
-                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""");
+                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<tpduFirstOctet>\d),(?<pid>\d),(?<dcs>\d),(?<serviceCenterAddress>""\+\d+""),(?<serviceCenterAddressType>\d+),(?<length>\d+)");
                         if (match.Success)
                         {
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
@@ -395,11 +409,27 @@ namespace HeboTech.ATLib.Modems.Generic
                             int minute = int.Parse(match.Groups["minute"].Value);
                             int second = int.Parse(match.Groups["second"].Value);
                             int zone = int.Parse(match.Groups["zone"].Value);
+
+                            int addressType = int.Parse(match.Groups["addressType"].Value);
+                            int tpduFirstOctet = int.Parse(match.Groups["tpduFirstOctet"].Value);
+                            int protocolIdentifier = int.Parse(match.Groups["pid"].Value);
+                            int dataCodingScheme = int.Parse(match.Groups["dcs"].Value);
+                            string serviceCenterAddress = match.Groups["serviceCenterAddress"].Value;
+                            int serviceCenterAddressType = int.Parse(match.Groups["serviceCenterAddressType"].Value);
+                            int length = int.Parse(match.Groups["length"].Value);
+
                             DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
                             string message = textResponse.Intermediates.Last();
+
+                            CodingScheme dcs = (CodingScheme)dataCodingScheme;
+                            if (dcs == CodingScheme.UCS2)
+                                message = UCS2.Decode(message);
+
                             return ModemResponse.IsResultSuccess(new Sms(status, sender, received, message));
                         }
                     }
+                    if (AtErrorParsers.TryGetError(textResponse.FinalResponse, out Error textError))
+                        return ModemResponse.HasResultError<Sms>(textError);
                     break;
                 default:
                     throw new NotSupportedException("The format is not supported");
@@ -596,6 +626,13 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<ModemResponse> SetErrorFormat(int errorFormat)
         {
             AtResponse response = await channel.SendCommand($"AT+CMEE={errorFormat}");
+            return ModemResponse.IsSuccess(response.Success);
+        }
+
+        public virtual async Task<ModemResponse> ShowSmsTextModeParameters(bool activate)
+        {
+
+            AtResponse response = await channel.SendCommand($"AT+CSDH={(activate ? "1" : "0")}");
             return ModemResponse.IsSuccess(response.Success);
         }
 

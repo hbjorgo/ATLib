@@ -5,11 +5,11 @@ namespace HeboTech.ATLib.DTOs
 {
     public enum SmsStatus
     {
-        REC_UNREAD,
-        REC_READ,
-        STO_UNSENT,
-        STO_SENT,
-        ALL
+        REC_UNREAD = 0,
+        REC_READ = 1,
+        STO_UNSENT = 2,
+        STO_SENT = 3,
+        ALL = 4
     }
 
     public static class SmsStatusHelpers

@@ -3,10 +3,10 @@ using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.Cinterion;
+using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.TestConsole
     {
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
-            SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
+            SmsTextFormat smsTextFormat = SmsTextFormat.Text;
             CodingScheme smsCodingScheme = CodingScheme.UCS2;
 
             using AtChannel atChannel = AtChannel.Create(stream);
@@ -96,18 +96,15 @@ namespace HeboTech.ATLib.TestConsole
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
 
-            var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 0);
+            var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 1);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
             var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();
             Console.WriteLine($"Supported storages:{Environment.NewLine}{supportedStorages}");
             var currentStorages = await modem.GetPreferredMessageStoragesAsync();
             Console.WriteLine($"Current storages:{Environment.NewLine}{currentStorages}");
-            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync("ME", "ME", "ME");
+            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.SM, MessageStorage.SM, MessageStorage.SM);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
-
-            if (!setPreferredStorages.Success && Debugger.IsAttached)
-                Debugger.Break();
 
             //var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
             //Console.WriteLine($"Single SMS: {singleSms}");

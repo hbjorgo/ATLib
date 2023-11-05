@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HeboTech.ATLib.Modems.Generic;
+using System;
 
 namespace HeboTech.ATLib.DTOs
 {
@@ -44,14 +45,14 @@ namespace HeboTech.ATLib.DTOs
         /// SR: Status report storage area
         /// TA: Terminal adaptor storage area
         /// </summary>
-        public PreferredMessageStorage(string storageName, int storageMessages, int storageMessageLocations)
+        public PreferredMessageStorage(MessageStorage storageName, int storageMessages, int storageMessageLocations)
         {
             StorageName = storageName;
             StorageMessages = storageMessages;
             StorageMessageLocations = storageMessageLocations;
         }
 
-        public string StorageName { get; }
+        public MessageStorage StorageName { get; }
         public int StorageMessages { get; }
         public int StorageMessageLocations { get; }
 
