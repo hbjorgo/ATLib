@@ -2,49 +2,55 @@
 {
     public class ModemResponse
     {
-        public ModemResponse(bool isSuccess, string errorMessage)
+        public ModemResponse(bool isSuccess, Error error)
         {
-            IsSuccess = isSuccess;
-            ErrorMessage = errorMessage;
+            Success = isSuccess;
+            Error = error;
         }
 
         /// <summary>
         /// Indicates whether the command was successful or not.
         /// </summary>
-        public bool IsSuccess { get; }
+        public bool Success { get; }
 
         /// <summary>
         /// This property is only valid if 'Success' is false.
         /// </summary>
-        public string ErrorMessage { get; }
+        public Error Error { get; }
 
         public override string ToString()
         {
-            if (IsSuccess)
+            if (Success)
                 return "Success";
             else
-                return $"Error: {ErrorMessage}";
+                return $"Error: {Error}";
         }
 
-        public static ModemResponse Success() =>
+        public static ModemResponse IsSuccess() =>
             new ModemResponse(true, default);
 
-        public static ModemResponse Success(bool isSuccess) =>
+        public static ModemResponse IsSuccess(bool isSuccess) =>
             new ModemResponse(isSuccess, default);
 
-        public static ModemResponse Error(string error = "") =>
+        public static ModemResponse HasError() =>
+            new ModemResponse(false, null);
+
+        public static ModemResponse HasError(Error error) =>
             new ModemResponse(false, error);
 
-        public static ModemResponse<T> ResultSuccess<T>(T result) =>
+        public static ModemResponse<T> IsResultSuccess<T>(T result) =>
             new ModemResponse<T>(true, default, result);
 
-        public static ModemResponse<T> ResultError<T>(string error = "") =>
+        public static ModemResponse<T> HasResultError<T>() =>
+            new ModemResponse<T>(false, null, default);
+
+        public static ModemResponse<T> HasResultError<T>(Error error) =>
             new ModemResponse<T>(false, error, default);
     }
 
     public class ModemResponse<T> : ModemResponse
     {
-        public ModemResponse(bool success, string error, T result)
+        public ModemResponse(bool success, Error error, T result)
             : base(success, error)
         {
             Result = result;
@@ -57,10 +63,10 @@
 
         public override string ToString()
         {
-            if (IsSuccess)
+            if (Success)
                 return $"{Result}";
             else
-                return $"Error: {ErrorMessage}";
+                return $"Error: {Error}";
         }
     }
 }

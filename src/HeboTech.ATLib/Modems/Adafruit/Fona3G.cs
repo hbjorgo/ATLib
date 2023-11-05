@@ -3,7 +3,7 @@ using HeboTech.ATLib.Parsers;
 
 namespace HeboTech.ATLib.Modems.Adafruit
 {
-    public class Fona3G : SIM5320, IModem
+    public class Fona3G : SIM5320, IModem, IFona3G
     {
         /// <summary>
         /// Based on SIMCOM SIM5320 chipset

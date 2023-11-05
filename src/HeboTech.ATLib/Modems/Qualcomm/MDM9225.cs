@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.Qualcomm
 {
-    public class MDM9225 : ModemBase, IModem
+    public class MDM9225 : ModemBase, IModem, IMDM9225
     {
         public MDM9225(AtChannel channel)
             : base(channel)

@@ -4,6 +4,12 @@ namespace HeboTech.ATLib.DTOs
 {
     public class PreferredMessageStorages
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="storage1Name">Storage area to be used when reading or deleting SMS messages</param>
+        /// <param name="storage2Name">Storage area to be used when sending SMS messages from message storage or writing SMS messages</param>
+        /// <param name="storage3Name">Storage area to be used when storing newly received SMS messages</param>
         public PreferredMessageStorages(
             PreferredMessageStorage storage1Name,
             PreferredMessageStorage storage2Name,
@@ -27,22 +33,31 @@ namespace HeboTech.ATLib.DTOs
         }
     }
 
+
     public class PreferredMessageStorage
     {
-        public PreferredMessageStorage(string storage1Name, int storage1Messages, int storage1MessageLocations)
+        /// <summary>
+        /// SM: SIM card storage area
+        /// ME: Modem storage area
+        /// MT: All storage combined
+        /// BM: Broadcast message storage area
+        /// SR: Status report storage area
+        /// TA: Terminal adaptor storage area
+        /// </summary>
+        public PreferredMessageStorage(string storageName, int storageMessages, int storageMessageLocations)
         {
-            Storage1Name = storage1Name;
-            Storage1Messages = storage1Messages;
-            Storage1MessageLocations = storage1MessageLocations;
+            StorageName = storageName;
+            StorageMessages = storageMessages;
+            StorageMessageLocations = storageMessageLocations;
         }
 
-        public string Storage1Name { get; }
-        public int Storage1Messages { get; }
-        public int Storage1MessageLocations { get; }
+        public string StorageName { get; }
+        public int StorageMessages { get; }
+        public int StorageMessageLocations { get; }
 
         public override string ToString()
         {
-            return $"Name:{Storage1Name}, Messages:{Storage1Messages}, Locations:{Storage1MessageLocations}";
+            return $"Name:{StorageName}, Messages:{StorageMessages}, Locations:{StorageMessageLocations}";
         }
     }
 }

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.TP_LINK
 {
-    public class MA260 : ModemBase, IModem
+    public class MA260 : ModemBase, IModem, IMA260
     {
         /// <summary>
         /// Based on some Qualcomm chipset

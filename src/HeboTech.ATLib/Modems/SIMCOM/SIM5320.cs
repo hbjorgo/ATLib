@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.SIMCOM
 {
-    public class SIM5320 : ModemBase, IModem
+    public class SIM5320 : ModemBase, IModem, ISIM5320
     {
         public SIM5320(AtChannel channel)
             : base(channel)
@@ -73,10 +73,10 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                             int length = int.Parse(line1Match.Groups["length"].Value);
                             string pdu = line2Match.Groups["pdu"].Value;
                             SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());
-                            return ModemResponse.ResultSuccess(new Sms((SmsStatus)status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
+                            return ModemResponse.IsResultSuccess(new Sms((SmsStatus)status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
                         }
                     }
-                    return ModemResponse.ResultError<Sms>();
+                    return ModemResponse.HasResultError<Sms>();
                 case SmsTextFormat.Text:
                     AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
@@ -97,10 +97,10 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                             int zone = int.Parse(match.Groups["zone"].Value);
                             DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
                             string message = textResponse.Intermediates.Last();
-                            return ModemResponse.ResultSuccess(new Sms(status, sender, received, message));
+                            return ModemResponse.IsResultSuccess(new Sms(status, sender, received, message));
                         }
                     }
-                    return ModemResponse.ResultError<Sms>();
+                    return ModemResponse.HasResultError<Sms>();
                 default:
                     throw new NotSupportedException("The format is not supported");
             }
@@ -135,8 +135,8 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                     }
                 }
             }
-            return ModemResponse.ResultSuccess(smss);
+            return ModemResponse.IsResultSuccess(smss);
         }
-#endregion
+        #endregion
     }
 }

@@ -13,7 +13,7 @@ using UnitsNet.Units;
 
 namespace HeboTech.ATLib.Modems.Cinterion
 {
-    public class MC55i : ModemBase, IModem
+    public class MC55i : ModemBase, IModem, IMC55i
     {
         /// <summary>
         /// Cinterion MC55i chipset
@@ -48,13 +48,13 @@ namespace HeboTech.ATLib.Modems.Cinterion
                     if (match.Success)
                     {
                         int mr = int.Parse(match.Groups["mr"].Value);
-                        references.Add(ModemResponse.ResultSuccess(new SmsReference(mr)));
+                        references.Add(ModemResponse.IsResultSuccess(new SmsReference(mr)));
                     }
                 }
                 else
                 {
                     if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                        references.Add(ModemResponse.ResultError<SmsReference>(error.ToString()));
+                        references.Add(ModemResponse.HasResultError<SmsReference>(error));
                 }
             }
             return references;
@@ -82,13 +82,13 @@ namespace HeboTech.ATLib.Modems.Cinterion
                     if (match.Success)
                     {
                         int mr = int.Parse(match.Groups["mr"].Value);
-                        references.Add(ModemResponse.ResultSuccess(new SmsReference(mr)));
+                        references.Add(ModemResponse.IsResultSuccess(new SmsReference(mr)));
                     }
                 }
                 else
                 {
                     if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                        references.Add(ModemResponse.ResultError<SmsReference>(error.ToString()));
+                        references.Add(ModemResponse.HasResultError<SmsReference>(error));
                 }
             }
             return references;
@@ -107,10 +107,10 @@ namespace HeboTech.ATLib.Modems.Cinterion
                     int bcs = int.Parse(match.Groups["bcs"].Value);
                     int bcl = int.Parse(match.Groups["bcl"].Value);
                     int mpc = int.Parse(match.Groups["mpc"].Value);
-                    return ModemResponse.ResultSuccess(new BatteryStatus((BatteryChargeStatus)bcs, Ratio.FromPercent(bcl)));
+                    return ModemResponse.IsResultSuccess(new BatteryStatus((BatteryChargeStatus)bcs, Ratio.FromPercent(bcl)));
                 }
             }
-            return ModemResponse.ResultError<BatteryStatus>();
+            return ModemResponse.HasResultError<BatteryStatus>();
         }
 
         public async Task<ModemResponse<MC55iBatteryStatus>> MC55i_GetBatteryStatusAsync()
@@ -126,25 +126,10 @@ namespace HeboTech.ATLib.Modems.Cinterion
                     int bcs = int.Parse(match.Groups["bcs"].Value);
                     int bcl = int.Parse(match.Groups["bcl"].Value);
                     int mpc = int.Parse(match.Groups["mpc"].Value);
-                    return ModemResponse.ResultSuccess(new MC55iBatteryStatus(new ElectricCurrent(mpc, ElectricCurrentUnit.Milliampere)));
+                    return ModemResponse.IsResultSuccess(new MC55iBatteryStatus(new ElectricCurrent(mpc, ElectricCurrentUnit.Milliampere)));
                 }
             }
-            return ModemResponse.ResultError<MC55iBatteryStatus>();
-        }
-
-        public class MC55iBatteryStatus
-        {
-            public MC55iBatteryStatus(ElectricCurrent powerConsumption)
-            {
-                PowerConsumption = powerConsumption;
-            }
-
-            public ElectricCurrent PowerConsumption { get; }
-
-            public override string ToString()
-            {
-                return $"Average power consumption: {PowerConsumption}";
-            }
+            return ModemResponse.HasResultError<MC55iBatteryStatus>();
         }
     }
 }

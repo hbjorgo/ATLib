@@ -3,7 +3,7 @@ using HeboTech.ATLib.Parsers;
 
 namespace HeboTech.ATLib.Modems.D_LINK
 {
-    public class DWM222 : MDM9225, IModem
+    public class DWM222 : MDM9225, IModem, IDWM222
     {
         /// <summary>
         /// Based on Qualcomm MDM9225 chipset

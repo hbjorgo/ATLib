@@ -2,10 +2,11 @@
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
-using HeboTech.ATLib.Modems.D_LINK;
+using HeboTech.ATLib.Modems.Cinterion;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -19,7 +20,7 @@ namespace HeboTech.ATLib.TestConsole
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IModem modem = new DWM222(atChannel);
+            using IMC55i modem = new MC55i(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -45,10 +46,10 @@ namespace HeboTech.ATLib.TestConsole
             simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
 
-            if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_READY)
+            if (simStatus.Success && simStatus.Result == SimStatus.SIM_READY)
             {
             }
-            else if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_PIN)
+            else if (simStatus.Success && simStatus.Result == SimStatus.SIM_PIN)
             {
                 var simPinStatus = await modem.EnterSimPinAsync(new PersonalIdentificationNumber(pin));
                 Console.WriteLine($"SIM PIN Status: {simPinStatus}");
@@ -57,7 +58,7 @@ namespace HeboTech.ATLib.TestConsole
                 {
                     simStatus = await modem.GetSimStatusAsync();
                     Console.WriteLine($"SIM Status: {simStatus}");
-                    if (simStatus.IsSuccess && simStatus.Result == SimStatus.SIM_READY)
+                    if (simStatus.Success && simStatus.Result == SimStatus.SIM_READY)
                         break;
                     await Task.Delay(TimeSpan.FromMilliseconds(1000));
                 }
@@ -72,7 +73,7 @@ namespace HeboTech.ATLib.TestConsole
             {
                 var imsi = await modem.GetImsiAsync();
                 Console.WriteLine($"IMSI: {imsi}");
-                if (imsi.IsSuccess)
+                if (imsi.Success)
                     break;
                 await Task.Delay(TimeSpan.FromMilliseconds(1000));
             }
@@ -82,6 +83,9 @@ namespace HeboTech.ATLib.TestConsole
 
             var batteryStatus = await modem.GetBatteryStatusAsync();
             Console.WriteLine($"Battery Status: {batteryStatus}");
+
+            var mc55iBatteryStatus = await modem.MC55i_GetBatteryStatusAsync();
+            Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
 
             var productInfo = await modem.GetProductIdentificationInformationAsync();
             Console.WriteLine($"Product Information:{Environment.NewLine}{productInfo}");
@@ -102,17 +106,20 @@ namespace HeboTech.ATLib.TestConsole
             var setPreferredStorages = await modem.SetPreferredMessageStorageAsync("ME", "ME", "ME");
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
+            if (!setPreferredStorages.Success && Debugger.IsAttached)
+                Debugger.Break();
+
             //var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
             //Console.WriteLine($"Single SMS: {singleSms}");
 
             var smss = await modem.ListSmssAsync(SmsStatus.ALL);
-            if (smss.IsSuccess)
+            if (smss.Success)
             {
                 foreach (var sms in smss.Result)
                 {
                     Console.WriteLine($"SMS: {sms}");
-                    var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
-                    Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
+                    //var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
+                    //Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
                 }
             }
 
