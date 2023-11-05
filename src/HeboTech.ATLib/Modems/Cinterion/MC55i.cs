@@ -112,7 +112,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
                         if (line1Match.Success && line2Match.Success)
                         {
                             int statusCode = int.Parse(line1Match.Groups["status"].Value);
-                            SmsStatus status = SmsStatusHelpers.ToSmsStatus(statusCode);
+                            SmsStatus status = (SmsStatus)statusCode;
 
                             string pdu = line2Match.Groups["status"].Value;
                             SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());

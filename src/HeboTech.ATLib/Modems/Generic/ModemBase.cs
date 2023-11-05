@@ -380,7 +380,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         if (line1Match.Success && line2Match.Success)
                         {
                             int statusCode = int.Parse(line1Match.Groups["status"].Value);
-                            SmsStatus status = SmsStatusHelpers.ToSmsStatus(statusCode);
+                            SmsStatus status = (SmsStatus)statusCode;
 
                             string pdu = line2Match.Groups["status"].Value;
                             SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());
@@ -439,49 +439,82 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
         {
-            AtResponse response = await channel.SendMultilineCommand($"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0", null);
+            string command = currentSmsTextFormat switch
+            {
+                CurrentSmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0",
+                CurrentSmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus},0",
+                _ => throw new Exception("Unknown SMS Text Format")
+            };
+
+            AtResponse response = await channel.SendMultilineCommand(command, null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
             {
-                string metaRegEx = @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+*\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))""";
-
-                using (var enumerator = response.Intermediates.GetEnumerator())
+                switch (currentSmsTextFormat)
                 {
-                    string line = null;
-                    AdvanceIterator();
-                    while (line != null)
-                    {
-                        var match = Regex.Match(line, metaRegEx);
-                        if (match.Success)
+                    case CurrentSmsTextFormat.PDU:
+                        if ((response.Intermediates.Count % 2) != 0)
+                            return ModemResponse.HasResultError<List<SmsWithIndex>>();
+
+                        for (int i = 0; i < response.Intermediates.Count; i += 2)
                         {
-                            int index = int.Parse(match.Groups["index"].Value);
-                            SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                            PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
-                            int year = int.Parse(match.Groups["year"].Value);
-                            int month = int.Parse(match.Groups["month"].Value);
-                            int day = int.Parse(match.Groups["day"].Value);
-                            int hour = int.Parse(match.Groups["hour"].Value);
-                            int minute = int.Parse(match.Groups["minute"].Value);
-                            int second = int.Parse(match.Groups["second"].Value);
-                            int zone = int.Parse(match.Groups["zone"].Value);
-                            DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-
-                            StringBuilder messageBuilder = new StringBuilder();
-                            AdvanceIterator();
-                            while (line != null && !Regex.Match(line, metaRegEx).Success)
+                            string metaDataLine = response.Intermediates[i];
+                            string messageLine = response.Intermediates[i + 1];
+                            var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),,(?<length>\d+)");
+                            if (match.Success)
                             {
-                                messageBuilder.AppendLine(line);
-                                AdvanceIterator();
-                            }
-                            smss.Add(new SmsWithIndex(index, status, sender, received, messageBuilder.ToString()));
-                        }
-                    }
+                                int index = int.Parse(match.Groups["index"].Value);
+                                SmsStatus status = (SmsStatus)int.Parse(match.Groups["status"].Value);
 
-                    void AdvanceIterator()
-                    {
-                        line = enumerator.MoveNext() ? enumerator.Current : null;
-                    }
+                                // Sent when AT+CSDH=1 is set
+                                int length = int.Parse(match.Groups["length"].Value);
+
+                                SmsDeliver sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
+                                smss.Add(new SmsWithIndex(index, status, sms.SenderNumber, sms.Timestamp, sms.Message));
+                            }
+                        }
+                        break;
+                    case CurrentSmsTextFormat.Text:
+                        if ((response.Intermediates.Count % 2) != 0)
+                            return ModemResponse.HasResultError<List<SmsWithIndex>>();
+
+                        for (int i = 0; i < response.Intermediates.Count; i += 2)
+                        {
+                            string metaDataLine = response.Intermediates[i];
+                            string messageLine = response.Intermediates[i + 1];
+                            var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+*\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<length>\d+)");
+                            if (match.Success)
+                            {
+                                int index = int.Parse(match.Groups["index"].Value);
+                                SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
+                                PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
+                                int year = int.Parse(match.Groups["year"].Value);
+                                int month = int.Parse(match.Groups["month"].Value);
+                                int day = int.Parse(match.Groups["day"].Value);
+                                int hour = int.Parse(match.Groups["hour"].Value);
+                                int minute = int.Parse(match.Groups["minute"].Value);
+                                int second = int.Parse(match.Groups["second"].Value);
+                                int zone = int.Parse(match.Groups["zone"].Value);
+
+                                // Sent when AT+CSDH=1 is set
+                                int addressType = int.Parse(match.Groups["addressType"].Value);
+                                int length = int.Parse(match.Groups["length"].Value);
+
+                                DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
+
+                                string message = messageLine;
+                                if (messageLine.Length == length * 2)
+                                    message = UCS2.Decode(messageLine);
+
+                                smss.Add(new SmsWithIndex(index, status, sender, received, message));
+                            }
+                        }
+                        break;
+                    case CurrentSmsTextFormat.Unknown:
+                        break;
+                    default:
+                        break;
                 }
             }
             return ModemResponse.IsResultSuccess(smss);

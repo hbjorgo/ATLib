@@ -106,24 +106,11 @@ namespace HeboTech.ATLib.TestConsole
             var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.SM, MessageStorage.SM, MessageStorage.SM);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
-            //var singleSms = await modem.ReadSmsAsync(2, smsTextFormat);
-            //Console.WriteLine($"Single SMS: {singleSms}");
-
-            var smss = await modem.ListSmssAsync(SmsStatus.ALL);
-            if (smss.Success)
-            {
-                foreach (var sms in smss.Result)
-                {
-                    Console.WriteLine($"SMS: {sms}");
-                    //var smsDeleteStatus = await modem.DeleteSmsAsync(sms.Index);
-                    //Console.WriteLine($"Delete SMS #{sms.Index} - {smsDeleteStatus}");
-                }
-            }
-
-            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'u' to send USSD code, '+' to enable debug, '-' to disable debug and 'q' to exit...");
+            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'u' to send USSD code, '+' to enable debug, '-' to disable debug and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
             {
+                Console.WriteLine();
                 switch (key)
                 {
                     case ConsoleKey.A:
@@ -189,6 +176,13 @@ namespace HeboTech.ATLib.TestConsole
                         var ussd = Console.ReadLine();
                         var ussdResult = await modem.SendUssdAsync(ussd);
                         Console.WriteLine($"USSD Status: {ussdResult}");
+                        break;
+                    case ConsoleKey.L:
+                        Console.WriteLine("List all SMSs:");
+                        var smss = await modem.ListSmssAsync(SmsStatus.ALL);
+                        if (smss.Success)
+                            foreach (var sms in smss.Result)
+                                Console.WriteLine($"SMS: {sms}");
                         break;
                     case ConsoleKey.OemPlus:
                         atChannel.EnableDebug((string line) => Console.WriteLine(line));

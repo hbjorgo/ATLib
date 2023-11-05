@@ -23,11 +23,6 @@ namespace HeboTech.ATLib.DTOs
             { SmsStatus.STO_UNSENT, "STO UNSENT" },
         };
 
-        public static SmsStatus ToSmsStatus(int statusCode)
-        {
-            return LUT.First(x => (int)x.Key == statusCode).Key;
-        }
-
         public static SmsStatus ToSmsStatus(string text)
         {
             return LUT.First(x => x.Value == text).Key;
