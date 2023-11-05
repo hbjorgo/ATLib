@@ -325,9 +325,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     string[] s3Split = match.Groups["storage3"].Value.Split(',');
 
                     return ModemResponse.IsResultSuccess(new PreferredMessageStorages(
-                        new PreferredMessageStorage(MessageStorage.Parse(s1Split[0].Trim('"')), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
-                        new PreferredMessageStorage(MessageStorage.Parse(s2Split[0].Trim('"')), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
-                        new PreferredMessageStorage(MessageStorage.Parse(s3Split[0].Trim('"')), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
+                        new PreferredMessageStorage((MessageStorage)s1Split[0].Trim('"'), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
+                        new PreferredMessageStorage((MessageStorage)s2Split[0].Trim('"'), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
+                        new PreferredMessageStorage((MessageStorage)s3Split[0].Trim('"'), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
                 }
             }
             if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
@@ -369,7 +369,7 @@ namespace HeboTech.ATLib.Modems.Generic
             switch (smsTextFormat)
             {
                 case SmsTextFormat.PDU:
-                    AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
+                    AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
                     if (pduResponse.Success)
                     {
@@ -441,8 +441,8 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             string command = currentSmsTextFormat switch
             {
-                CurrentSmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\",0",
-                CurrentSmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus},0",
+                CurrentSmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"",
+                CurrentSmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus}",
                 _ => throw new Exception("Unknown SMS Text Format")
             };
 
@@ -499,12 +499,12 @@ namespace HeboTech.ATLib.Modems.Generic
 
                                 // Sent when AT+CSDH=1 is set
                                 int addressType = int.Parse(match.Groups["addressType"].Value);
-                                int length = int.Parse(match.Groups["length"].Value);
+                                int dataLength = int.Parse(match.Groups["length"].Value);
 
                                 DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
 
                                 string message = messageLine;
-                                if (messageLine.Length == length * 2)
+                                if (messageLine.Length != dataLength)
                                     message = UCS2.Decode(messageLine);
 
                                 smss.Add(new SmsWithIndex(index, status, sender, received, message));

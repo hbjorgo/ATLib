@@ -3,6 +3,7 @@ using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.Cinterion;
+using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
@@ -20,7 +21,7 @@ namespace HeboTech.ATLib.TestConsole
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IMC55i modem = new MC55i(atChannel);
+            using IDWM222 modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -84,8 +85,8 @@ namespace HeboTech.ATLib.TestConsole
             var batteryStatus = await modem.GetBatteryStatusAsync();
             Console.WriteLine($"Battery Status: {batteryStatus}");
 
-            var mc55iBatteryStatus = await modem.MC55i_GetBatteryStatusAsync();
-            Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
+            //var mc55iBatteryStatus = await modem.MC55i_GetBatteryStatusAsync();
+            //Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
 
             var productInfo = await modem.GetProductIdentificationInformationAsync();
             Console.WriteLine($"Product Information:{Environment.NewLine}{productInfo}");
@@ -208,7 +209,8 @@ namespace HeboTech.ATLib.TestConsole
 
         private static void Modem_UssdResponseReceived(object sender, UssdResponseEventArgs e)
         {
-            Console.WriteLine($"USSD Response: {e.Status} - {e.Response} - ({e.CodingScheme})");
+            if (e != null)
+                Console.WriteLine($"USSD Response: {e.Status} - {e.Response} - ({e.CodingScheme})");
         }
 
         private static void Modem_CallEnded(object sender, CallEndedEventArgs e)

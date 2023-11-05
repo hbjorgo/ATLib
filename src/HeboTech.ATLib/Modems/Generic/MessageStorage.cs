@@ -2,6 +2,9 @@
 
 namespace HeboTech.ATLib.Modems.Generic
 {
+    /// <summary>
+    /// Message Storage Areas
+    /// </summary>
     public class MessageStorage
     {
         /// <summary>
@@ -36,7 +39,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public string Value { get; }
 
-        public static MessageStorage Parse(string value)
+        protected static MessageStorage ParseString(string value)
         {
             if (value == SM.ToString())
                 return SM;
@@ -58,6 +61,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
             throw new ArgumentException($"\"{value}\" is not supported");
         }
+
+        public static implicit operator string(MessageStorage value) => value.Value;
+        public static explicit operator MessageStorage(string value) => ParseString(value);
 
         public override string ToString()
         {
