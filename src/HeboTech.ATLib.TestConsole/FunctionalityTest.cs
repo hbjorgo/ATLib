@@ -18,12 +18,12 @@ namespace HeboTech.ATLib.TestConsole
     {
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
-            SmsTextFormat smsTextFormat = SmsTextFormat.Text;
+            SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
             CodingScheme smsCodingScheme = CodingScheme.UCS2;
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IFona3G modem = new Fona3G(atChannel);
+            using IMC55i modem = new MC55i(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
