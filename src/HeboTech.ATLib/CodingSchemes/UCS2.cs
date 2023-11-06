@@ -12,8 +12,6 @@ namespace HeboTech.ATLib.CodingSchemes
     /// </summary>
     public class UCS2
     {
-        public const CodingScheme DataCodingSchemeCode = CodingScheme.UCS2;
-
         /// <summary>
         /// Encode to UCS2
         /// </summary>

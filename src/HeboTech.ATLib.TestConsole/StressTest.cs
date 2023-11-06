@@ -64,7 +64,7 @@ namespace HeboTech.ATLib.TestConsole
                 Console.WriteLine($"Single SMS: {singleSms}");
 
                 var smss = await modem.ListSmssAsync(SmsStatus.ALL);
-                if (smss.IsSuccess)
+                if (smss.Success)
                 {
                     foreach (var sms in smss.Result)
                     {

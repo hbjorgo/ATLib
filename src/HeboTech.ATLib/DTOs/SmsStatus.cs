@@ -5,11 +5,11 @@ namespace HeboTech.ATLib.DTOs
 {
     public enum SmsStatus
     {
-        REC_UNREAD,
-        REC_READ,
-        STO_UNSENT,
-        STO_SENT,
-        ALL
+        REC_UNREAD = 0,
+        REC_READ = 1,
+        STO_UNSENT = 2,
+        STO_SENT = 3,
+        ALL = 4
     }
 
     public static class SmsStatusHelpers
@@ -22,11 +22,6 @@ namespace HeboTech.ATLib.DTOs
             { SmsStatus.STO_SENT, "STO SENT" },
             { SmsStatus.STO_UNSENT, "STO UNSENT" },
         };
-
-        public static SmsStatus ToSmsStatus(int statusCode)
-        {
-            return LUT.First(x => (int)x.Key == statusCode).Key;
-        }
 
         public static SmsStatus ToSmsStatus(string text)
         {

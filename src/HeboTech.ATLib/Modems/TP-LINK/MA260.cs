@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.TP_LINK
 {
-    public class MA260 : ModemBase, IModem
+    public class MA260 : ModemBase, IModem, IMA260
     {
         /// <summary>
         /// Based on some Qualcomm chipset
@@ -16,7 +16,7 @@ namespace HeboTech.ATLib.Modems.TP_LINK
         /// Serial port settings:
         /// 9600 8N1 Handshake.RequestToSend
         /// </summary>
-        public MA260(AtChannel channel)
+        public MA260(IAtChannel channel)
             : base(channel)
         {
         }

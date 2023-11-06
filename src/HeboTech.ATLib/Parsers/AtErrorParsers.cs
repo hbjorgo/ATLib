@@ -206,7 +206,7 @@ namespace HeboTech.ATLib.Parsers
 
         public override string ToString()
         {
-            return $"{ErrorMessage} (Error code {ErrorCode})";
+            return $"Error code {ErrorCode} - {ErrorMessage}";
         }
     }
 }

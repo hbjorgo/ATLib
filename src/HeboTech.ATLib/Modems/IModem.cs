@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
+using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
@@ -160,7 +161,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="storage2Name"></param>
         /// <param name="storage3Name"></param>
         /// <returns>Command status with set preferred message storages</returns>
-        Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(string storage1Name, string storage2Name, string storage3Name);
+        Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(MessageStorage storage1Name, MessageStorage storage2Name, MessageStorage storage3Name);
 
         /// <summary>
         /// Get supported preferred message storages
@@ -180,12 +181,6 @@ namespace HeboTech.ATLib.Modems
         /// <param name="index"></param>
         /// <returns>Command status with SMS</returns>
         Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat);
-
-        /// <summary>
-        /// Reload and initialize the SIM card
-        /// </summary>
-        /// <returns>Command status</returns>
-        Task<ModemResponse> ReInitializeSimAsync();
 
         /// <summary>
         /// Sends an SMS in text format
@@ -253,10 +248,29 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr);
 
         /// <summary>
+        /// Sets settings required for correct operation after PIN is entered.
+        /// </summary>
+        /// <returns></returns>
+        Task<bool> SetRequiredSettingsAfterPinAsync();
+
+        /// <summary>
+        /// Sets settings required for correct operation before PIN is entered
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<bool> SetRequiredSettingsBeforePinAsync();
+
+        /// <summary>
         /// Sets the input and output format of SMSs. Currently, only Text is supported and must be set before sending SMSs
         /// </summary>
         /// <param name="format">The format</param>
         /// <returns>Command status</returns>
         Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format);
+
+        /// <summary>
+        /// Sets whether or not detailed header information is shown in text mode result codes
+        /// </summary>
+        /// <param name="activate">True to activate, false to deactivate</param>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> ShowSmsTextModeParameters(bool activate);
     }
 }
