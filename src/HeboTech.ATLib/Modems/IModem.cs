@@ -183,12 +183,6 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat);
 
         /// <summary>
-        /// Reload and initialize the SIM card
-        /// </summary>
-        /// <returns>Command status</returns>
-        Task<ModemResponse> ReInitializeSimAsync();
-
-        /// <summary>
         /// Sends an SMS in text format
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>
@@ -254,6 +248,18 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr);
 
         /// <summary>
+        /// Sets settings required for correct operation after PIN is entered.
+        /// </summary>
+        /// <returns></returns>
+        Task<bool> SetRequiredSettingsAfterPinAsync();
+
+        /// <summary>
+        /// Sets settings required for correct operation before PIN is entered
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<bool> SetRequiredSettingsBeforePinAsync();
+
+        /// <summary>
         /// Sets the input and output format of SMSs. Currently, only Text is supported and must be set before sending SMSs
         /// </summary>
         /// <param name="format">The format</param>
@@ -266,17 +272,5 @@ namespace HeboTech.ATLib.Modems
         /// <param name="activate">True to activate, false to deactivate</param>
         /// <returns>Command status</returns>
         Task<ModemResponse> ShowSmsTextModeParameters(bool activate);
-
-        /// <summary>
-        /// Sets settings required for correct operation before PIN is entered
-        /// </summary>
-        /// <returns>Command status</returns>
-        Task<bool> SetRequiredSettingsBeforePinAsync();
-
-        /// <summary>
-        /// Sets settings required for correct operation after PIN is entered.
-        /// </summary>
-        /// <returns></returns>
-        Task<bool> SetRequiredSettingsAfterPinAsync();
     }
 }

@@ -209,5 +209,11 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             return ModemResponse.IsResultSuccess(smss);
         }
         #endregion
+
+        public virtual async Task<ModemResponse> ReInitializeSimAsync()
+        {
+            AtResponse response = await channel.SendCommand($"AT+CRFSIM");
+            return ModemResponse.IsSuccess(response.Success);
+        }
     }
 }

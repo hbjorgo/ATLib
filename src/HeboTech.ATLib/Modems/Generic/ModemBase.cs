@@ -578,12 +578,6 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.IsSuccess(response.Success);
         }
 
-        public virtual async Task<ModemResponse> ReInitializeSimAsync()
-        {
-            AtResponse response = await channel.SendCommand($"AT+CRFSIM");
-            return ModemResponse.IsSuccess(response.Success);
-        }
-
         public virtual async Task<ModemResponse<SignalStrength>> GetSignalStrengthAsync()
         {
             AtResponse response = await channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ:");
