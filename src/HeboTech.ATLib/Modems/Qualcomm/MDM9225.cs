@@ -9,7 +9,7 @@ namespace HeboTech.ATLib.Modems.Qualcomm
 {
     public class MDM9225 : ModemBase, IModem, IMDM9225
     {
-        public MDM9225(AtChannel channel)
+        public MDM9225(IAtChannel channel)
             : base(channel)
         {
         }

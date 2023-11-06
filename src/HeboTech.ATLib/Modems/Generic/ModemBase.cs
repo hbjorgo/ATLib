@@ -24,11 +24,11 @@ namespace HeboTech.ATLib.Modems.Generic
             Unknown
         }
 
-        protected readonly AtChannel channel;
+        protected readonly IAtChannel channel;
         private bool disposed;
         protected CurrentSmsTextFormat currentSmsTextFormat = CurrentSmsTextFormat.Unknown;
 
-        public ModemBase(AtChannel channel)
+        public ModemBase(IAtChannel channel)
         {
             this.channel = channel;
             channel.UnsolicitedEvent += Channel_UnsolicitedEvent;

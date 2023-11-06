@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 {
     public class SIM5320 : ModemBase, IModem, ISIM5320
     {
-        public SIM5320(AtChannel channel)
+        public SIM5320(IAtChannel channel)
             : base(channel)
         {
         }

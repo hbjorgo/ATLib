@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.Modems.Adafruit
         /// Serial port settings:
         /// 9600 8N1 Handshake.None
         /// </summary>
-        public Fona3G(AtChannel channel)
+        public Fona3G(IAtChannel channel)
             : base(channel)
         {
         }

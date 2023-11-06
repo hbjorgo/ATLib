@@ -11,7 +11,7 @@ namespace HeboTech.ATLib.Modems.D_LINK
         /// Serial port settings:
         /// 9600 8N1 Handshake.RequestToSend
         /// </summary>
-        public DWM222(AtChannel channel)
+        public DWM222(IAtChannel channel)
             : base(channel)
         {
         }

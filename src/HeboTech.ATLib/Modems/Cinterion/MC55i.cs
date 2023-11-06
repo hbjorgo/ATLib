@@ -22,7 +22,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
         /// Serial port settings:
         /// 115200 8N1 Handshake.None
         /// </summary>
-        public MC55i(AtChannel channel)
+        public MC55i(IAtChannel channel)
             : base(channel)
         {
         }
