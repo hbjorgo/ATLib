@@ -63,6 +63,19 @@ namespace HeboTech.ATLib.Modems.Generic
         public event EventHandler<CallStartedEventArgs> CallStarted;
         public event EventHandler<CallEndedEventArgs> CallEnded;
 
+        public virtual async Task<bool> SetRequiredSettingsBeforePinAsync()
+        {
+            ModemResponse echo = await DisableEchoAsync();
+            ModemResponse errorFormat = await SetErrorFormat(1);
+            return echo.Success && errorFormat.Success;
+        }
+
+        public virtual async Task<bool> SetRequiredSettingsAfterPinAsync()
+        {
+            ModemResponse detailedTextModeResultCodes = await ShowSmsTextModeParameters(true);
+            return detailedTextModeResultCodes.Success;
+        }
+
         public virtual async Task<ModemResponse<Imsi>> GetImsiAsync()
         {
             AtResponse response = await channel.SendSingleLineCommandAsync("AT+CIMI", string.Empty);

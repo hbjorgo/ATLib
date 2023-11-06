@@ -2,11 +2,8 @@
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
-using HeboTech.ATLib.Modems.Adafruit;
 using HeboTech.ATLib.Modems.Cinterion;
-using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Modems.Generic;
-using HeboTech.ATLib.Modems.TP_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
@@ -36,12 +33,10 @@ namespace HeboTech.ATLib.TestConsole
             modem.ErrorReceived += Modem_ErrorReceived;
             modem.GenericEvent += Modem_GenericEvent;
 
-            // Configure modem with required settings
-            await modem.SetRequiredSettingsAsync();
-
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
-            await modem.SetSmsMessageFormatAsync(smsTextFormat);
+            // Configure modem with required settings before PIN
+            var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
+            Console.WriteLine($"Successfully set required settings before PIN: {requiredSettingsBeforePin}");
+            await Task.Delay(TimeSpan.FromSeconds(2));
 
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
@@ -65,7 +60,7 @@ namespace HeboTech.ATLib.TestConsole
                     Console.WriteLine($"SIM Status: {simStatus}");
                     if (simStatus.Success && simStatus.Result == SimStatus.SIM_READY)
                         break;
-                    await Task.Delay(TimeSpan.FromMilliseconds(1000));
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             }
             else
@@ -73,6 +68,8 @@ namespace HeboTech.ATLib.TestConsole
                 Console.Write(simStatus);
                 return;
             }
+
+            await Task.Delay(TimeSpan.FromSeconds(2));
 
             for (int i = 0; i < 10; i++)
             {
@@ -82,6 +79,13 @@ namespace HeboTech.ATLib.TestConsole
                     break;
                 await Task.Delay(TimeSpan.FromMilliseconds(1000));
             }
+
+            // Configure modem with required settings after PIN
+            var requiredSettingsAfterPin = await modem.SetRequiredSettingsAfterPinAsync();
+            Console.WriteLine($"Successfully set required settings after PIN: {requiredSettingsAfterPin}");
+
+            var smsMessageFormat = await modem.SetSmsMessageFormatAsync(smsTextFormat);
+            Console.WriteLine($"Setting SMS message format: {smsMessageFormat}");
 
             var signalStrength = await modem.GetSignalStrengthAsync();
             Console.WriteLine($"Signal Strength: {signalStrength}");

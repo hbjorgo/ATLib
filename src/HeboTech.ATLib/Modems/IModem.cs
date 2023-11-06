@@ -266,5 +266,17 @@ namespace HeboTech.ATLib.Modems
         /// <param name="activate">True to activate, false to deactivate</param>
         /// <returns>Command status</returns>
         Task<ModemResponse> ShowSmsTextModeParameters(bool activate);
+
+        /// <summary>
+        /// Sets settings required for correct operation before PIN is entered
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<bool> SetRequiredSettingsBeforePinAsync();
+
+        /// <summary>
+        /// Sets settings required for correct operation after PIN is entered.
+        /// </summary>
+        /// <returns></returns>
+        Task<bool> SetRequiredSettingsAfterPinAsync();
     }
 }
