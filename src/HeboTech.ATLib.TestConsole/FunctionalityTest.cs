@@ -2,9 +2,11 @@
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems;
+using HeboTech.ATLib.Modems.Adafruit;
 using HeboTech.ATLib.Modems.Cinterion;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Modems.Generic;
+using HeboTech.ATLib.Modems.TP_LINK;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
@@ -21,7 +23,7 @@ namespace HeboTech.ATLib.TestConsole
 
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IDWM222 modem = new DWM222(atChannel);
+            using IFona3G modem = new Fona3G(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -37,12 +39,14 @@ namespace HeboTech.ATLib.TestConsole
             // Configure modem with required settings
             await modem.SetRequiredSettingsAsync();
 
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
             await modem.SetSmsMessageFormatAsync(smsTextFormat);
 
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
 
-            await modem.ReInitializeSimAsync();
+            //await modem.ReInitializeSimAsync();
 
             simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");

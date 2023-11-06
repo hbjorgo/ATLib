@@ -392,12 +392,12 @@ namespace HeboTech.ATLib.Modems.Generic
                     }
                     break;
                 case SmsTextFormat.Text:
-                    AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index},0", null);
+                    AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
                     if (textResponse.Success && textResponse.Intermediates.Count > 0)
                     {
                         string line = textResponse.Intermediates.First();
-                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<tpduFirstOctet>\d),(?<pid>\d),(?<dcs>\d),(?<serviceCenterAddress>""\+\d+""),(?<serviceCenterAddressType>\d+),(?<length>\d+)");
+                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<tpduFirstOctet>\d),(?<pid>\d),(?<dcs>\d),(?<serviceCenterAddress>""\+\d+""),(?<serviceCenterAddressType>\d+),(?<length>\d+)");
                         if (match.Success)
                         {
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
