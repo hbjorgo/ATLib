@@ -11,7 +11,7 @@
 		<PackageId>HeboTech.ATLib</PackageId>
 		<Title>AT command library that makes it easy to communicate with modems.</Title>
 		<Description>AT command library that makes it easy to communicate with modems.</Description>
-		<PackageTags>atcommand at command gsm sms hayes simcom d-link tp-link dwm-222 ma260 sim5320</PackageTags>
+		<PackageTags>atcommand at command hayes gsm sms modem simcom d-link tp-link dwm-222 ma260 sim5320 mc55i</PackageTags>
 		<RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>

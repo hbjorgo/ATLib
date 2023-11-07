@@ -205,7 +205,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="message">The message body</param>
         /// <param name="codingScheme">Encoding to use</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
+        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event
@@ -272,5 +272,8 @@ namespace HeboTech.ATLib.Modems
         /// <param name="activate">True to activate, false to deactivate</param>
         /// <returns>Command status</returns>
         Task<ModemResponse> ShowSmsTextModeParameters(bool activate);
+
+        Task<ModemResponse> RawCommand(string command);
+        Task<ModemResponse<List<string>>> RawCommandWithResponse(string command, string responsePrefix);
     }
 }

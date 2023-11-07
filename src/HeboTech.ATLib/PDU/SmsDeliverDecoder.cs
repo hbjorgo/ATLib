@@ -72,7 +72,7 @@ namespace HeboTech.ATLib.PDU
             SmsDeliverHeader header = SmsDeliverHeader.Parse(headerByte);
 
             byte tp_oa_nibbles_length = bytes[offset++];
-            byte tp_oa_bytes_length = (byte)(tp_oa_nibbles_length % 2 == 0 ? tp_oa_nibbles_length / 2 : (tp_oa_nibbles_length / 2) + 1);
+            byte tp_oa_bytes_length = (byte)(tp_oa_nibbles_length % 2 == 0 ? tp_oa_nibbles_length / 2 : (tp_oa_nibbles_length + 1) / 2);
             tp_oa_bytes_length++;
             PhoneNumberDTO oa = null;
             if (tp_oa_bytes_length > 0)
@@ -83,25 +83,23 @@ namespace HeboTech.ATLib.PDU
             byte tp_pid = bytes[offset++];
 
             byte tp_dcs_byte = bytes[offset++];
-            if (!Enum.IsDefined(typeof(CodingScheme), tp_dcs_byte))
-                throw new ArgumentException($"DCS with value {tp_dcs_byte} is not supported");
-            CodingScheme tp_dcs = (CodingScheme)tp_dcs_byte;
+            DataCodingScheme dcs = DataCodingScheme.ParseByte(tp_dcs_byte);
 
             ReadOnlySpan<byte> tp_scts = bytes[offset..(offset += 7)];
             DateTimeOffset scts = TpduTime.DecodeTimestamp(tp_scts, timestampYearOffset);
 
             byte tp_udl = bytes[offset++];
             int udlBytes = 0;
-            switch (tp_dcs)
+            switch (dcs.CharacterSet)
             {
-                case CodingScheme.Gsm7:
+                case CharacterSet.Gsm7:
                     udlBytes = (int)Math.Ceiling(tp_udl * 7 / 8.0);
                     break;
-                case CodingScheme.UCS2:
+                case CharacterSet.UCS2:
                     udlBytes = tp_udl;
                     break;
                 default:
-                    throw new ArgumentException($"DCS with value {tp_dcs} is not supported");
+                    throw new ArgumentException($"DCS with value {dcs.CharacterSet} is not supported");
             }
 
             ReadOnlySpan<byte> tp_ud = bytes[offset..(offset += udlBytes)];
@@ -121,9 +119,9 @@ namespace HeboTech.ATLib.PDU
             }
 
             string message;
-            switch (tp_dcs)
+            switch (dcs.CharacterSet)
             {
-                case CodingScheme.Gsm7:
+                case CharacterSet.Gsm7:
                     int fillBits = 0;
                     if (header.UDHI)
                         fillBits = 7 - (((1 + udh.Length) * 8) % 7);
@@ -131,11 +129,11 @@ namespace HeboTech.ATLib.PDU
                     var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
                     message = Gsm7.DecodeFromBytes(unpacked);
                     break;
-                case CodingScheme.UCS2:
+                case CharacterSet.UCS2:
                     message = UCS2.Decode(payload.ToArray());
                     break;
                 default:
-                    throw new ArgumentException($"DCS with value {tp_dcs} is not supported");
+                    throw new ArgumentException($"DCS with value {dcs.CharacterSet} is not supported");
             }
 
             return new SmsDeliver(serviceCenterNumber, oa, message, scts);
@@ -147,8 +145,19 @@ namespace HeboTech.ATLib.PDU
             TypeOfNumber ton = (TypeOfNumber)((ext_ton_npi & 0b0111_0000) >> 4);
 
             string number = string.Empty;
-            if (ton == TypeOfNumber.International)
-                number = "+";
+            switch (ton)
+            {
+                case TypeOfNumber.International:
+                    number = "+";
+                    break;
+                case TypeOfNumber.AlphaNumeric:
+                    var unpacked = Gsm7.Unpack(data[1..].ToArray());
+                    var decoded = Gsm7.DecodeFromBytes(unpacked);
+                    return new PhoneNumberDTO(decoded);
+                default:
+                    throw new NotImplementedException($"TON {ton} is not supported");
+            }
+
             number += string.Join("", data[1..].ToArray().Select(x => x.SwapNibbles().ToString("X2")));
             if (number[^1] == 'F')
                 number = number[..^1];

@@ -49,6 +49,7 @@ Feedback is very much welcome and please request features 🙂
 - Adafruit FONA 3G (based on SIMCOM SIM5320 chipset)
 - D-Link DWM-222 (based on Qualcomm MDM9225 chipset)
 - TP-LINK MA260 (based on a Qualcomm chipset)
+- Cinterion MC55i
 - Other modems may work using one of the implementations above
 
 ## Other

@@ -265,9 +265,9 @@ namespace HeboTech.ATLib.Modems.Generic
             return references;
         }
 
-        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
+        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme);
 
-        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
+        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme, bool includeEmptySmscLength)
         {
             if (phoneNumber is null)
                 throw new ArgumentNullException(nameof(phoneNumber));
@@ -434,8 +434,8 @@ namespace HeboTech.ATLib.Modems.Generic
                             DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
                             string message = textResponse.Intermediates.Last();
 
-                            CodingScheme dcs = (CodingScheme)dataCodingScheme;
-                            if (dcs == CodingScheme.UCS2)
+                            CharacterSet dcs = (CharacterSet)dataCodingScheme;
+                            if (dcs == CharacterSet.UCS2)
                                 message = UCS2.Decode(message);
 
                             return ModemResponse.IsResultSuccess(new Sms(status, sender, received, message));
@@ -671,9 +671,22 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> ShowSmsTextModeParameters(bool activate)
         {
-
             AtResponse response = await channel.SendCommand($"AT+CSDH={(activate ? "1" : "0")}");
             return ModemResponse.IsSuccess(response.Success);
+        }
+
+        public virtual async Task<ModemResponse> RawCommand(string command)
+        {
+            AtResponse response = await channel.SendCommand(command);
+            return ModemResponse.IsSuccess(response.Success);
+        }
+
+        public virtual async Task<ModemResponse<List<string>>> RawCommandWithResponse(string command, string responsePrefix)
+        {
+            AtResponse response = await channel.SendSingleLineCommandAsync(command, responsePrefix);
+            if (response.Success)
+                return ModemResponse.IsResultSuccess(response.Intermediates);
+            return ModemResponse.HasResultError<List<string>>();
         }
 
         public void Close()

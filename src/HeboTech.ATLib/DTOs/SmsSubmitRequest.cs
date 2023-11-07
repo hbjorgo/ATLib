@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.DTOs
             : this(
                   phoneNumber,
                   message,
-                  Gsm7.IsGsm7Compatible(message.ToCharArray()) ? CodingScheme.Gsm7 : CodingScheme.UCS2)
+                  Gsm7.IsGsm7Compatible(message.ToCharArray()) ? CharacterSet.Gsm7 : CharacterSet.UCS2)
         {
         }
 
@@ -33,7 +33,7 @@ namespace HeboTech.ATLib.DTOs
         public SmsSubmitRequest(
             PhoneNumber phoneNumber,
             string message,
-            CodingScheme codingScheme)
+            CharacterSet codingScheme)
             : this(
                   phoneNumber,
                   message,
@@ -52,7 +52,7 @@ namespace HeboTech.ATLib.DTOs
         public SmsSubmitRequest(
             PhoneNumber phoneNumber,
             string message,
-            CodingScheme codingScheme,
+            CharacterSet codingScheme,
             ValidityPeriod validityPeriod)
         {
             PhoneNumber = phoneNumber;
@@ -63,7 +63,7 @@ namespace HeboTech.ATLib.DTOs
 
         public PhoneNumber PhoneNumber { get; }
         public string Message { get; }
-        public CodingScheme CodingScheme { get; }
+        public CharacterSet CodingScheme { get; }
         public bool IncludeEmptySmscLength { get; set; }
         public byte MessageReferenceNumber { get; set; }
         public ValidityPeriod ValidityPeriod { get; set; }

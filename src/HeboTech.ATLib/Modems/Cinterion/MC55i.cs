@@ -61,7 +61,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
             return references;
         }
 
-        public override async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme)
+        public override async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
         {
             if (phoneNumber is null)
                 throw new ArgumentNullException(nameof(phoneNumber));

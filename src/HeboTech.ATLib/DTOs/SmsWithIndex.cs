@@ -11,5 +11,10 @@ namespace HeboTech.ATLib.DTOs
         }
 
         public int Index { get; }
+
+        public override string ToString()
+        {
+            return $"Index:\t\t{Index}{Environment.NewLine}Sender:\t\t{Sender}{Environment.NewLine}ReceiveTime:\t{ReceiveTime}{Environment.NewLine}Message:\t{Message}";
+        }
     }
 }
