@@ -30,7 +30,7 @@ namespace HeboTech.ATLib.PDU
             {
                 byte iei = data[i];
                 byte length = data[i + 1];
-                ReadOnlySpan<byte> payload = data[(i + 1)..(i + 1 + length)];
+                ReadOnlySpan<byte> payload = data[(i + 2)..(i + 2 + length)];
                 informationElements.Add(new InformationElement(iei, length, payload.ToArray()));
                 i += 2 + length;
             }
