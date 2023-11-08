@@ -3,6 +3,7 @@ using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Extensions;
 using System;
 using System.Linq;
+using System.Threading;
 
 namespace HeboTech.ATLib.PDU
 {
@@ -136,7 +137,11 @@ namespace HeboTech.ATLib.PDU
                     throw new ArgumentException($"DCS with value {dcs.CharacterSet} is not supported");
             }
 
-            return new SmsDeliver(serviceCenterNumber, oa, message, scts);
+            InformationElement concatenatedSms = udh.InformationElements.FirstOrDefault(x => x.IEI == (byte)IEI.ConcatenatedShortMessages);
+            if (concatenatedSms != null)
+                return new SmsDeliver(serviceCenterNumber, oa, message, scts, concatenatedSms.Data[0], concatenatedSms.Data[1], concatenatedSms.Data[2]);
+            else
+                return new SmsDeliver(serviceCenterNumber, oa, message, scts);
         }
 
         private static PhoneNumberDTO DecodePhoneNumber(ReadOnlySpan<byte> data)
