@@ -1,10 +1,8 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
-using HeboTech.ATLib.Modems.Adafruit;
 using HeboTech.ATLib.Modems.Cinterion;
 using HeboTech.ATLib.Modems.Generic;
-using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
