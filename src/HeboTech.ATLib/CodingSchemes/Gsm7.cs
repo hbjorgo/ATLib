@@ -9,63 +9,45 @@ namespace HeboTech.ATLib.CodingSchemes
     /// <summary>
     /// Encode / decode GSM 7-bit strings (GSM 03.38 or 3GPP 23.038)
     /// </summary>
-    public static class Gsm7
+    internal static class Gsm7
     {
-        public enum Extension : byte
-        {
-            Default = 0x00,
-            Turkish = 0x01,
-            Spanish = 0x02,
-            Portugese = 0x03,
-            BengaliAndAssamese = 0x04,
-            Gujarati = 0x05,
-            Hindi = 0x06,
-            Kannada = 0x07,
-            Malayalam = 0x08,
-            Oriya = 0x09,
-            Punjabi = 0x0A,
-            Tamil = 0x0B,
-            Telugu = 0x0C,
-            Urdu = 0x0D,
-        }
-
         // ` is not a conversion, just a untranslatable letter
-        private static readonly Dictionary<Extension, string> regularTable = new Dictionary<Extension, string>()
+        private static readonly Dictionary<Gsm7Extension, string> regularTable = new Dictionary<Gsm7Extension, string>()
         {
-            { Extension.Default, "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
-            { Extension.Turkish, "@£$¥€éùıòÇLĞğCÅåΔ_ΦΓΛΩΠΨΣΘFEŞRßÉ !\"#¤%&'()ΞS,ş./0123456789*C<->?İABCDEFGHI:+L=NOPQRSTUVWXYJ;ÖMÜ§çabcdefghiZKlÑnopqrstuvwxyjÄömüà" },
-            { Extension.Spanish, "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
-            { Extension.Portugese, "@£$¥êéúíóçLÔôCÁáΔ_ªÇÀ∞^\\€ÓFEÂRÊÉ !\"#º%&'()|S,â./0123456789*C<->?ÍABCDEFGHI:+L=NOPQRSTUVWXYJ;ÕMÜ§~abcdefghiZKlÚnopqrstuvwxyjÃõmüà" },
-            { Extension.BengaliAndAssamese, "◌◌◌অআইঈউঊঋLঌ`C`এঁংঃওঔকখগঘঙFEছRঝঞঐ``ঠডঢণত)(চS,জ.ন !ট3456789থC`ধফ?012যর`ল```:দসপ◌ঽ◌ভম◌◌◌◌``◌শ;`হ়◌ব◌◌ুূৃৄghে◌ষl◌◌্ািীcdefwxiৈ`ডোৌo" },
-            { Extension.Gujarati, "◌◌◌અઆઇઈઉઊઋLઌઍC`એઁંઃઓઔકખગઘઙFEછRઝઞઐઑ`ઠડઢણત)(ચS,જ.ન !ટ3456789થC`ધફ?012યર`લળ`વ:દસપ◌ઽબભમ◌◌◌◌◌`◌શ;`હ઼◌◌◌◌ુૂૃૄૅhે◌ષl◌◌્ાિીcdefgxiૈ◌ૡોૌo" },
-            { Extension.Hindi, "◌◌◌अआइईउऊऋLऌऍCऎएँंःओऔकखगघङFEछRझञऐऑऒठडढणत)(चS,ज.न !ट3456789थCऩधफ?012यरऱलळऴव:दसप◌ऽबभम◌◌◌◌◌◌◌श;◌ह़◌◌◌◌ुूृॄॅॆे◌षॊ◌◌्ािीcdefghiै◌lोौo" },
-            { Extension.Kannada, "`ಂಃಅಆಇಈಉಊಋLಌ`Cಎಏಐ`ಒಓಔಕಖಗಘಙFEಛRಝಞ !ಟಠಪಢಣತ)(ಚS,ಜ.ನ0123456789ಥC`ಧಫ?ಬಭಮಯರಱಲಳ`ವ:ದಸಪ಼ಽಾಿೀುೂೃೄ`ೆೇಶ;ೊಹೌ್ೕabcdefghiೈಷlೋnopqrstuvwxyj`ೠmೢೣ" },
-            { Extension.Malayalam, "`ംഃഅആഇഈഉഊഋLഌ`Cഎഏഐ`ഒഓഔകഖഗഘങFEഛRഝഞ !ടഠഡഢണത)(ചS,ജ.ന0123456789ഥC`ധഫ?ബഭമയരറലളഴവ:ദസപ`ഽാിീുൂൃൄ`െേശ;ൊഹൌ്ൗabcdefghiൈഷlോnopqrstuvwxyj`ൡmൣ൹" },
-            { Extension.Oriya, "◌◌◌ଅଆଇଈଉଊଋLଌ`C`ଏଁଂଃଓଔକଖଗଘଙFEଛRଝଞଐ``ଠଡଢଣତ)(ଚS,ଜ.ନ !ଟ3456789ଥC`ଧଫ?012ଯର`ଲଳ`ଵ:ଦସପ◌ଽବଭମ◌◌◌ୄ``◌ଶ;`ହ଼◌◌◌◌ୁୂୃfghେ◌ଷl◌◌୍ାିୀcdevwxiୈ`ୠୋୌo" },
-            { Extension.Punjabi, "◌◌◌ਅਆਇਈਉਊ`L``C`ਏਁਂਃਓਔਕਖਗਘਙFEਛRਝਞਐ``ਠਡਢਣਤ)(ਚS,ਜ.ਨ !ਟ3456789ਥC`ਧਫ?012ਯਰ`ਲਲ`ਵ:ਦਸਪ◌`ਬਭਮ◌◌``਼`◌ਸ;`ਹ਼◌◌◌◌ੁੂef`hੇ਼`l◌◌੍ਾਿੀcduvgxi◌`◌ੋੌo" },
-            { Extension.Tamil, "`◌◌அஆஇஈஉஊ`L``Cஎஏஐஂஃஓஔக```ஙFE`R`ஞ `ஒ```ணத)(சS,ஜ.ந0!ட3456789`Cன``?`12யரறலளழவ:`ஸப``◌`ம◌◌```◌◌ஶ;◌ஹ◌◌ா◌◌ுூefgெே◌ஷொ◌ௌ்ௐிீcduvwhiை`lோno" },
-            { Extension.Telugu, "◌◌◌అఆఇఈఉఊఋLఌ`CఎఏఁంఃఓఔకఖగఘఙFEఛRఝఞఐ`ఒఠడఢణత)(చS,జ.న !ట3456789థC`ధఫ?012యరఱలళ`వ:దసప`ఽబభమ◌◌◌◌`◌◌శ;◌హ◌◌◌◌◌ుూృౄgెే◌షొ◌ౌ్ాిీcdefwhiై`lోno" },
-            { Extension.Urdu, "اآبٻڀپڦتۂٿLٹٽCٺټثجځڄڃڅچڇحخFEڌRډڊ !ڏڍذرڑړ)(دS,ڈ.ژ0123456789ڙCښږش?صضطظعفقکڪګ:زڱسمنںڻڼوۄەہھءیگ;◌ل◌◌◌abcdefghiېڳٍ◌ُٗٔqrstuvwxyjےlِno" },
+            { Gsm7Extension.Default, "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
+            { Gsm7Extension.Turkish, "@£$¥€éùıòÇLĞğCÅåΔ_ΦΓΛΩΠΨΣΘFEŞRßÉ !\"#¤%&'()ΞS,ş./0123456789*C<->?İABCDEFGHI:+L=NOPQRSTUVWXYJ;ÖMÜ§çabcdefghiZKlÑnopqrstuvwxyjÄömüà" },
+            { Gsm7Extension.Spanish, "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
+            { Gsm7Extension.Portugese, "@£$¥êéúíóçLÔôCÁáΔ_ªÇÀ∞^\\€ÓFEÂRÊÉ !\"#º%&'()|S,â./0123456789*C<->?ÍABCDEFGHI:+L=NOPQRSTUVWXYJ;ÕMÜ§~abcdefghiZKlÚnopqrstuvwxyjÃõmüà" },
+            { Gsm7Extension.BengaliAndAssamese, "◌◌◌অআইঈউঊঋLঌ`C`এঁংঃওঔকখগঘঙFEছRঝঞঐ``ঠডঢণত)(চS,জ.ন !ট3456789থC`ধফ?012যর`ল```:দসপ◌ঽ◌ভম◌◌◌◌``◌শ;`হ়◌ব◌◌ুূৃৄghে◌ষl◌◌্ািীcdefwxiৈ`ডোৌo" },
+            { Gsm7Extension.Gujarati, "◌◌◌અઆઇઈઉઊઋLઌઍC`એઁંઃઓઔકખગઘઙFEછRઝઞઐઑ`ઠડઢણત)(ચS,જ.ન !ટ3456789થC`ધફ?012યર`લળ`વ:દસપ◌ઽબભમ◌◌◌◌◌`◌શ;`હ઼◌◌◌◌ુૂૃૄૅhે◌ષl◌◌્ાિીcdefgxiૈ◌ૡોૌo" },
+            { Gsm7Extension.Hindi, "◌◌◌अआइईउऊऋLऌऍCऎएँंःओऔकखगघङFEछRझञऐऑऒठडढणत)(चS,ज.न !ट3456789थCऩधफ?012यरऱलळऴव:दसप◌ऽबभम◌◌◌◌◌◌◌श;◌ह़◌◌◌◌ुूृॄॅॆे◌षॊ◌◌्ािीcdefghiै◌lोौo" },
+            { Gsm7Extension.Kannada, "`ಂಃಅಆಇಈಉಊಋLಌ`Cಎಏಐ`ಒಓಔಕಖಗಘಙFEಛRಝಞ !ಟಠಪಢಣತ)(ಚS,ಜ.ನ0123456789ಥC`ಧಫ?ಬಭಮಯರಱಲಳ`ವ:ದಸಪ಼ಽಾಿೀುೂೃೄ`ೆೇಶ;ೊಹೌ್ೕabcdefghiೈಷlೋnopqrstuvwxyj`ೠmೢೣ" },
+            { Gsm7Extension.Malayalam, "`ംഃഅആഇഈഉഊഋLഌ`Cഎഏഐ`ഒഓഔകഖഗഘങFEഛRഝഞ !ടഠഡഢണത)(ചS,ജ.ന0123456789ഥC`ധഫ?ബഭമയരറലളഴവ:ദസപ`ഽാിീുൂൃൄ`െേശ;ൊഹൌ്ൗabcdefghiൈഷlോnopqrstuvwxyj`ൡmൣ൹" },
+            { Gsm7Extension.Oriya, "◌◌◌ଅଆଇଈଉଊଋLଌ`C`ଏଁଂଃଓଔକଖଗଘଙFEଛRଝଞଐ``ଠଡଢଣତ)(ଚS,ଜ.ନ !ଟ3456789ଥC`ଧଫ?012ଯର`ଲଳ`ଵ:ଦସପ◌ଽବଭମ◌◌◌ୄ``◌ଶ;`ହ଼◌◌◌◌ୁୂୃfghେ◌ଷl◌◌୍ାିୀcdevwxiୈ`ୠୋୌo" },
+            { Gsm7Extension.Punjabi, "◌◌◌ਅਆਇਈਉਊ`L``C`ਏਁਂਃਓਔਕਖਗਘਙFEਛRਝਞਐ``ਠਡਢਣਤ)(ਚS,ਜ.ਨ !ਟ3456789ਥC`ਧਫ?012ਯਰ`ਲਲ`ਵ:ਦਸਪ◌`ਬਭਮ◌◌``਼`◌ਸ;`ਹ਼◌◌◌◌ੁੂef`hੇ਼`l◌◌੍ਾਿੀcduvgxi◌`◌ੋੌo" },
+            { Gsm7Extension.Tamil, "`◌◌அஆஇஈஉஊ`L``Cஎஏஐஂஃஓஔக```ஙFE`R`ஞ `ஒ```ணத)(சS,ஜ.ந0!ட3456789`Cன``?`12யரறலளழவ:`ஸப``◌`ம◌◌```◌◌ஶ;◌ஹ◌◌ா◌◌ுூefgெே◌ஷொ◌ௌ்ௐிீcduvwhiை`lோno" },
+            { Gsm7Extension.Telugu, "◌◌◌అఆఇఈఉఊఋLఌ`CఎఏఁంఃఓఔకఖగఘఙFEఛRఝఞఐ`ఒఠడఢణత)(చS,జ.న !ట3456789థC`ధఫ?012యరఱలళ`వ:దసప`ఽబభమ◌◌◌◌`◌◌శ;◌హ◌◌◌◌◌ుూృౄgెే◌షొ◌ౌ్ాిీcdefwhiై`lోno" },
+            { Gsm7Extension.Urdu, "اآبٻڀپڦتۂٿLٹٽCٺټثجځڄڃڅچڇحخFEڌRډڊ !ڏڍذرڑړ)(دS,ڈ.ژ0123456789ڙCښږش?صضطظعفقکڪګ:زڱسمنںڻڼوۄەہھءیگ;◌ل◌◌◌abcdefghiېڳٍ◌ُٗٔqrstuvwxyjےlِno" },
         };
-        private static readonly Dictionary<Extension, string> extendedTable = new Dictionary<Extension, string>()
+        private static readonly Dictionary<Gsm7Extension, string> extendedTable = new Dictionary<Gsm7Extension, string>()
         {
-            { Extension.Default, "````````````````````^```````````````````{}`````\\````````````[~]`|````````````````````````````````````€``````````````````````````" },
-            { Extension.Turkish, "````````````````````^```````````````````{}`````\\````````````[~]`|``````Ğ`İ`````````Ş```````````````ç`€`ğ`ı`````````ş````````````" },
-            { Extension.Spanish, "`````````ç``````````^```````````````````{}`````\\````````````[~]`|Á```````Í`````Ó`````Ú```````````á```€```í`````ó`````ú``````````" },
-            { Extension.Portugese, "`````ê```ç`Ôô`Áá``ΦΓ^ΩΠΨΣΘ`````Ê````````{}`````\\````````````[~]`|À```````Í`````Ó`````Ú`````ÃÕ````Â```€```í`````ó`````ú`````ãõ``â" },
-            { Extension.BengaliAndAssamese, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*০১`২৩৪৫৬৭৮৯যৠৡ◌{}◌৲৳৴৵\\৶৷৸৹়``ৢ``ৣ`[~]`|ABC৺EF`HI`KLMNOPQRSDUVGXYJ`````````T€`W``Z`````````````````````" },
-            { Extension.Gujarati, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`૦૧૨૩૪૫૬૭૮૯``{}`````\\````````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
-            { Extension.Hindi, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`०१२३४५६७८९◌◌{}◌◌कखग\\जडढफयॠ॒॑◌॰़़़॓॔`़़़़़Eॡ◌ॣIॱ`[~]O|ABCDUFॢHYJKLMN`PQRST€VGX`Z````````````W````````" },
-            { Extension.Kannada, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`೦೧೨೩೪೫೬೭೮೯ೞೱ{}ೲ````\\````````````]~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
-            { Extension.Malayalam, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`൦൧൨൩൪൫൬൭൮൯൰൱{}൲൳൴൵ൺ\\ൻർൽൾൿ```````[~]`-ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
-            { Extension.Oriya, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`୦୧୨୩୪୫୬୭୮୯ଡଢ{}ୟ୰ୱ``\\``````଼଼````[~]`|ABCDE``HIJKLMNOPQRSTUFGXYZ``````````€VW````````````````````````" },
-            { Extension.Punjabi, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`੦੧੨੩੪੫੬੭੮੯ਖਗ{}ਜੜਫ◌`\\``````਼਼``਼`਼ੵ]`|ABCDE``HI`K[~NOPQRSTUFGXYJ`LM```````€VW``Z`````````````````````" },
-            { Extension.Tamil, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`௦௧௨௩௪௫௬௭௮௯௳௴{}௵௶௷௸௺\\````````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
-            { Extension.Telugu, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*```౦౧౨౩౪౫౬౭౮౯ౘౙ{}౸౹౺౻౼\\౽౾౿`````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ`````````````````````````````````````" },
-            { Extension.Urdu, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*؀؁`۰۱۲۳۴۵۶۷۸۹،؍{}؎؏◌◌◌\\◌◌؛؟ـ◌◌٫٬ٲٳۍؐؑؒ۔ؓؔBCDْ٘GHIJK[~]O|ARSTEFWXYZ`LMN`PQ```UV``````````````€``````````" },
+            { Gsm7Extension.Default, "````````````````````^```````````````````{}`````\\````````````[~]`|````````````````````````````````````€``````````````````````````" },
+            { Gsm7Extension.Turkish, "````````````````````^```````````````````{}`````\\````````````[~]`|``````Ğ`İ`````````Ş```````````````ç`€`ğ`ı`````````ş````````````" },
+            { Gsm7Extension.Spanish, "`````````ç``````````^```````````````````{}`````\\````````````[~]`|Á```````Í`````Ó`````Ú```````````á```€```í`````ó`````ú``````````" },
+            { Gsm7Extension.Portugese, "`````ê```ç`Ôô`Áá``ΦΓ^ΩΠΨΣΘ`````Ê````````{}`````\\````````````[~]`|À```````Í`````Ó`````Ú`````ÃÕ````Â```€```í`````ó`````ú`````ãõ``â" },
+            { Gsm7Extension.BengaliAndAssamese, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*০১`২৩৪৫৬৭৮৯যৠৡ◌{}◌৲৳৴৵\\৶৷৸৹়``ৢ``ৣ`[~]`|ABC৺EF`HI`KLMNOPQRSDUVGXYJ`````````T€`W``Z`````````````````````" },
+            { Gsm7Extension.Gujarati, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`૦૧૨૩૪૫૬૭૮૯``{}`````\\````````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
+            { Gsm7Extension.Hindi, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`०१२३४५६७८९◌◌{}◌◌कखग\\जडढफयॠ॒॑◌॰़़़॓॔`़़़़़Eॡ◌ॣIॱ`[~]O|ABCDUFॢHYJKLMN`PQRST€VGX`Z````````````W````````" },
+            { Gsm7Extension.Kannada, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`೦೧೨೩೪೫೬೭೮೯ೞೱ{}ೲ````\\````````````]~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
+            { Gsm7Extension.Malayalam, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`൦൧൨൩൪൫൬൭൮൯൰൱{}൲൳൴൵ൺ\\ൻർൽൾൿ```````[~]`-ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
+            { Gsm7Extension.Oriya, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`୦୧୨୩୪୫୬୭୮୯ଡଢ{}ୟ୰ୱ``\\``````଼଼````[~]`|ABCDE``HIJKLMNOPQRSTUFGXYZ``````````€VW````````````````````````" },
+            { Gsm7Extension.Punjabi, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`੦੧੨੩੪੫੬੭੮੯ਖਗ{}ਜੜਫ◌`\\``````਼਼``਼`਼ੵ]`|ABCDE``HI`K[~NOPQRSTUFGXYJ`LM```````€VW``Z`````````````````````" },
+            { Gsm7Extension.Tamil, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*।॥`௦௧௨௩௪௫௬௭௮௯௳௴{}௵௶௷௸௺\\````````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ``````````€``````````````````````````" },
+            { Gsm7Extension.Telugu, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*```౦౧౨౩౪౫౬౭౮౯ౘౙ{}౸౹౺౻౼\\౽౾౿`````````[~]`|ABCDEFGHIJKLMNOPQRSTUVWXYZ`````````````````````````````````````" },
+            { Gsm7Extension.Urdu, "@£$¥¿\"¤%&'`*+`-/<=>¡^¡_#*؀؁`۰۱۲۳۴۵۶۷۸۹،؍{}؎؏◌◌◌\\◌◌؛؟ـ◌◌٫٬ٲٳۍؐؑؒ۔ؓؔBCDْ٘GHIJK[~]O|ARSTEFWXYZ`LMN`PQ```UV``````````````€``````````" },
         };
 
-        public static bool IsGsm7Compatible(IEnumerable<char> text, Extension lockingShift = Extension.Default, Extension singleShift = Extension.Default)
+        public static bool IsGsm7Compatible(IEnumerable<char> text, Gsm7Extension lockingShift = Gsm7Extension.Default, Gsm7Extension singleShift = Gsm7Extension.Default)
         {
             string defaultString = regularTable[lockingShift];
             string extendedString = extendedTable[singleShift];
@@ -86,7 +68,7 @@ namespace HeboTech.ATLib.CodingSchemes
             return true;
         }
 
-        public static byte[] EncodeToBytes(IEnumerable<char> text, Extension lockingShift = Extension.Default, Extension singleShift = Extension.Default)
+        public static byte[] EncodeToBytes(IEnumerable<char> text, Gsm7Extension lockingShift = Gsm7Extension.Default, Gsm7Extension singleShift = Gsm7Extension.Default)
         {
             string defaultString = regularTable[lockingShift];
             string extendedString = extendedTable[singleShift];
@@ -115,7 +97,7 @@ namespace HeboTech.ATLib.CodingSchemes
             return byteGSMOutput.ToArray();
         }
 
-        public static string DecodeFromBytes(IEnumerable<byte> bytes, Extension lockingShift = Extension.Default, Extension singleShift = Extension.Default)
+        public static string DecodeFromBytes(IEnumerable<byte> bytes, Gsm7Extension lockingShift = Gsm7Extension.Default, Gsm7Extension singleShift = Gsm7Extension.Default)
         {
             string defaultString = regularTable[lockingShift];
             string extendedString = extendedTable[singleShift];

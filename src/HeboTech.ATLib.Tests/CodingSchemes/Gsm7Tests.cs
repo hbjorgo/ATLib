@@ -109,10 +109,10 @@ namespace HeboTech.ATLib.Tests.PDU
         }
 
         [Theory]
-        [InlineData("À", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "14")]
-        [InlineData("Φ", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "1B12")]
-        [InlineData("ΦΣ", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "1B121B18")]
-        public void EncodeToBytes_returns_encoded_bytes_with_extension_table(string gsm7Bit, Gsm7.Extension singleShift, Gsm7.Extension lockingShift, string expected)
+        [InlineData("À", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "14")]
+        [InlineData("Φ", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "1B12")]
+        [InlineData("ΦΣ", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "1B121B18")]
+        public void EncodeToBytes_returns_encoded_bytes_with_extension_table(string gsm7Bit, Gsm7Extension singleShift, Gsm7Extension lockingShift, string expected)
         {
             byte[] result = Gsm7.EncodeToBytes(gsm7Bit, singleShift, lockingShift);
 
@@ -132,10 +132,10 @@ namespace HeboTech.ATLib.Tests.PDU
         }
 
         [Theory]
-        [InlineData("14", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "À")]
-        [InlineData("1B", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, " ")]
-        [InlineData("1B12", Gsm7.Extension.Portugese, Gsm7.Extension.Portugese, "Φ")]
-        public void DecodeFromBytes_returns_decoded_text_with_extension_table(string gsm7Bit, Gsm7.Extension singleShift, Gsm7.Extension lockingShift, string expected)
+        [InlineData("14", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "À")]
+        [InlineData("1B", Gsm7Extension.Portugese, Gsm7Extension.Portugese, " ")]
+        [InlineData("1B12", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "Φ")]
+        public void DecodeFromBytes_returns_decoded_text_with_extension_table(string gsm7Bit, Gsm7Extension singleShift, Gsm7Extension lockingShift, string expected)
         {
             string result = Gsm7.DecodeFromBytes(Convert.FromHexString(gsm7Bit), singleShift, lockingShift);
 

@@ -3,7 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public static class AtErrorParsers
+    internal static class AtErrorParsers
     {
         /*
         * Returns error code from response

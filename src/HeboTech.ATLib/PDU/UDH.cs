@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 namespace HeboTech.ATLib.PDU
 {
-    public enum IEI : byte
+    internal enum IEI : byte
     {
         ConcatenatedShortMessages = 0x00,
         //NationalLanguageSingleShift = 0x24,
         //NationalLanguageLockingShift = 0x25,
     }
 
-    public class Udh
+    internal class Udh
     {
         private Udh(byte length, IEnumerable<InformationElement> informationElements)
         {

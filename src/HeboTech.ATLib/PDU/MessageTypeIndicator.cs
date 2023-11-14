@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.PDU
 {
-    public enum MessageTypeIndicator : byte
+    internal enum MessageTypeIndicator : byte
     {
         SMS_DELIVER_REPORT = 0x00,
         SMS_DELIVER = 0x00,

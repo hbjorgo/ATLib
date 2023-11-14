@@ -398,7 +398,7 @@ namespace HeboTech.ATLib.Modems.Generic
                             string pdu = line2Match.Groups["status"].Value;
                             SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());
 
-                            return ModemResponse.IsResultSuccess(new Sms(status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
+                            return ModemResponse.IsResultSuccess(pduMessage.ToSms(status));
                         }
                         if (AtErrorParsers.TryGetError(pduResponse.FinalResponse, out Error pduError))
                             return ModemResponse.HasResultError<Sms>(pduError);
@@ -410,7 +410,8 @@ namespace HeboTech.ATLib.Modems.Generic
                     if (textResponse.Success && textResponse.Intermediates.Count > 0)
                     {
                         string line = textResponse.Intermediates.First();
-                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<tpduFirstOctet>\d),(?<pid>\d),(?<dcs>\d),(?<serviceCenterAddress>""\+\d+""),(?<serviceCenterAddressType>\d+),(?<length>\d+)");
+                        //var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<tpduFirstOctet>\d),(?<pid>\d),(?<dcs>\d),(?<serviceCenterAddress>""\+\d+""),(?<serviceCenterAddressType>\d+),(?<length>\d+)");
+                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+?\w+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<tpduFirstOctet>\d{1,3}),(?<pid>\d{1,3}),(?<dcs>\d{1,3}),(?<serviceCenterAddress>""\+\d+""),(?<serviceCenterAddressType>\d+),(?<length>\d+)");
                         if (match.Success)
                         {
                             SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
@@ -484,7 +485,7 @@ namespace HeboTech.ATLib.Modems.Generic
                                 int length = int.Parse(match.Groups["length"].Value);
 
                                 SmsDeliver sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
-                                smss.Add(new SmsWithIndex(index, status, sms.SenderNumber, sms.Timestamp, sms.Message));
+                                smss.Add(sms.ToSmsWithIndex(index, status));
                             }
                         }
                         break;

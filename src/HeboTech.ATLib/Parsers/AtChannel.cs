@@ -67,7 +67,7 @@ namespace HeboTech.ATLib.Parsers
             Dispose();
         }
 
-        public bool IsDebugEnabled()
+        private bool IsDebugEnabled()
         {
             return debugEnabled;
         }

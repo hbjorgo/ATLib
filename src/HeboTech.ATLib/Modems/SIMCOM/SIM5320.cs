@@ -126,7 +126,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         //    return ModemResponse.HasResultError<Sms>();
         //}
 
-        public virtual async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
+        public override async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
         {
             string command = currentSmsTextFormat switch
             {

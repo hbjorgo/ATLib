@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.Parsers
 {
-    public enum AtError
+    internal enum AtError
     {
         NO_ERROR,
         INVALID_RESPONSE,

@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.Parsers
 {
-    public enum AtCommandType
+    internal enum AtCommandType
     {
         NO_RESULT, // No intermediate response expected
         NUMERIC, // A single intermediate response starting with a 0-9
