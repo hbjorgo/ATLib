@@ -152,13 +152,25 @@ namespace HeboTech.ATLib.PDU
             string number = string.Empty;
             switch (ton)
             {
+                case TypeOfNumber.Unknown:
+                    break;
                 case TypeOfNumber.International:
                     number = "+";
+                    break;
+                case TypeOfNumber.National:
+                    break;
+                case TypeOfNumber.NetworkSpecific:
+                    break;
+                case TypeOfNumber.Subscriber:
                     break;
                 case TypeOfNumber.AlphaNumeric:
                     var unpacked = Gsm7.Unpack(data[1..].ToArray());
                     var decoded = Gsm7.DecodeFromBytes(unpacked);
                     return new PhoneNumberDTO(decoded);
+                case TypeOfNumber.Abbreviated:
+                    break;
+                case TypeOfNumber.ReservedForExtension:
+                    break;
                 default:
                     throw new NotImplementedException($"TON {ton} is not supported");
             }

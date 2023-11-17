@@ -135,9 +135,11 @@ namespace HeboTech.ATLib.TestConsole
                         break;
                     case ConsoleKey.Z:
                         {
+                            Console.WriteLine("Enter command:");
                             string rawCommand = Console.ReadLine();
+                            Console.WriteLine("Enter response:");
                             string rawResponse = Console.ReadLine();
-                            var rawStatus = await modem.RawCommandWithResponse(rawCommand, rawResponse);
+                            var rawStatus = await modem.RawCommandWithResponse(rawCommand.ToUpperInvariant(), rawResponse.ToUpperInvariant());
                             if (rawStatus.Success)
                                 Console.WriteLine($"Raw command status: {string.Join(',', rawStatus.Result)}");
                             else

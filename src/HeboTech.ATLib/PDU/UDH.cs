@@ -39,7 +39,7 @@ namespace HeboTech.ATLib.PDU
         }
     }
 
-    public class InformationElement
+    internal class InformationElement
     {
         public InformationElement(byte iei, byte length, byte[] data)
         {

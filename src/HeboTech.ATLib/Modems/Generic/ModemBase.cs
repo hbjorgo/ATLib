@@ -26,6 +26,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         protected readonly IAtChannel channel;
         private bool disposed;
+
         protected CurrentSmsTextFormat currentSmsTextFormat = CurrentSmsTextFormat.Unknown;
 
         public ModemBase(IAtChannel channel)
