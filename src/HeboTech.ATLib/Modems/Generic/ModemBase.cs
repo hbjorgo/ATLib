@@ -677,6 +677,12 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.IsSuccess(response.Success);
         }
 
+        public virtual async Task<ModemResponse> ResetToFactoryDefaults()
+        {
+            AtResponse response = await channel.SendCommand($"AT&F");
+            return ModemResponse.IsSuccess(response.Success);
+        }
+
         public virtual async Task<ModemResponse> RawCommand(string command)
         {
             AtResponse response = await channel.SendCommand(command);

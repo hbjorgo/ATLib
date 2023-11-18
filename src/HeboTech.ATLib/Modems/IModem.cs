@@ -183,6 +183,12 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat);
 
         /// <summary>
+        /// Resets the modem to factory defaults
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> ResetToFactoryDefaults();
+
+        /// <summary>
         /// Sends an SMS in text format
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>
