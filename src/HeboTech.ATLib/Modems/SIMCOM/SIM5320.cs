@@ -130,8 +130,8 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             string command = currentSmsTextFormat switch
             {
-                CurrentSmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"",
-                CurrentSmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus}",
+                SmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"",
+                SmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus}",
                 _ => throw new Exception("Unknown SMS Text Format")
             };
 
@@ -142,7 +142,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             {
                 switch (currentSmsTextFormat)
                 {
-                    case CurrentSmsTextFormat.PDU:
+                    case SmsTextFormat.PDU:
                         if ((response.Intermediates.Count % 2) != 0)
                             return ModemResponse.HasResultError<List<SmsWithIndex>>();
 
@@ -164,7 +164,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                             }
                         }
                         break;
-                    case CurrentSmsTextFormat.Text:
+                    case SmsTextFormat.Text:
                         if ((response.Intermediates.Count % 2) != 0)
                             return ModemResponse.HasResultError<List<SmsWithIndex>>();
 
@@ -199,8 +199,6 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                                 smss.Add(new SmsWithIndex(index, status, sender, received, message));
                             }
                         }
-                        break;
-                    case CurrentSmsTextFormat.Unknown:
                         break;
                     default:
                         break;

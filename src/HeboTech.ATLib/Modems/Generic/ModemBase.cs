@@ -17,21 +17,23 @@ namespace HeboTech.ATLib.Modems.Generic
 {
     public abstract class ModemBase : IDisposable
     {
-        protected enum CurrentSmsTextFormat
-        {
-            PDU = 0,
-            Text = 1,
-            Unknown
-        }
-
         protected readonly IAtChannel channel;
         private bool disposed;
 
-        protected CurrentSmsTextFormat currentSmsTextFormat = CurrentSmsTextFormat.Unknown;
+        protected SmsTextFormat? currentSmsTextFormat = null;
+        protected CharacterSet? currentCommCharacterSet = CharacterSet.Gsm7;
 
         public ModemBase(IAtChannel channel)
         {
             this.channel = channel;
+            channel.UnsolicitedEvent += Channel_UnsolicitedEvent;
+        }
+
+        public ModemBase(IAtChannel channel, CharacterSet currentCharacterSet, SmsTextFormat currentSmsTextFormat)
+        {
+            this.channel = channel;
+            this.currentSmsTextFormat = currentSmsTextFormat;
+            this.currentCommCharacterSet = currentCharacterSet;
             channel.UnsolicitedEvent += Channel_UnsolicitedEvent;
         }
 
@@ -68,7 +70,9 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             ModemResponse echo = await DisableEchoAsync();
             ModemResponse errorFormat = await SetErrorFormat(1);
-            return echo.Success && errorFormat.Success;
+            ModemResponse currentCharacterSet = await GetCurrentCharacterSetAsync();
+            ModemResponse currentSmsTextFormat = await GetSmsMessageFormatAsync();
+            return echo.Success && errorFormat.Success && currentCharacterSet.Success && currentSmsTextFormat.Success;
         }
 
         public virtual async Task<bool> SetRequiredSettingsAfterPinAsync()
@@ -152,21 +156,23 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasResultError<IEnumerable<string>>();
         }
 
-        public virtual async Task<ModemResponse<string>> GetCurrentCharacterSetAsync()
+        public virtual async Task<ModemResponse<CharacterSet>> GetCurrentCharacterSetAsync()
         {
             AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:");
 
             if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"""(?<characterSet>\w)""");
+                var match = Regex.Match(line, @"\+CSCS: ""(?<characterSet>\w+)""");
                 if (match.Success)
                 {
-                    string characterSet = match.Groups["characterSet"].Value;
+                    string characterSetString = match.Groups["characterSet"].Value;
+                    CharacterSet characterSet = CharacterSetHelpers.FromString(characterSetString);
+                    currentCommCharacterSet = characterSet;
                     return ModemResponse.IsResultSuccess(characterSet);
                 }
             }
-            return ModemResponse.HasResultError<string>();
+            return ModemResponse.HasResultError<CharacterSet>();
         }
 
         public virtual async Task<ModemResponse> SetCharacterSetAsync(string characterSet)
@@ -179,12 +185,32 @@ namespace HeboTech.ATLib.Modems.Generic
         #region _3GPP_TS_27_005
         public event EventHandler<SmsReceivedEventArgs> SmsReceived;
 
+        public virtual async Task<ModemResponse<SmsTextFormat>> GetSmsMessageFormatAsync()
+        {
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CMGF?", "+CMGF:");
+
+            if (response.Success)
+            {
+                string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
+                var match = Regex.Match(line, @"(?<mode>\d)");
+                if (match.Success)
+                {
+                    int mode = int.Parse(match.Groups["mode"].Value);
+                    SmsTextFormat smsTextFormat = (SmsTextFormat)mode;
+                    currentSmsTextFormat = smsTextFormat;
+                    return ModemResponse.IsResultSuccess(smsTextFormat);
+                }
+            }
+
+            return ModemResponse.HasResultError<SmsTextFormat>();
+        }
+
         public virtual async Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format)
         {
             AtResponse response = await channel.SendCommand($"AT+CMGF={(int)format}");
 
             if (response.Success)
-                currentSmsTextFormat = (CurrentSmsTextFormat)format;
+                currentSmsTextFormat = format;
 
             return ModemResponse.IsSuccess(response.Success);
         }
@@ -372,9 +398,9 @@ namespace HeboTech.ATLib.Modems.Generic
                         new PreferredMessageStorage(storage3Name, s3Used, s3Total)));
                 }
             }
-            
+
             if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                        return ModemResponse.HasResultError<PreferredMessageStorages>(error);
+                return ModemResponse.HasResultError<PreferredMessageStorages>(error);
             return ModemResponse.HasResultError<PreferredMessageStorages>();
         }
 
@@ -456,8 +482,8 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             string command = currentSmsTextFormat switch
             {
-                CurrentSmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"",
-                CurrentSmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus}",
+                SmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"",
+                SmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus}",
                 _ => throw new Exception("Unknown SMS Text Format")
             };
 
@@ -468,7 +494,7 @@ namespace HeboTech.ATLib.Modems.Generic
             {
                 switch (currentSmsTextFormat)
                 {
-                    case CurrentSmsTextFormat.PDU:
+                    case SmsTextFormat.PDU:
                         if ((response.Intermediates.Count % 2) != 0)
                             return ModemResponse.HasResultError<List<SmsWithIndex>>();
 
@@ -490,7 +516,7 @@ namespace HeboTech.ATLib.Modems.Generic
                             }
                         }
                         break;
-                    case CurrentSmsTextFormat.Text:
+                    case SmsTextFormat.Text:
                         if ((response.Intermediates.Count % 2) != 0)
                             return ModemResponse.HasResultError<List<SmsWithIndex>>();
 
@@ -525,8 +551,6 @@ namespace HeboTech.ATLib.Modems.Generic
                                 smss.Add(new SmsWithIndex(index, status, sender, received, message));
                             }
                         }
-                        break;
-                    case CurrentSmsTextFormat.Unknown:
                         break;
                     default:
                         break;

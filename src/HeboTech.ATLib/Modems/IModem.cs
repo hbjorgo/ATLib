@@ -109,7 +109,7 @@ namespace HeboTech.ATLib.Modems
         /// Gets the current character set
         /// </summary>
         /// <returns>Command status with character set</returns>
-        Task<ModemResponse<string>> GetCurrentCharacterSetAsync();
+        Task<ModemResponse<CharacterSet>> GetCurrentCharacterSetAsync();
 
         /// <summary>
         /// Gets the current date and time
