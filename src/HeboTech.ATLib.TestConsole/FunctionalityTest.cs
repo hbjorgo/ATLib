@@ -75,8 +75,6 @@ namespace HeboTech.ATLib.TestConsole
                 return;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
-
             for (int i = 0; i < 10; i++)
             {
                 var imsi = await modem.GetImsiAsync();
