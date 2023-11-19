@@ -17,16 +17,8 @@ namespace HeboTech.ATLib.Modems.Generic
 {
     public abstract class ModemBase : IDisposable
     {
-        protected enum CurrentSmsTextFormat
-        {
-            PDU = 0,
-            Text = 1,
-            Unknown
-        }
-
         protected readonly IAtChannel channel;
         private bool disposed;
-        protected CurrentSmsTextFormat currentSmsTextFormat = CurrentSmsTextFormat.Unknown;
 
         public ModemBase(IAtChannel channel)
         {
@@ -66,14 +58,15 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<bool> SetRequiredSettingsBeforePinAsync()
         {
             ModemResponse echo = await DisableEchoAsync();
-            ModemResponse errorFormat = await SetErrorFormat(1);
-            return echo.Success && errorFormat.Success;
+            ModemResponse errorFormat = await SetErrorFormatAsync(1);
+            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2);
+            ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU);
+            return echo.Success && errorFormat.Success && currentCharacterSet.Success && smsMessageFormat.Success;
         }
 
-        public virtual async Task<bool> SetRequiredSettingsAfterPinAsync()
+        public virtual Task<bool> SetRequiredSettingsAfterPinAsync()
         {
-            ModemResponse detailedTextModeResultCodes = await ShowSmsTextModeParameters(true);
-            return detailedTextModeResultCodes.Success;
+            return Task.FromResult(true);
         }
 
         public virtual async Task<ModemResponse<Imsi>> GetImsiAsync()
@@ -90,7 +83,8 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(new Imsi(imsi));
                 }
             }
-            return ModemResponse.HasResultError<Imsi>();
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<Imsi>(error);
         }
 
         public virtual async Task<ModemResponse> AnswerIncomingCallAsync()
@@ -132,7 +126,12 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<ModemResponse> HangupAsync()
         {
             AtResponse response = await channel.SendCommand($"AT+CHUP");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse<IEnumerable<string>>> GetAvailableCharacterSetsAsync()
@@ -148,47 +147,78 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(match.Groups["characterSet"].Captures.Select(x => x.Value));
                 }
             }
-            return ModemResponse.HasResultError<IEnumerable<string>>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<IEnumerable<string>>(error);
         }
 
-        public virtual async Task<ModemResponse<string>> GetCurrentCharacterSetAsync()
+        public virtual async Task<ModemResponse<CharacterSet>> GetCurrentCharacterSetAsync()
         {
             AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:");
 
             if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"""(?<characterSet>\w)""");
+                var match = Regex.Match(line, @"\+CSCS: ""(?<characterSet>\w+)""");
                 if (match.Success)
                 {
-                    string characterSet = match.Groups["characterSet"].Value;
+                    string characterSetString = match.Groups["characterSet"].Value;
+                    CharacterSet characterSet = CharacterSetHelpers.FromString(characterSetString);
                     return ModemResponse.IsResultSuccess(characterSet);
                 }
             }
-            return ModemResponse.HasResultError<string>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<CharacterSet>(error);
         }
 
-        public virtual async Task<ModemResponse> SetCharacterSetAsync(string characterSet)
+        public virtual async Task<ModemResponse> SetCharacterSetAsync(CharacterSet characterSet)
         {
-            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{characterSet}\"");
-            return ModemResponse.IsSuccess(response.Success);
+            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{CharacterSetHelpers.FromEnum(characterSet)}\"");
+            if (response.Success)
+            {
+                return ModemResponse.IsSuccess(response.Success);
+            }
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
         #endregion
 
         #region _3GPP_TS_27_005
         public event EventHandler<SmsReceivedEventArgs> SmsReceived;
 
+        public virtual async Task<ModemResponse<string>> GetSmsMessageFormatAsync()
+        {
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CMGF?", "+CMGF:");
+
+            if (response.Success)
+            {
+                string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
+                var match = Regex.Match(line, @"(?<mode>\d)");
+                if (match.Success)
+                {
+                    int mode = int.Parse(match.Groups["mode"].Value);
+                    return ModemResponse.IsResultSuccess(mode.ToString());
+                }
+            }
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<string>(error);
+        }
+
         public virtual async Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format)
         {
             AtResponse response = await channel.SendCommand($"AT+CMGF={(int)format}");
 
             if (response.Success)
-                currentSmsTextFormat = (CurrentSmsTextFormat)format;
+                return ModemResponse.IsSuccess(response.Success);
 
-            return ModemResponse.IsSuccess(response.Success);
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr)
+        public virtual async Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr)
         {
             if (mode < 0 || mode > 2)
                 throw new ArgumentOutOfRangeException(nameof(mode));
@@ -202,72 +232,21 @@ namespace HeboTech.ATLib.Modems.Generic
                 throw new ArgumentOutOfRangeException(nameof(bfr));
 
             AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}");
-            return ModemResponse.IsSuccess(response.Success);
-        }
-
-        public virtual async Task<ModemResponse<SmsReference>> SendSmsInTextFormatAsync(PhoneNumber phoneNumber, string message)
-        {
-            if (phoneNumber is null)
-                throw new ArgumentNullException(nameof(phoneNumber));
-            if (message is null)
-                throw new ArgumentNullException(nameof(message));
-
-            string cmd1 = $"AT+CMGS=\"{phoneNumber}\"";
-            string cmd2 = message;
-            AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:");
 
             if (response.Success)
-            {
-                string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                if (match.Success)
-                {
-                    int mr = int.Parse(match.Groups["mr"].Value);
-                    return ModemResponse.IsResultSuccess(new SmsReference(mr));
-                }
-            }
-            return ModemResponse.HasResultError<SmsReference>();
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
-        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message);
-
-        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, bool includeEmptySmscLength)
+        protected virtual Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, bool includeEmptySmscLength)
         {
-            if (phoneNumber is null)
-                throw new ArgumentNullException(nameof(phoneNumber));
-            if (message is null)
-                throw new ArgumentNullException(nameof(message));
-
-            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message) { IncludeEmptySmscLength = includeEmptySmscLength });
-            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
-            foreach (string pdu in pdus)
-            {
-                string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
-                string cmd2 = pdu;
-                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
-
-                if (response.Success)
-                {
-                    string line = response.Intermediates.First();
-                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                    if (match.Success)
-                    {
-                        int mr = int.Parse(match.Groups["mr"].Value);
-                        references.Add(ModemResponse.IsResultSuccess(new SmsReference(mr)));
-                    }
-                }
-                else
-                {
-                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                        references.Add(ModemResponse.HasResultError<SmsReference>(error));
-                }
-            }
-            return references;
+            CharacterSet characterSet = Gsm7.IsGsm7Compatible(message.ToCharArray()) ? CharacterSet.Gsm7 : CharacterSet.UCS2;
+            return SendSmsAsync(phoneNumber, message, characterSet, includeEmptySmscLength);
         }
 
-        public abstract Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
-
-        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme, bool includeEmptySmscLength)
+        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme, bool includeEmptySmscLength)
         {
             if (phoneNumber is null)
                 throw new ArgumentNullException(nameof(phoneNumber));
@@ -318,9 +297,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(new SupportedPreferredMessageStorages(s1Storages, s2Storages, s3Storages));
                 }
             }
-            if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                return ModemResponse.HasResultError<SupportedPreferredMessageStorages>(error);
-            return ModemResponse.HasResultError<SupportedPreferredMessageStorages>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<SupportedPreferredMessageStorages>(error);
         }
 
         public virtual async Task<ModemResponse<PreferredMessageStorages>> GetPreferredMessageStoragesAsync()
@@ -343,9 +322,9 @@ namespace HeboTech.ATLib.Modems.Generic
                         new PreferredMessageStorage((MessageStorage)s3Split[0].Trim('"'), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
                 }
             }
-            if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                return ModemResponse.HasResultError<PreferredMessageStorages>(error);
-            return ModemResponse.HasResultError<PreferredMessageStorages>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<PreferredMessageStorages>(error);
         }
 
         public virtual async Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(MessageStorage storage1Name, MessageStorage storage2Name, MessageStorage storage3Name)
@@ -371,163 +350,75 @@ namespace HeboTech.ATLib.Modems.Generic
                         new PreferredMessageStorage(storage3Name, s3Used, s3Total)));
                 }
             }
-            
-            if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                        return ModemResponse.HasResultError<PreferredMessageStorages>(error);
-            return ModemResponse.HasResultError<PreferredMessageStorages>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<PreferredMessageStorages>(error);
         }
 
-        public virtual async Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)
+        public virtual async Task<ModemResponse<Sms>> ReadSmsAsync(int index)
         {
-            switch (smsTextFormat)
-            {
-                case SmsTextFormat.PDU:
-                    AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
+            AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
-                    if (pduResponse.Success)
+            if (pduResponse.Success)
+            {
+                if (!pduResponse.Intermediates.Any())
+                    return ModemResponse.HasResultError<Sms>();
+
+                string line1 = pduResponse.Intermediates[0];
+                var line1Match = Regex.Match(line1, @"\+CMGR:\s(?<status>\d),(""(?<alpha>\w*)"")*,(?<length>\d+)");
+                if (line1Match.Success)
+                {
+                    int statusCode = int.Parse(line1Match.Groups["status"].Value);
+                    int length = int.Parse(line1Match.Groups["length"].Value);
+                    SmsStatus status = (SmsStatus)statusCode;
+
+                    if (length > 0)
                     {
-                        string line1 = pduResponse.Intermediates[0];
-                        var line1Match = Regex.Match(line1, @"\+CMGR:\s(?<status>\d),(""(?<alpha>\w*)"")*,(?<length>\d+)");
                         string line2 = pduResponse.Intermediates[1];
                         var line2Match = Regex.Match(line2, @"(?<status>[0-9A-Z]*)");
-                        if (line1Match.Success && line2Match.Success)
+                        if (line2Match.Success)
                         {
-                            int statusCode = int.Parse(line1Match.Groups["status"].Value);
-                            SmsStatus status = (SmsStatus)statusCode;
-
                             string pdu = line2Match.Groups["status"].Value;
                             SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());
 
-                            return ModemResponse.IsResultSuccess(new Sms(status, pduMessage.SenderNumber, pduMessage.Timestamp, pduMessage.Message));
-                        }
-                        if (AtErrorParsers.TryGetError(pduResponse.FinalResponse, out Error pduError))
-                            return ModemResponse.HasResultError<Sms>(pduError);
-                    }
-                    break;
-                case SmsTextFormat.Text:
-                    AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
-
-                    if (textResponse.Success && textResponse.Intermediates.Count > 0)
-                    {
-                        string line = textResponse.Intermediates.First();
-                        var match = Regex.Match(line, @"\+CMGR:\s""(?<status>[A-Z\s]+)"",""(?<sender>\+\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<tpduFirstOctet>\d),(?<pid>\d),(?<dcs>\d),(?<serviceCenterAddress>""\+\d+""),(?<serviceCenterAddressType>\d+),(?<length>\d+)");
-                        if (match.Success)
-                        {
-                            SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                            PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
-                            int year = int.Parse(match.Groups["year"].Value);
-                            int month = int.Parse(match.Groups["month"].Value);
-                            int day = int.Parse(match.Groups["day"].Value);
-                            int hour = int.Parse(match.Groups["hour"].Value);
-                            int minute = int.Parse(match.Groups["minute"].Value);
-                            int second = int.Parse(match.Groups["second"].Value);
-                            int zone = int.Parse(match.Groups["zone"].Value);
-
-                            int addressType = int.Parse(match.Groups["addressType"].Value);
-                            int tpduFirstOctet = int.Parse(match.Groups["tpduFirstOctet"].Value);
-                            int protocolIdentifier = int.Parse(match.Groups["pid"].Value);
-                            int dataCodingScheme = int.Parse(match.Groups["dcs"].Value);
-                            string serviceCenterAddress = match.Groups["serviceCenterAddress"].Value;
-                            int serviceCenterAddressType = int.Parse(match.Groups["serviceCenterAddressType"].Value);
-                            int length = int.Parse(match.Groups["length"].Value);
-
-                            DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-                            string message = textResponse.Intermediates.Last();
-
-                            CodingScheme dcs = (CodingScheme)dataCodingScheme;
-                            if (dcs == CodingScheme.UCS2)
-                                message = UCS2.Decode(message);
-
-                            return ModemResponse.IsResultSuccess(new Sms(status, sender, received, message));
+                            return ModemResponse.IsResultSuccess(pduMessage.ToSms(status));
                         }
                     }
-                    if (AtErrorParsers.TryGetError(textResponse.FinalResponse, out Error textError))
-                        return ModemResponse.HasResultError<Sms>(textError);
-                    break;
-                default:
-                    throw new NotSupportedException("The format is not supported");
+                }
             }
-            return ModemResponse.HasResultError<Sms>();
+
+            AtErrorParsers.TryGetError(pduResponse.FinalResponse, out Error pduError);
+            return ModemResponse.HasResultError<Sms>(pduError);
         }
 
         public virtual async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
         {
-            string command = currentSmsTextFormat switch
-            {
-                CurrentSmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"",
-                CurrentSmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus}",
-                _ => throw new Exception("Unknown SMS Text Format")
-            };
+            string command = $"AT+CMGL={(int)smsStatus}";
 
             AtResponse response = await channel.SendMultilineCommand(command, null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
             {
-                switch (currentSmsTextFormat)
+                if ((response.Intermediates.Count % 2) != 0)
+                    return ModemResponse.HasResultError<List<SmsWithIndex>>();
+
+                for (int i = 0; i < response.Intermediates.Count; i += 2)
                 {
-                    case CurrentSmsTextFormat.PDU:
-                        if ((response.Intermediates.Count % 2) != 0)
-                            return ModemResponse.HasResultError<List<SmsWithIndex>>();
+                    string metaDataLine = response.Intermediates[i];
+                    string messageLine = response.Intermediates[i + 1];
+                    var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),,(?<length>\d+)");
+                    if (match.Success)
+                    {
+                        int index = int.Parse(match.Groups["index"].Value);
+                        SmsStatus status = (SmsStatus)int.Parse(match.Groups["status"].Value);
 
-                        for (int i = 0; i < response.Intermediates.Count; i += 2)
-                        {
-                            string metaDataLine = response.Intermediates[i];
-                            string messageLine = response.Intermediates[i + 1];
-                            var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),,(?<length>\d+)");
-                            if (match.Success)
-                            {
-                                int index = int.Parse(match.Groups["index"].Value);
-                                SmsStatus status = (SmsStatus)int.Parse(match.Groups["status"].Value);
+                        // Sent when AT+CSDH=1 is set
+                        int length = int.Parse(match.Groups["length"].Value);
 
-                                // Sent when AT+CSDH=1 is set
-                                int length = int.Parse(match.Groups["length"].Value);
-
-                                SmsDeliver sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
-                                smss.Add(new SmsWithIndex(index, status, sms.SenderNumber, sms.Timestamp, sms.Message));
-                            }
-                        }
-                        break;
-                    case CurrentSmsTextFormat.Text:
-                        if ((response.Intermediates.Count % 2) != 0)
-                            return ModemResponse.HasResultError<List<SmsWithIndex>>();
-
-                        for (int i = 0; i < response.Intermediates.Count; i += 2)
-                        {
-                            string metaDataLine = response.Intermediates[i];
-                            string messageLine = response.Intermediates[i + 1];
-                            var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+*\d+)"",,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<length>\d+)");
-                            if (match.Success)
-                            {
-                                int index = int.Parse(match.Groups["index"].Value);
-                                SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                                PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
-                                int year = int.Parse(match.Groups["year"].Value);
-                                int month = int.Parse(match.Groups["month"].Value);
-                                int day = int.Parse(match.Groups["day"].Value);
-                                int hour = int.Parse(match.Groups["hour"].Value);
-                                int minute = int.Parse(match.Groups["minute"].Value);
-                                int second = int.Parse(match.Groups["second"].Value);
-                                int zone = int.Parse(match.Groups["zone"].Value);
-
-                                // Sent when AT+CSDH=1 is set
-                                int addressType = int.Parse(match.Groups["addressType"].Value);
-                                int dataLength = int.Parse(match.Groups["length"].Value);
-
-                                DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-
-                                string message = messageLine;
-                                if (messageLine.Length != dataLength)
-                                    message = UCS2.Decode(messageLine);
-
-                                smss.Add(new SmsWithIndex(index, status, sender, received, message));
-                            }
-                        }
-                        break;
-                    case CurrentSmsTextFormat.Unknown:
-                        break;
-                    default:
-                        break;
+                        SmsDeliver sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
+                        smss.Add(sms.ToSmsWithIndex(index, status));
+                    }
                 }
             }
             return ModemResponse.IsResultSuccess(smss);
@@ -536,7 +427,12 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<ModemResponse> DeleteSmsAsync(int index)
         {
             AtResponse response = await channel.SendCommand($"AT+CMGD={index}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
         #endregion
 
@@ -569,13 +465,19 @@ namespace HeboTech.ATLib.Modems.Generic
                 };
             }
 
-            return ModemResponse.HasResultError<SimStatus>();
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<SimStatus>(error);
         }
 
         public virtual async Task<ModemResponse> EnterSimPinAsync(PersonalIdentificationNumber pin)
         {
             AtResponse response = await channel.SendCommand($"AT+CPIN={pin}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<SimStatus>(error);
         }
 
         public virtual async Task<ModemResponse<SignalStrength>> GetSignalStrengthAsync()
@@ -593,7 +495,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(new SignalStrength(PowerRatio.FromDecibelMilliwatts(rssi), Ratio.FromPercent(ber)));
                 }
             }
-            return ModemResponse.HasResultError<SignalStrength>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<SignalStrength>(error);
         }
 
         public virtual async Task<ModemResponse<BatteryStatus>> GetBatteryStatusAsync()
@@ -611,7 +515,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(new BatteryStatus((BatteryChargeStatus)bcs, Ratio.FromPercent(bcl)));
                 }
             }
-            return ModemResponse.HasResultError<BatteryStatus>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<BatteryStatus>(error);
         }
 
         public virtual async Task<ModemResponse> SetDateTimeAsync(DateTimeOffset value)
@@ -622,7 +528,12 @@ namespace HeboTech.ATLib.Modems.Generic
             sb.Append(offsetQuarters.ToString("+00;-#", CultureInfo.InvariantCulture));
             sb.Append("\"");
             AtResponse response = await channel.SendCommand(sb.ToString());
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse<DateTimeOffset>> GetDateTimeAsync()
@@ -653,27 +564,111 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(time);
                 }
             }
-            return ModemResponse.HasResultError<DateTimeOffset>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<DateTimeOffset>(error);
         }
 
         public virtual async Task<ModemResponse> SendUssdAsync(string code, int codingScheme = 15)
         {
             AtResponse response = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
         #endregion
 
-        public virtual async Task<ModemResponse> SetErrorFormat(int errorFormat)
+        public virtual async Task<ModemResponse> SetErrorFormatAsync(int errorFormat)
         {
             AtResponse response = await channel.SendCommand($"AT+CMEE={errorFormat}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> ShowSmsTextModeParameters(bool activate)
+        public virtual async Task<ModemResponse> ShowSmsTextModeParametersAsync(bool activate)
         {
-
             AtResponse response = await channel.SendCommand($"AT+CSDH={(activate ? "1" : "0")}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
+        }
+
+        public virtual async Task<ModemResponse> ResetToFactoryDefaultsAsync()
+        {
+            AtResponse response = await channel.SendCommand($"AT&F");
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
+        }
+
+        public virtual async Task<ModemResponse> RawCommandAsync(string command)
+        {
+            AtResponse response = await channel.SendCommand(command);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
+        }
+
+        public virtual async Task<ModemResponse<List<string>>> RawCommandWithResponseAsync(string command, string responsePrefix)
+        {
+            AtResponse response = await channel.SendSingleLineCommandAsync(command, responsePrefix);
+
+            if (response.Success)
+                return ModemResponse.IsResultSuccess(response.Intermediates);
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<List<string>>(error);
+        }
+
+        public virtual async Task<ModemResponse> RestoreUserSettingsAsync()
+        {
+            AtResponse response = await channel.SendCommand("ATZ0");
+
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
+        }
+
+        public virtual async Task<ModemResponse> SaveUserSettingsAsync()
+        {
+            AtResponse response = await channel.SendCommand("AT&W0");
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
+        }
+
+        public virtual async Task<ModemResponse> ResetUserSettingsAsync()
+        {
+            AtResponse response = await channel.SendCommand("AT&F0");
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public void Close()

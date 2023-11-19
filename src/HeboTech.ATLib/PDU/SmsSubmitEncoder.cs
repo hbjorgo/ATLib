@@ -31,7 +31,7 @@ namespace HeboTech.ATLib.PDU
         // TP-PID Protocol identifier
         protected byte pi;
         // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
-        protected CodingScheme dcs;
+        protected CharacterSet dcs;
         // TP-Validity-Period. 'AA'-4 days
         protected List<byte> vp = new List<byte>();
         // Message
@@ -191,7 +191,7 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="value"></param>
         /// <returns></returns>
-        protected SmsSubmitEncoder Message(string message, CodingScheme dataCodingScheme, byte messageReferenceNumber)
+        protected SmsSubmitEncoder Message(string message, CharacterSet dataCodingScheme, byte messageReferenceNumber)
         {
             dcs = dataCodingScheme;
             partitionedMessage = CreateMessageParts(message, dataCodingScheme, messageReferenceNumber);
@@ -219,7 +219,7 @@ namespace HeboTech.ATLib.PDU
 
                 switch (dcs)
                 {
-                    case CodingScheme.Gsm7:
+                    case CharacterSet.Gsm7:
                         int fillBits = 0;
                         if (UserDataHeaderIndicatorIsSet)
                             fillBits = 7 - ((part.Header.Length * 8) % 7);
@@ -234,7 +234,7 @@ namespace HeboTech.ATLib.PDU
                         sb.Append(string.Join("", part.Header.Select(x => x.ToString("X2"))));
                         sb.Append(string.Join("", encoded.Select(x => x.ToString("X2"))));
                         break;
-                    case CodingScheme.UCS2:
+                    case CharacterSet.UCS2:
                         var ucs2Bytes = UCS2.EncodeToBytes(part.Data.ToArray());
                         sb.Append((part.Header.Length + ucs2Bytes.Length).ToString("X2"));
                         sb.Append(string.Join("", part.Header.Select(x => x.ToString("X2"))));
@@ -248,7 +248,7 @@ namespace HeboTech.ATLib.PDU
             }
         }
 
-        protected static Message CreateMessageParts(string message, CodingScheme dcs, byte messageReferenceNumber)
+        protected static Message CreateMessageParts(string message, CharacterSet dcs, byte messageReferenceNumber)
         {
             if (message == null)
                 throw new ArgumentNullException(nameof(message));
@@ -257,11 +257,11 @@ namespace HeboTech.ATLib.PDU
             int maxSingleMessageSize;
             switch (dcs)
             {
-                case CodingScheme.Gsm7:
+                case CharacterSet.Gsm7:
                     maxSingleMessageSize = MAX_SINGLE_MESSAGE_SIZE_GSM7;
                     maxMessagePartSize = MAX_MESSAGE_PART_SIZE_GSM7;
                     break;
-                case CodingScheme.UCS2:
+                case CharacterSet.UCS2:
                     maxSingleMessageSize = MAX_SINGLE_MESSAGE_SIZE_UCS2;
                     maxMessagePartSize = MAX_MESSAGE_PART_SIZE_UCS2;
                     break;

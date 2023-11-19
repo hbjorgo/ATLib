@@ -109,7 +109,7 @@ namespace HeboTech.ATLib.Modems
         /// Gets the current character set
         /// </summary>
         /// <returns>Command status with character set</returns>
-        Task<ModemResponse<string>> GetCurrentCharacterSetAsync();
+        Task<ModemResponse<CharacterSet>> GetCurrentCharacterSetAsync();
 
         /// <summary>
         /// Gets the current date and time
@@ -180,15 +180,13 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="index"></param>
         /// <returns>Command status with SMS</returns>
-        Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat);
+        Task<ModemResponse<Sms>> ReadSmsAsync(int index);
 
         /// <summary>
-        /// Sends an SMS in text format
+        /// Resets the modem to factory defaults
         /// </summary>
-        /// <param name="phoneNumber">The number to send to</param>
-        /// <param name="message">The message body</param>
-        /// <returns>Command status with SMS reference</returns>
-        Task<ModemResponse<SmsReference>> SendSmsInTextFormatAsync(PhoneNumber phoneNumber, string message);
+        /// <returns>Command status</returns>
+        Task<ModemResponse> ResetToFactoryDefaultsAsync();
 
         /// <summary>
         /// Sends an SMS in PDU format. This will automatically select the Data Coding Scheme that will result in the fewest messages being sent in case of a concatenated SMS based on the content of the message.
@@ -196,7 +194,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="phoneNumber">The number to send to</param>
         /// <param name="message">The message body</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message);
+        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message);
 
         /// <summary>
         /// Sends an SMS in PDU format
@@ -205,7 +203,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="message">The message body</param>
         /// <param name="codingScheme">Encoding to use</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CodingScheme codingScheme);
+        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme = CharacterSet.UCS2);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event
@@ -218,9 +216,9 @@ namespace HeboTech.ATLib.Modems
         /// <summary>
         /// Sets the current character set. Get available character sets to see the supported sets
         /// </summary>
-        /// <param name="characterSet"></param>
+        /// <param name="characterSet">The character set</param>
         /// <returns>Command status</returns>
-        Task<ModemResponse> SetCharacterSetAsync(string characterSet);
+        Task<ModemResponse> SetCharacterSetAsync(CharacterSet characterSet);
 
         /// <summary>
         /// Sets the current date and time
@@ -234,7 +232,7 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="errorFormat">Typical: 0 (disable), 1 (numeric), 2 (verbose)</param>
         /// <returns>Command status</returns>
-        Task<ModemResponse> SetErrorFormat(int errorFormat);
+        Task<ModemResponse> SetErrorFormatAsync(int errorFormat);
 
         /// <summary>
         /// Sets how receiving a new SMS is indicated
@@ -245,7 +243,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="ds">ds</param>
         /// <param name="bfr">bfr</param>
         /// <returns>Command status</returns>
-        Task<ModemResponse> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr);
+        Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr);
 
         /// <summary>
         /// Sets settings required for correct operation after PIN is entered.
@@ -260,17 +258,43 @@ namespace HeboTech.ATLib.Modems
         Task<bool> SetRequiredSettingsBeforePinAsync();
 
         /// <summary>
-        /// Sets the input and output format of SMSs. Currently, only Text is supported and must be set before sending SMSs
-        /// </summary>
-        /// <param name="format">The format</param>
-        /// <returns>Command status</returns>
-        Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format);
-
-        /// <summary>
         /// Sets whether or not detailed header information is shown in text mode result codes
         /// </summary>
         /// <param name="activate">True to activate, false to deactivate</param>
         /// <returns>Command status</returns>
-        Task<ModemResponse> ShowSmsTextModeParameters(bool activate);
+        Task<ModemResponse> ShowSmsTextModeParametersAsync(bool activate);
+
+        /// <summary>
+        /// Send raw command with no response (except from 'OK'/'ERROR')
+        /// </summary>
+        /// <param name="command">Command to send</param>
+        /// <returns>Command response</returns>
+        Task<ModemResponse> RawCommandAsync(string command);
+
+        /// <summary>
+        /// Send raw command with expected response (e.g. ''+CBC:')
+        /// </summary>
+        /// <param name="command">Command to send</param>
+        /// <param name="responsePrefix">Expected response</param>
+        /// <returns>Command response</returns>
+        Task<ModemResponse<List<string>>> RawCommandWithResponseAsync(string command, string responsePrefix);
+
+        /// <summary>
+        /// Restore user settings
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> RestoreUserSettingsAsync();
+
+        /// <summary>
+        /// Save user settings
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> SaveUserSettingsAsync();
+
+        /// <summary>
+        /// Reset user settings to factory defaults
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> ResetUserSettingsAsync();
     }
 }

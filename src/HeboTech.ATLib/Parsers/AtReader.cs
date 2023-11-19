@@ -66,8 +66,7 @@ namespace HeboTech.ATLib.Parsers
                 }
                 ReadOnlySequence<byte> buffer = result.Buffer;
 
-                string line;
-                while (TryReadLine(ref buffer, out line))
+                while (TryReadLine(ref buffer, out string line))
                 {
                     try
                     {

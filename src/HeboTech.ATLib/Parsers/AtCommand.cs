@@ -2,7 +2,7 @@
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtCommand
+    internal class AtCommand
     {
         public AtCommand(AtCommandType commandType, string command, string responsePrefix, string smsPdu, TimeSpan timeout)
         {

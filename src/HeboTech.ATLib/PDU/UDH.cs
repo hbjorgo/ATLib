@@ -3,14 +3,14 @@ using System.Collections.Generic;
 
 namespace HeboTech.ATLib.PDU
 {
-    public enum IEI : byte
+    internal enum IEI : byte
     {
         ConcatenatedShortMessages = 0x00,
         //NationalLanguageSingleShift = 0x24,
         //NationalLanguageLockingShift = 0x25,
     }
 
-    public class Udh
+    internal class Udh
     {
         private Udh(byte length, IEnumerable<InformationElement> informationElements)
         {
@@ -30,7 +30,7 @@ namespace HeboTech.ATLib.PDU
             {
                 byte iei = data[i];
                 byte length = data[i + 1];
-                ReadOnlySpan<byte> payload = data[(i + 1)..(i + 1 + length)];
+                ReadOnlySpan<byte> payload = data[(i + 2)..(i + 2 + length)];
                 informationElements.Add(new InformationElement(iei, length, payload.ToArray()));
                 i += 2 + length;
             }
@@ -39,7 +39,7 @@ namespace HeboTech.ATLib.PDU
         }
     }
 
-    public class InformationElement
+    internal class InformationElement
     {
         public InformationElement(byte iei, byte length, byte[] data)
         {

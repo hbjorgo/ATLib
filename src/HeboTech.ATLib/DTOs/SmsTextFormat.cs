@@ -3,6 +3,6 @@
     public enum SmsTextFormat
     {
         PDU = 0,
-        Text = 1
+        //Text = 1
     }
 }

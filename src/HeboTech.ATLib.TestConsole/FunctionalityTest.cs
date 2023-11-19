@@ -1,12 +1,11 @@
-﻿using HeboTech.ATLib.CodingSchemes;
-using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
-using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.Cinterion;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -15,9 +14,6 @@ namespace HeboTech.ATLib.TestConsole
     {
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
-            SmsTextFormat smsTextFormat = SmsTextFormat.PDU;
-            CodingScheme smsCodingScheme = CodingScheme.UCS2;
-
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
             using IMC55i modem = new MC55i(atChannel);
@@ -36,12 +32,9 @@ namespace HeboTech.ATLib.TestConsole
             // Configure modem with required settings before PIN
             var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
             Console.WriteLine($"Successfully set required settings before PIN: {requiredSettingsBeforePin}");
-            await Task.Delay(TimeSpan.FromSeconds(2));
 
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
-
-            //await modem.ReInitializeSimAsync();
 
             simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
@@ -60,7 +53,7 @@ namespace HeboTech.ATLib.TestConsole
                     Console.WriteLine($"SIM Status: {simStatus}");
                     if (simStatus.Success && simStatus.Result == SimStatus.SIM_READY)
                         break;
-                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(2));
                 }
             }
             else
@@ -69,23 +62,18 @@ namespace HeboTech.ATLib.TestConsole
                 return;
             }
 
-            await Task.Delay(TimeSpan.FromSeconds(2));
-
             for (int i = 0; i < 10; i++)
             {
                 var imsi = await modem.GetImsiAsync();
                 Console.WriteLine($"IMSI: {imsi}");
                 if (imsi.Success)
                     break;
-                await Task.Delay(TimeSpan.FromMilliseconds(1000));
+                await Task.Delay(TimeSpan.FromSeconds(1));
             }
 
             // Configure modem with required settings after PIN
             var requiredSettingsAfterPin = await modem.SetRequiredSettingsAfterPinAsync();
             Console.WriteLine($"Successfully set required settings after PIN: {requiredSettingsAfterPin}");
-
-            var smsMessageFormat = await modem.SetSmsMessageFormatAsync(smsTextFormat);
-            Console.WriteLine($"Setting SMS message format: {smsMessageFormat}");
 
             var signalStrength = await modem.GetSignalStrengthAsync();
             Console.WriteLine($"Signal Strength: {signalStrength}");
@@ -93,8 +81,13 @@ namespace HeboTech.ATLib.TestConsole
             var batteryStatus = await modem.GetBatteryStatusAsync();
             Console.WriteLine($"Battery Status: {batteryStatus}");
 
-            //var mc55iBatteryStatus = await modem.MC55i_GetBatteryStatusAsync();
-            //Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
+            {
+                if (modem is IMC55i mc55i)
+                {
+                    var mc55iBatteryStatus = await mc55i.MC55i_GetBatteryStatusAsync();
+                    Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
+                }
+            }
 
             var productInfo = await modem.GetProductIdentificationInformationAsync();
             Console.WriteLine($"Product Information:{Environment.NewLine}{productInfo}");
@@ -105,7 +98,8 @@ namespace HeboTech.ATLib.TestConsole
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
 
-            var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 1);
+
+            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 0, 1);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
             var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();
@@ -115,7 +109,7 @@ namespace HeboTech.ATLib.TestConsole
             var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.SM, MessageStorage.SM, MessageStorage.SM);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
-            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'u' to send USSD code, '+' to enable debug, '-' to disable debug and 'q' to exit...");
+            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'u' to send USSD code, 'x' to send raw command, 'z' to send raw command with response, '+' to enable debug, '-' to disable debug and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
             {
@@ -125,6 +119,26 @@ namespace HeboTech.ATLib.TestConsole
                     case ConsoleKey.A:
                         var answerStatus = await modem.AnswerIncomingCallAsync();
                         Console.WriteLine($"Answer Status: {answerStatus}");
+                        break;
+                    case ConsoleKey.X:
+                        {
+                            string rawCommand = Console.ReadLine();
+                            var rawStatus = await modem.RawCommandAsync(rawCommand);
+                            Console.WriteLine($"Raw command status: {rawStatus}");
+                        }
+                        break;
+                    case ConsoleKey.Z:
+                        {
+                            Console.WriteLine("Enter command:");
+                            string rawCommand = Console.ReadLine();
+                            Console.WriteLine("Enter response:");
+                            string rawResponse = Console.ReadLine();
+                            var rawStatus = await modem.RawCommandWithResponseAsync(rawCommand.ToUpperInvariant(), rawResponse.ToUpperInvariant());
+                            if (rawStatus.Success)
+                                Console.WriteLine($"Raw command status: {string.Join(',', rawStatus.Result)}");
+                            else
+                                Console.WriteLine($"Raw command status: {rawStatus}");
+                        }
                         break;
                     case ConsoleKey.D:
                         {
@@ -150,31 +164,16 @@ namespace HeboTech.ATLib.TestConsole
                             string smsMessage = Console.ReadLine();
 
                             Console.WriteLine("Sending SMS...");
-                            switch (smsTextFormat)
-                            {
-                                case SmsTextFormat.PDU:
-                                    IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsInPduFormatAsync(phoneNumber, smsMessage, smsCodingScheme);
-                                    foreach (var smsReference in smsReferences)
-                                        Console.WriteLine($"SMS Reference: {smsReference}");
-                                    break;
-                                case SmsTextFormat.Text:
-                                    {
-                                        ModemResponse<SmsReference> smsReference = await modem.SendSmsInTextFormatAsync(new PhoneNumber(phoneNumberString), smsMessage);
-                                        if (smsReference is not null)
-                                            Console.WriteLine($"SMS Reference: {smsReference}");
-                                    }
-                                    break;
-                                default:
-                                    Console.WriteLine("Unsupported SMS text format");
-                                    break;
-                            }
+                            IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsAsync(phoneNumber, smsMessage);
+                            foreach (var smsReference in smsReferences)
+                                Console.WriteLine($"SMS Reference: {smsReference}");
+                            break;
                         }
-                        break;
                     case ConsoleKey.R:
                         Console.WriteLine("Enter SMS index:");
                         if (int.TryParse(Console.ReadLine(), out int smsIndex))
                         {
-                            var sms = await modem.ReadSmsAsync(smsIndex, smsTextFormat);
+                            var sms = await modem.ReadSmsAsync(smsIndex);
                             Console.WriteLine(sms);
                         }
                         else
@@ -189,9 +188,13 @@ namespace HeboTech.ATLib.TestConsole
                     case ConsoleKey.L:
                         Console.WriteLine("List all SMSs:");
                         var smss = await modem.ListSmssAsync(SmsStatus.ALL);
-                        if (smss.Success)
+                        if (smss.Success && smss.Result.Any())
+                        {
                             foreach (var sms in smss.Result)
-                                Console.WriteLine($"SMS: {sms}");
+                                Console.WriteLine($"------------------------------------------------{Environment.NewLine}{sms}");
+                            Console.WriteLine($"------------------------------------------------");
+                        }
+
                         break;
                     case ConsoleKey.OemPlus:
                         atChannel.EnableDebug((string line) => Console.WriteLine(line));

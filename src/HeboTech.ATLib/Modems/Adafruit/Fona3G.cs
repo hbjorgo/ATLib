@@ -1,14 +1,8 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
-using HeboTech.ATLib.PDU;
-using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System;
-using System.Linq;
 
 namespace HeboTech.ATLib.Modems.Adafruit
 {
@@ -23,6 +17,20 @@ namespace HeboTech.ATLib.Modems.Adafruit
         public Fona3G(IAtChannel channel)
             : base(channel)
         {
+        }
+
+        public override async Task<bool> SetRequiredSettingsBeforePinAsync()
+        {
+            ModemResponse echo = await DisableEchoAsync();
+            ModemResponse errorFormat = await SetErrorFormatAsync(1);
+            return echo.Success && errorFormat.Success;
+        }
+
+        public override async Task<bool> SetRequiredSettingsAfterPinAsync()
+        {
+            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2);
+            ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU);
+            return currentCharacterSet.Success && smsMessageFormat.Success;
         }
 
         //public override async Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)
