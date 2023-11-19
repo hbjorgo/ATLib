@@ -264,7 +264,37 @@ namespace HeboTech.ATLib.Modems
         /// <returns>Command status</returns>
         Task<ModemResponse> ShowSmsTextModeParameters(bool activate);
 
+        /// <summary>
+        /// Send raw command with no response (except from 'OK'/'ERROR')
+        /// </summary>
+        /// <param name="command">Command to send</param>
+        /// <returns>Command response</returns>
         Task<ModemResponse> RawCommand(string command);
+
+        /// <summary>
+        /// Send raw command with expected response (e.g. ''+CBC:')
+        /// </summary>
+        /// <param name="command">Command to send</param>
+        /// <param name="responsePrefix">Expected response</param>
+        /// <returns>Command response</returns>
         Task<ModemResponse<List<string>>> RawCommandWithResponse(string command, string responsePrefix);
+
+        /// <summary>
+        /// Restore user settings
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> RestoreUserSettings();
+
+        /// <summary>
+        /// Save user settings
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> SaveUserSettings();
+
+        /// <summary>
+        /// Reset user settings to factory defaults
+        /// </summary>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> ResetUserSettings();
     }
 }

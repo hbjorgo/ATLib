@@ -127,7 +127,8 @@ namespace HeboTech.ATLib.Modems.Cinterion
                     return ModemResponse.IsResultSuccess(new BatteryStatus((BatteryChargeStatus)bcs, Ratio.FromPercent(bcl)));
                 }
             }
-            return ModemResponse.HasResultError<BatteryStatus>();
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<BatteryStatus>(error);
         }
 
         public async Task<ModemResponse<MC55iBatteryStatus>> MC55i_GetBatteryStatusAsync()
@@ -146,7 +147,9 @@ namespace HeboTech.ATLib.Modems.Cinterion
                     return ModemResponse.IsResultSuccess(new MC55iBatteryStatus(new ElectricCurrent(mpc, ElectricCurrentUnit.Milliampere)));
                 }
             }
-            return ModemResponse.HasResultError<MC55iBatteryStatus>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<MC55iBatteryStatus>(error);
         }
     }
 }

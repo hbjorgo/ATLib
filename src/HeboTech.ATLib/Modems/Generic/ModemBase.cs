@@ -83,7 +83,8 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(new Imsi(imsi));
                 }
             }
-            return ModemResponse.HasResultError<Imsi>();
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<Imsi>(error);
         }
 
         public virtual async Task<ModemResponse> AnswerIncomingCallAsync()
@@ -125,7 +126,12 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<ModemResponse> HangupAsync()
         {
             AtResponse response = await channel.SendCommand($"AT+CHUP");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse<IEnumerable<string>>> GetAvailableCharacterSetsAsync()
@@ -141,7 +147,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(match.Groups["characterSet"].Captures.Select(x => x.Value));
                 }
             }
-            return ModemResponse.HasResultError<IEnumerable<string>>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<IEnumerable<string>>(error);
         }
 
         public virtual async Task<ModemResponse<CharacterSet>> GetCurrentCharacterSetAsync()
@@ -160,7 +168,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(characterSet);
                 }
             }
-            return ModemResponse.HasResultError<CharacterSet>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<CharacterSet>(error);
         }
 
         public virtual async Task<ModemResponse> SetCharacterSetAsync(CharacterSet characterSet)
@@ -172,7 +182,8 @@ namespace HeboTech.ATLib.Modems.Generic
                 return ModemResponse.IsSuccess(response.Success);
             }
 
-            return ModemResponse.HasError();
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
         #endregion
 
@@ -194,15 +205,19 @@ namespace HeboTech.ATLib.Modems.Generic
                 }
             }
 
-            return ModemResponse.HasResultError<string>();
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<string>(error);
         }
 
         public virtual async Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format)
         {
             AtResponse response = await channel.SendCommand($"AT+CMGF={(int)format}");
+
             if (response.Success)
                 return ModemResponse.IsSuccess(response.Success);
-            return ModemResponse.HasError();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr)
@@ -219,7 +234,12 @@ namespace HeboTech.ATLib.Modems.Generic
                 throw new ArgumentOutOfRangeException(nameof(bfr));
 
             AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, bool includeEmptySmscLength)
@@ -307,9 +327,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(new SupportedPreferredMessageStorages(s1Storages, s2Storages, s3Storages));
                 }
             }
-            if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                return ModemResponse.HasResultError<SupportedPreferredMessageStorages>(error);
-            return ModemResponse.HasResultError<SupportedPreferredMessageStorages>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<SupportedPreferredMessageStorages>(error);
         }
 
         public virtual async Task<ModemResponse<PreferredMessageStorages>> GetPreferredMessageStoragesAsync()
@@ -332,9 +352,9 @@ namespace HeboTech.ATLib.Modems.Generic
                         new PreferredMessageStorage((MessageStorage)s3Split[0].Trim('"'), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
                 }
             }
-            if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                return ModemResponse.HasResultError<PreferredMessageStorages>(error);
-            return ModemResponse.HasResultError<PreferredMessageStorages>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<PreferredMessageStorages>(error);
         }
 
         public virtual async Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(MessageStorage storage1Name, MessageStorage storage2Name, MessageStorage storage3Name)
@@ -361,9 +381,8 @@ namespace HeboTech.ATLib.Modems.Generic
                 }
             }
 
-            if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                return ModemResponse.HasResultError<PreferredMessageStorages>(error);
-            return ModemResponse.HasResultError<PreferredMessageStorages>();
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<PreferredMessageStorages>(error);
         }
 
         public virtual async Task<ModemResponse<Sms>> ReadSmsAsync(int index)
@@ -393,11 +412,10 @@ namespace HeboTech.ATLib.Modems.Generic
                         }
                     }
                 }
-                if (AtErrorParsers.TryGetError(pduResponse.FinalResponse, out Error pduError))
-                    return ModemResponse.HasResultError<Sms>(pduError);
             }
 
-            return ModemResponse.HasResultError<Sms>();
+            AtErrorParsers.TryGetError(pduResponse.FinalResponse, out Error pduError);
+            return ModemResponse.HasResultError<Sms>(pduError);
         }
 
         public virtual async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
@@ -436,7 +454,12 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<ModemResponse> DeleteSmsAsync(int index)
         {
             AtResponse response = await channel.SendCommand($"AT+CMGD={index}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
         #endregion
 
@@ -469,7 +492,8 @@ namespace HeboTech.ATLib.Modems.Generic
                 };
             }
 
-            return ModemResponse.HasResultError<SimStatus>();
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<SimStatus>(error);
         }
 
         public virtual async Task<ModemResponse> EnterSimPinAsync(PersonalIdentificationNumber pin)
@@ -493,7 +517,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(new SignalStrength(PowerRatio.FromDecibelMilliwatts(rssi), Ratio.FromPercent(ber)));
                 }
             }
-            return ModemResponse.HasResultError<SignalStrength>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<SignalStrength>(error);
         }
 
         public virtual async Task<ModemResponse<BatteryStatus>> GetBatteryStatusAsync()
@@ -511,7 +537,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(new BatteryStatus((BatteryChargeStatus)bcs, Ratio.FromPercent(bcl)));
                 }
             }
-            return ModemResponse.HasResultError<BatteryStatus>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<BatteryStatus>(error);
         }
 
         public virtual async Task<ModemResponse> SetDateTimeAsync(DateTimeOffset value)
@@ -522,7 +550,12 @@ namespace HeboTech.ATLib.Modems.Generic
             sb.Append(offsetQuarters.ToString("+00;-#", CultureInfo.InvariantCulture));
             sb.Append("\"");
             AtResponse response = await channel.SendCommand(sb.ToString());
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse<DateTimeOffset>> GetDateTimeAsync()
@@ -553,46 +586,111 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.IsResultSuccess(time);
                 }
             }
-            return ModemResponse.HasResultError<DateTimeOffset>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<DateTimeOffset>(error);
         }
 
         public virtual async Task<ModemResponse> SendUssdAsync(string code, int codingScheme = 15)
         {
             AtResponse response = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
         #endregion
 
         public virtual async Task<ModemResponse> SetErrorFormat(int errorFormat)
         {
             AtResponse response = await channel.SendCommand($"AT+CMEE={errorFormat}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse> ShowSmsTextModeParameters(bool activate)
         {
             AtResponse response = await channel.SendCommand($"AT+CSDH={(activate ? "1" : "0")}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse> ResetToFactoryDefaults()
         {
             AtResponse response = await channel.SendCommand($"AT&F");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse> RawCommand(string command)
         {
             AtResponse response = await channel.SendCommand(command);
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public virtual async Task<ModemResponse<List<string>>> RawCommandWithResponse(string command, string responsePrefix)
         {
             AtResponse response = await channel.SendSingleLineCommandAsync(command, responsePrefix);
+
             if (response.Success)
                 return ModemResponse.IsResultSuccess(response.Intermediates);
-            return ModemResponse.HasResultError<List<string>>();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<List<string>>(error);
+        }
+
+        public virtual async Task<ModemResponse> RestoreUserSettings()
+        {
+            AtResponse response = await channel.SendCommand("ATZ0");
+
+            await Task.Delay(TimeSpan.FromMilliseconds(300));
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
+        }
+
+        public virtual async Task<ModemResponse> SaveUserSettings()
+        {
+            AtResponse response = await channel.SendCommand("AT&W0");
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
+        }
+
+        public virtual async Task<ModemResponse> ResetUserSettings()
+        {
+            AtResponse response = await channel.SendCommand("AT&F0");
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
 
         public void Close()

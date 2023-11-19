@@ -35,13 +35,13 @@ namespace HeboTech.ATLib.TestConsole
             var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
             Console.WriteLine($"Successfully set required settings before PIN: {requiredSettingsBeforePin}");
 
-            {
-                if (modem is IMC55i mc55i)
-                {
-                    //var indicateSimDataReady = await mc55i.IndicateSimDataReady(true);
-                    //Console.WriteLine($"MC55i Indicate SIM data ready: {indicateSimDataReady}");
-                }
-            }
+            //{
+            //    if (modem is IMC55i mc55i)
+            //    {
+            //        var indicateSimDataReady = await mc55i.IndicateSimDataReady(true);
+            //        Console.WriteLine($"MC55i Indicate SIM data ready: {indicateSimDataReady}");
+            //    }
+            //}
 
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");

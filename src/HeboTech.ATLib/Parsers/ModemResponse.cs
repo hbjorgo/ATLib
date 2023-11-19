@@ -33,7 +33,7 @@
             new ModemResponse(isSuccess, default);
 
         public static ModemResponse HasError() =>
-            new ModemResponse(false, null);
+            new ModemResponse(false, default);
 
         public static ModemResponse HasError(Error error) =>
             new ModemResponse(false, error);
@@ -42,7 +42,7 @@
             new ModemResponse<T>(true, default, result);
 
         public static ModemResponse<T> HasResultError<T>() =>
-            new ModemResponse<T>(false, null, default);
+            new ModemResponse<T>(false, default, default);
 
         public static ModemResponse<T> HasResultError<T>(Error error) =>
             new ModemResponse<T>(false, error, default);
