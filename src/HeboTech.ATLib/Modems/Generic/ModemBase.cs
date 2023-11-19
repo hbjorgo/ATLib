@@ -693,12 +693,6 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public void Open()
-        {
-            channel.Open();
-            channel.ClearAsync().Wait();
-        }
-
         public void Close()
         {
             Dispose();

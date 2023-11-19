@@ -19,7 +19,8 @@ namespace HeboTech.ATLib.TestConsole
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
             using IMC55i modem = new MC55i(atChannel);
-            modem.Open();
+            atChannel.Open();
+            await atChannel.ClearAsync();
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;

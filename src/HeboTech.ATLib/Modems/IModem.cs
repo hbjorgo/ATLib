@@ -58,12 +58,7 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse> AnswerIncomingCallAsync();
 
         /// <summary>
-        /// Open the connection
-        /// </summary>
-        void Open();
-
-        /// <summary>
-        /// Close the connection
+        /// Closes the connection
         /// </summary>
         void Close();
 
