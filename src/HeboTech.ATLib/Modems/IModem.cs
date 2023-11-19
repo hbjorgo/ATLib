@@ -203,7 +203,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="message">The message body</param>
         /// <param name="codingScheme">Encoding to use</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme);
+        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme = CharacterSet.UCS2);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event

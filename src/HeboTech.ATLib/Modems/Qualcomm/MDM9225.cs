@@ -14,14 +14,14 @@ namespace HeboTech.ATLib.Modems.Qualcomm
         {
         }
 
-        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
+        public Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
         {
-            return base.SendSmsInPduFormatAsync(phoneNumber, message, false);
+            return base.SendSmsAsync(phoneNumber, message, false);
         }
 
-        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
+        public Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
         {
-            return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
+            return base.SendSmsAsync(phoneNumber, message, codingScheme, false);
         }
     }
 }

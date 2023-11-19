@@ -35,6 +35,14 @@ namespace HeboTech.ATLib.TestConsole
             var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
             Console.WriteLine($"Successfully set required settings before PIN: {requiredSettingsBeforePin}");
 
+            {
+                if (modem is IMC55i mc55i)
+                {
+                    //var indicateSimDataReady = await mc55i.IndicateSimDataReady(true);
+                    //Console.WriteLine($"MC55i Indicate SIM data ready: {indicateSimDataReady}");
+                }
+            }
+
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
 
@@ -88,10 +96,12 @@ namespace HeboTech.ATLib.TestConsole
             var batteryStatus = await modem.GetBatteryStatusAsync();
             Console.WriteLine($"Battery Status: {batteryStatus}");
 
-            if (modem is IMC55i mc55i)
             {
-                var mc55iBatteryStatus = await mc55i.MC55i_GetBatteryStatusAsync();
-                Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
+                if (modem is IMC55i mc55i)
+                {
+                    var mc55iBatteryStatus = await mc55i.MC55i_GetBatteryStatusAsync();
+                    Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
+                }
             }
 
             var productInfo = await modem.GetProductIdentificationInformationAsync();
@@ -168,7 +178,7 @@ namespace HeboTech.ATLib.TestConsole
                             string smsMessage = Console.ReadLine();
 
                             Console.WriteLine("Sending SMS...");
-                            IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsAsync(phoneNumber, smsMessage, CharacterSet.Gsm7);
+                            IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsAsync(phoneNumber, smsMessage, CharacterSet.UCS2);
                             foreach (var smsReference in smsReferences)
                                 Console.WriteLine($"SMS Reference: {smsReference}");
                             break;

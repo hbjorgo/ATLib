@@ -10,5 +10,12 @@ namespace HeboTech.ATLib.Modems.Cinterion
         /// </summary>
         /// <returns>Command status with battery status</returns>
         Task<ModemResponse<MC55iBatteryStatus>> MC55i_GetBatteryStatusAsync();
+        
+        /// <summary>
+        /// Indicate SIM data ready URC
+        /// </summary>
+        /// <param name="enable">True to enable, false to disable</param>
+        /// <returns>Command status</returns>
+        //Task<ModemResponse> IndicateSimDataReady(bool enable);
     }
 }

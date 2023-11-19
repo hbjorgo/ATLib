@@ -4,7 +4,6 @@ using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.PDU;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -43,14 +42,14 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
+        public Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
         {
-            return base.SendSmsInPduFormatAsync(phoneNumber, message, false);
+            return base.SendSmsAsync(phoneNumber, message, false);
         }
 
-        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
+        public Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
         {
-            return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
+            return base.SendSmsAsync(phoneNumber, message, codingScheme, false);
         }
 
         //public virtual async Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat)
