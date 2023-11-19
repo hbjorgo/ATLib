@@ -22,7 +22,7 @@ namespace HeboTech.ATLib.Modems.Adafruit
         public override async Task<bool> SetRequiredSettingsBeforePinAsync()
         {
             ModemResponse echo = await DisableEchoAsync();
-            ModemResponse errorFormat = await SetErrorFormat(1);
+            ModemResponse errorFormat = await SetErrorFormatAsync(1);
             return echo.Success && errorFormat.Success;
         }
 

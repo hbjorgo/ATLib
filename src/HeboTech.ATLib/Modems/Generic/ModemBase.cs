@@ -58,7 +58,7 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<bool> SetRequiredSettingsBeforePinAsync()
         {
             ModemResponse echo = await DisableEchoAsync();
-            ModemResponse errorFormat = await SetErrorFormat(1);
+            ModemResponse errorFormat = await SetErrorFormatAsync(1);
             ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2);
             ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU);
             return echo.Success && errorFormat.Success && currentCharacterSet.Success && smsMessageFormat.Success;
@@ -218,7 +218,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> SetNewSmsIndication(int mode, int mt, int bm, int ds, int bfr)
+        public virtual async Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr)
         {
             if (mode < 0 || mode > 2)
                 throw new ArgumentOutOfRangeException(nameof(mode));
@@ -581,7 +581,7 @@ namespace HeboTech.ATLib.Modems.Generic
         }
         #endregion
 
-        public virtual async Task<ModemResponse> SetErrorFormat(int errorFormat)
+        public virtual async Task<ModemResponse> SetErrorFormatAsync(int errorFormat)
         {
             AtResponse response = await channel.SendCommand($"AT+CMEE={errorFormat}");
 
@@ -592,7 +592,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> ShowSmsTextModeParameters(bool activate)
+        public virtual async Task<ModemResponse> ShowSmsTextModeParametersAsync(bool activate)
         {
             AtResponse response = await channel.SendCommand($"AT+CSDH={(activate ? "1" : "0")}");
 
@@ -603,7 +603,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> ResetToFactoryDefaults()
+        public virtual async Task<ModemResponse> ResetToFactoryDefaultsAsync()
         {
             AtResponse response = await channel.SendCommand($"AT&F");
 
@@ -614,7 +614,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> RawCommand(string command)
+        public virtual async Task<ModemResponse> RawCommandAsync(string command)
         {
             AtResponse response = await channel.SendCommand(command);
 
@@ -625,7 +625,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse<List<string>>> RawCommandWithResponse(string command, string responsePrefix)
+        public virtual async Task<ModemResponse<List<string>>> RawCommandWithResponseAsync(string command, string responsePrefix)
         {
             AtResponse response = await channel.SendSingleLineCommandAsync(command, responsePrefix);
 
@@ -636,7 +636,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasResultError<List<string>>(error);
         }
 
-        public virtual async Task<ModemResponse> RestoreUserSettings()
+        public virtual async Task<ModemResponse> RestoreUserSettingsAsync()
         {
             AtResponse response = await channel.SendCommand("ATZ0");
 
@@ -649,7 +649,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> SaveUserSettings()
+        public virtual async Task<ModemResponse> SaveUserSettingsAsync()
         {
             AtResponse response = await channel.SendCommand("AT&W0");
 
@@ -660,7 +660,7 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> ResetUserSettings()
+        public virtual async Task<ModemResponse> ResetUserSettingsAsync()
         {
             AtResponse response = await channel.SendCommand("AT&F0");
 

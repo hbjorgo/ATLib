@@ -99,7 +99,7 @@ namespace HeboTech.ATLib.TestConsole
             Console.WriteLine($"Date and time: {dateTime}");
 
 
-            var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 1);
+            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 0, 1);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
             var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();
@@ -123,7 +123,7 @@ namespace HeboTech.ATLib.TestConsole
                     case ConsoleKey.X:
                         {
                             string rawCommand = Console.ReadLine();
-                            var rawStatus = await modem.RawCommand(rawCommand);
+                            var rawStatus = await modem.RawCommandAsync(rawCommand);
                             Console.WriteLine($"Raw command status: {rawStatus}");
                         }
                         break;
@@ -133,7 +133,7 @@ namespace HeboTech.ATLib.TestConsole
                             string rawCommand = Console.ReadLine();
                             Console.WriteLine("Enter response:");
                             string rawResponse = Console.ReadLine();
-                            var rawStatus = await modem.RawCommandWithResponse(rawCommand.ToUpperInvariant(), rawResponse.ToUpperInvariant());
+                            var rawStatus = await modem.RawCommandWithResponseAsync(rawCommand.ToUpperInvariant(), rawResponse.ToUpperInvariant());
                             if (rawStatus.Success)
                                 Console.WriteLine($"Raw command status: {string.Join(',', rawStatus.Result)}");
                             else
