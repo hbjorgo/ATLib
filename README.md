@@ -16,7 +16,7 @@ Feedback is very much welcome and please request features 🙂
 - Send concatenated SMS (message that spans over multiple SMSs) in PDU format (GSM 7 bit or UCS2 encoding)
 - SMS supports emojies
 - List SMSs
-- Read SMS (text or PDU (GSM 7 bit or UCS2)
+- Read SMS (PDU format (GSM 7 bit or UCS2 encoding))
 - Delete SMS
 - Dial number
 - Answer incoming call
