@@ -12,13 +12,12 @@ Feedback is very much welcome and please request features 🙂
 [HeboTech.GsmApi](https://github.com/hbjorgo/GsmApi) is a REST API wrapping this library.
 
 ## Supported commands:
-- Send SMS in text or PDU (GSM 7 bit or UCS2) format.
-- Send concatenated SMS (message that spans over multiple SMSs) in PDU (GSM 7 bit or UCS2) format
+- Send SMS in PDU format (GSM 7 bit or UCS2 encoding)
+- Send concatenated SMS (message that spans over multiple SMSs) in PDU format (GSM 7 bit or UCS2 encoding)
 - SMS supports emojies
 - List SMSs
 - Read SMS (text or PDU (GSM 7 bit or UCS2)
 - Delete SMS
-- Set SMS message format (text or PDU (GSM 7 bit or UCS2))
 - Dial number
 - Answer incoming call
 - Hang up call
@@ -50,7 +49,7 @@ Feedback is very much welcome and please request features 🙂
 - D-Link DWM-222 (based on Qualcomm MDM9225 chipset)
 - TP-LINK MA260 (based on a Qualcomm chipset)
 - Cinterion MC55i
-- Other modems may work using one of the implementations above
+- Other modems may work using one of the implementations above. You can add your own implementation using the existing functionality as base.
 
 ## Other
 - Debug functionality that lets you intercept incoming and outgoing data
@@ -79,8 +78,8 @@ using IModem modem = new Fona3G(atChannel);
 // Open AT channel
 atChannel.Open();
 
-// The library doesn't support echo, so turn it off
-await modem.DisableEchoAsync();
+// Configure modem with required settings before PIN
+var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
 
 // Get SIM status
 var simStatus = await modem.GetSimStatusAsync();
@@ -92,11 +91,11 @@ if (simStatus == SimStatus.SIM_PIN)
     Console.WriteLine($"SIM PIN Status: {simPinStatus}");
 }
 
-// Set SMS text format
-var smsTextFormatResult = await modem.SetSmsMessageFormatAsync(SmsTextFormat.Text);
+// Configure modem with required settings after PIN
+var requiredSettingsAfterPin = await modem.SetRequiredSettingsAfterPinAsync();
 
 // Send SMS to the specified number
-var smsReference = await modem.SendSmsInTextFormatAsync(new PhoneNumber("123456789"), "Hello ATLib!");
+var smsReference = await modem.SendSmsAsync(new PhoneNumber("123456789"), "Hello ATLib!");
 Console.WriteLine($"SMS Reference: {smsReference}");
 ```
 Because it relies on a stream, you can even control a modem over a network! Either use a network attached modem, or forward a modem serial port to a network port.
