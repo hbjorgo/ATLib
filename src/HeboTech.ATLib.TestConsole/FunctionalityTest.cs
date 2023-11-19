@@ -3,6 +3,7 @@ using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems.Cinterion;
 using HeboTech.ATLib.Modems.Generic;
+using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
@@ -15,8 +16,6 @@ namespace HeboTech.ATLib.TestConsole
     {
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
-            CharacterSet characterSet = CharacterSet.Gsm7;
-
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
             using IMC55i modem = new MC55i(atChannel);
@@ -35,15 +34,12 @@ namespace HeboTech.ATLib.TestConsole
             // Configure modem with required settings before PIN
             var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
             Console.WriteLine($"Successfully set required settings before PIN: {requiredSettingsBeforePin}");
-            //await Task.Delay(TimeSpan.FromSeconds(2));
-
-            var cscs = await modem.SetCharacterSetAsync(characterSet);
-            Console.WriteLine($"CSCS: {cscs}");
 
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
 
-            //await modem.ReInitializeSimAsync();
+            if (modem is ISIM5320 sim5320)
+                await sim5320.ReInitializeSimAsync();
 
             simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
@@ -92,9 +88,9 @@ namespace HeboTech.ATLib.TestConsole
             var batteryStatus = await modem.GetBatteryStatusAsync();
             Console.WriteLine($"Battery Status: {batteryStatus}");
 
-            if (modem is IMC55i)
+            if (modem is IMC55i mc55i)
             {
-                var mc55iBatteryStatus = await modem.MC55i_GetBatteryStatusAsync();
+                var mc55iBatteryStatus = await mc55i.MC55i_GetBatteryStatusAsync();
                 Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
             }
 

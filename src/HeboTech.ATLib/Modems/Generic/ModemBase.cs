@@ -59,7 +59,7 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             ModemResponse echo = await DisableEchoAsync();
             ModemResponse errorFormat = await SetErrorFormat(1);
-            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.Gsm7);
+            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2);
             ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU);
             return echo.Success && errorFormat.Success && currentCharacterSet.Success && smsMessageFormat.Success;
         }
