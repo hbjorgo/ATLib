@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
@@ -16,5 +17,6 @@ namespace HeboTech.ATLib.Parsers
         Task<AtResponse> SendSmsAsync(string command, string pdu, string responsePrefix, TimeSpan? timeout = null);
         void Open();
         void Close();
+        Task ClearAsync(CancellationToken cancellationToken = default);
     }
 }
