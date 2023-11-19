@@ -26,23 +26,6 @@ namespace HeboTech.ATLib.Modems.Cinterion
         {
         }
 
-        //public async Task<ModemResponse> IndicateSimDataReady(bool enable)
-        //{
-        //    string command = $"AT^SSET={(enable ? 1 : 0)}";
-        //    AtResponse response = await channel.SendSingleLineCommandAsync(command, "^SSET:");
-
-        //    if (response.Success)
-        //    {
-        //        string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-        //        var match = Regex.Match(line, @"^SSET:\s(?<presentationMode>\d)");
-        //        if (match.Success)
-        //        {
-        //            return ModemResponse.IsSuccess();
-        //        }
-        //    }
-        //    return ModemResponse.HasError();
-        //}
-
         public async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
         {
             if (phoneNumber is null)
