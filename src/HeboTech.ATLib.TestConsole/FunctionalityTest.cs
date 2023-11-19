@@ -46,8 +46,10 @@ namespace HeboTech.ATLib.TestConsole
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
 
-            if (modem is ISIM5320 sim5320)
-                await sim5320.ReInitializeSimAsync();
+            {
+                if (modem is ISIM5320 sim5320)
+                    await sim5320.ReInitializeSimAsync();
+            }
 
             simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
