@@ -164,7 +164,6 @@ namespace HeboTech.ATLib.Modems.Generic
                 {
                     string characterSetString = match.Groups["characterSet"].Value;
                     CharacterSet characterSet = CharacterSetHelpers.FromString(characterSetString);
-                    //currentCommCharacterSet = characterSet;
                     return ModemResponse.IsResultSuccess(characterSet);
                 }
             }
@@ -178,7 +177,6 @@ namespace HeboTech.ATLib.Modems.Generic
             AtResponse response = await channel.SendCommand($"AT+CSCS=\"{CharacterSetHelpers.FromEnum(characterSet)}\"");
             if (response.Success)
             {
-                //currentCommCharacterSet = characterSet;
                 return ModemResponse.IsSuccess(response.Success);
             }
 
@@ -242,38 +240,10 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, bool includeEmptySmscLength)
+        protected virtual Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, bool includeEmptySmscLength)
         {
-            if (phoneNumber is null)
-                throw new ArgumentNullException(nameof(phoneNumber));
-            if (message is null)
-                throw new ArgumentNullException(nameof(message));
-
-            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message) { IncludeEmptySmscLength = includeEmptySmscLength });
-            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
-            foreach (string pdu in pdus)
-            {
-                string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
-                string cmd2 = pdu;
-                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
-
-                if (response.Success)
-                {
-                    string line = response.Intermediates.First();
-                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                    if (match.Success)
-                    {
-                        int mr = int.Parse(match.Groups["mr"].Value);
-                        references.Add(ModemResponse.IsResultSuccess(new SmsReference(mr)));
-                    }
-                }
-                else
-                {
-                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                        references.Add(ModemResponse.HasResultError<SmsReference>(error));
-                }
-            }
-            return references;
+            CharacterSet characterSet = Gsm7.IsGsm7Compatible(message.ToCharArray()) ? CharacterSet.Gsm7 : CharacterSet.UCS2;
+            return SendSmsAsync(phoneNumber, message, characterSet, includeEmptySmscLength);
         }
 
         protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme, bool includeEmptySmscLength)
@@ -391,6 +361,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
             if (pduResponse.Success)
             {
+                if (!pduResponse.Intermediates.Any())
+                    return ModemResponse.HasResultError<Sms>();
+
                 string line1 = pduResponse.Intermediates[0];
                 var line1Match = Regex.Match(line1, @"\+CMGR:\s(?<status>\d),(""(?<alpha>\w*)"")*,(?<length>\d+)");
                 if (line1Match.Success)
@@ -499,7 +472,12 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<ModemResponse> EnterSimPinAsync(PersonalIdentificationNumber pin)
         {
             AtResponse response = await channel.SendCommand($"AT+CPIN={pin}");
-            return ModemResponse.IsSuccess(response.Success);
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasResultError<SimStatus>(error);
         }
 
         public virtual async Task<ModemResponse<SignalStrength>> GetSignalStrengthAsync()

@@ -1,9 +1,7 @@
-﻿using HeboTech.ATLib.CodingSchemes;
-using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems.Cinterion;
 using HeboTech.ATLib.Modems.Generic;
-using HeboTech.ATLib.Modems.SIMCOM;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;
@@ -35,21 +33,8 @@ namespace HeboTech.ATLib.TestConsole
             var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
             Console.WriteLine($"Successfully set required settings before PIN: {requiredSettingsBeforePin}");
 
-            //{
-            //    if (modem is IMC55i mc55i)
-            //    {
-            //        var indicateSimDataReady = await mc55i.IndicateSimDataReady(true);
-            //        Console.WriteLine($"MC55i Indicate SIM data ready: {indicateSimDataReady}");
-            //    }
-            //}
-
             var simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
-
-            {
-                if (modem is ISIM5320 sim5320)
-                    await sim5320.ReInitializeSimAsync();
-            }
 
             simStatus = await modem.GetSimStatusAsync();
             Console.WriteLine($"SIM Status: {simStatus}");
@@ -68,7 +53,7 @@ namespace HeboTech.ATLib.TestConsole
                     Console.WriteLine($"SIM Status: {simStatus}");
                     if (simStatus.Success && simStatus.Result == SimStatus.SIM_READY)
                         break;
-                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    await Task.Delay(TimeSpan.FromSeconds(2));
                 }
             }
             else
@@ -83,7 +68,7 @@ namespace HeboTech.ATLib.TestConsole
                 Console.WriteLine($"IMSI: {imsi}");
                 if (imsi.Success)
                     break;
-                await Task.Delay(TimeSpan.FromMilliseconds(1000));
+                await Task.Delay(TimeSpan.FromSeconds(1));
             }
 
             // Configure modem with required settings after PIN
@@ -112,6 +97,7 @@ namespace HeboTech.ATLib.TestConsole
 
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
+
 
             var newSmsIndicationResult = await modem.SetNewSmsIndication(2, 1, 0, 0, 1);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
@@ -178,7 +164,7 @@ namespace HeboTech.ATLib.TestConsole
                             string smsMessage = Console.ReadLine();
 
                             Console.WriteLine("Sending SMS...");
-                            IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsAsync(phoneNumber, smsMessage, CharacterSet.UCS2);
+                            IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsAsync(phoneNumber, smsMessage);
                             foreach (var smsReference in smsReferences)
                                 Console.WriteLine($"SMS Reference: {smsReference}");
                             break;
