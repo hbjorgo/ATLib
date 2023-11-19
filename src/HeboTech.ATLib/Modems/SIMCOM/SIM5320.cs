@@ -43,12 +43,12 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message)
+        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
         {
             return base.SendSmsInPduFormatAsync(phoneNumber, message, false);
         }
 
-        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
+        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
         {
             return base.SendSmsInPduFormatAsync(phoneNumber, message, codingScheme, false);
         }
@@ -128,80 +128,32 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         public override async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
         {
-            string command = currentSmsTextFormat switch
-            {
-                SmsTextFormat.Text => $"AT+CMGL=\"{SmsStatusHelpers.ToString(smsStatus)}\"",
-                SmsTextFormat.PDU => $"AT+CMGL={(int)smsStatus}",
-                _ => throw new Exception("Unknown SMS Text Format")
-            };
+            string command = $"AT+CMGL={(int)smsStatus}";
 
             AtResponse response = await channel.SendMultilineCommand(command, null);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
             {
-                switch (currentSmsTextFormat)
+                if ((response.Intermediates.Count % 2) != 0)
+                    return ModemResponse.HasResultError<List<SmsWithIndex>>();
+
+                for (int i = 0; i < response.Intermediates.Count; i += 2)
                 {
-                    case SmsTextFormat.PDU:
-                        if ((response.Intermediates.Count % 2) != 0)
-                            return ModemResponse.HasResultError<List<SmsWithIndex>>();
+                    string metaDataLine = response.Intermediates[i];
+                    string messageLine = response.Intermediates[i + 1];
+                    var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),,(?<length>\d+)");
+                    if (match.Success)
+                    {
+                        int index = int.Parse(match.Groups["index"].Value);
+                        SmsStatus status = (SmsStatus)int.Parse(match.Groups["status"].Value);
 
-                        for (int i = 0; i < response.Intermediates.Count; i += 2)
-                        {
-                            string metaDataLine = response.Intermediates[i];
-                            string messageLine = response.Intermediates[i + 1];
-                            var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),,(?<length>\d+)");
-                            if (match.Success)
-                            {
-                                int index = int.Parse(match.Groups["index"].Value);
-                                SmsStatus status = (SmsStatus)int.Parse(match.Groups["status"].Value);
+                        // Sent when AT+CSDH=1 is set
+                        int length = int.Parse(match.Groups["length"].Value);
 
-                                // Sent when AT+CSDH=1 is set
-                                int length = int.Parse(match.Groups["length"].Value);
-
-                                SmsDeliver sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
-                                smss.Add(new SmsWithIndex(index, status, sms.SenderNumber, sms.Timestamp, sms.Message));
-                            }
-                        }
-                        break;
-                    case SmsTextFormat.Text:
-                        if ((response.Intermediates.Count % 2) != 0)
-                            return ModemResponse.HasResultError<List<SmsWithIndex>>();
-
-                        for (int i = 0; i < response.Intermediates.Count; i += 2)
-                        {
-                            string metaDataLine = response.Intermediates[i];
-                            string messageLine = response.Intermediates[i + 1];
-                            var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),""(?<status>[A-Z\s]+)"",""(?<sender>\+*\d+)"",("""")?,""(?<received>(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d))"",(?<addressType>\d+),(?<tpduFirstOctet>\d),(?<pid>\d),(?<dcs>\d),(?<serviceCenterAddress>""\+\d+""),(?<serviceCenterAddressType>\d+),(?<length>\d+)");
-                            if (match.Success)
-                            {
-                                int index = int.Parse(match.Groups["index"].Value);
-                                SmsStatus status = SmsStatusHelpers.ToSmsStatus(match.Groups["status"].Value);
-                                PhoneNumberDTO sender = new PhoneNumberDTO(match.Groups["sender"].Value);
-                                int year = int.Parse(match.Groups["year"].Value);
-                                int month = int.Parse(match.Groups["month"].Value);
-                                int day = int.Parse(match.Groups["day"].Value);
-                                int hour = int.Parse(match.Groups["hour"].Value);
-                                int minute = int.Parse(match.Groups["minute"].Value);
-                                int second = int.Parse(match.Groups["second"].Value);
-                                int zone = int.Parse(match.Groups["zone"].Value);
-
-                                // Sent when AT+CSDH=1 is set
-                                int addressType = int.Parse(match.Groups["addressType"].Value);
-                                int dataLength = int.Parse(match.Groups["length"].Value);
-
-                                DateTimeOffset received = new DateTimeOffset(2000 + year, month, day, hour, minute, second, TimeSpan.FromMinutes(15 * zone));
-
-                                string message = messageLine;
-                                if (messageLine.Length != dataLength)
-                                    message = UCS2.Decode(messageLine);
-
-                                smss.Add(new SmsWithIndex(index, status, sender, received, message));
-                            }
-                        }
-                        break;
-                    default:
-                        break;
+                        SmsDeliver sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
+                        smss.Add(new SmsWithIndex(index, status, sms.SenderNumber, sms.Timestamp, sms.Message));
+                    }
                 }
             }
             return ModemResponse.IsResultSuccess(smss);

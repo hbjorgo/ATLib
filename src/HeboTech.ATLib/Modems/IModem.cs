@@ -180,7 +180,7 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="index"></param>
         /// <returns>Command status with SMS</returns>
-        Task<ModemResponse<Sms>> ReadSmsAsync(int index, SmsTextFormat smsTextFormat);
+        Task<ModemResponse<Sms>> ReadSmsAsync(int index);
 
         /// <summary>
         /// Resets the modem to factory defaults
@@ -189,20 +189,12 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse> ResetToFactoryDefaults();
 
         /// <summary>
-        /// Sends an SMS in text format
-        /// </summary>
-        /// <param name="phoneNumber">The number to send to</param>
-        /// <param name="message">The message body</param>
-        /// <returns>Command status with SMS reference</returns>
-        Task<ModemResponse<SmsReference>> SendSmsInTextFormatAsync(PhoneNumber phoneNumber, string message);
-
-        /// <summary>
         /// Sends an SMS in PDU format. This will automatically select the Data Coding Scheme that will result in the fewest messages being sent in case of a concatenated SMS based on the content of the message.
         /// </summary>
         /// <param name="phoneNumber">The number to send to</param>
         /// <param name="message">The message body</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message);
+        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message);
 
         /// <summary>
         /// Sends an SMS in PDU format
@@ -211,7 +203,7 @@ namespace HeboTech.ATLib.Modems
         /// <param name="message">The message body</param>
         /// <param name="codingScheme">Encoding to use</param>
         /// <returns>Command status with SMS reference</returns>
-        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsInPduFormatAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme);
+        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event
@@ -224,9 +216,9 @@ namespace HeboTech.ATLib.Modems
         /// <summary>
         /// Sets the current character set. Get available character sets to see the supported sets
         /// </summary>
-        /// <param name="characterSet"></param>
+        /// <param name="characterSet">The character set</param>
         /// <returns>Command status</returns>
-        Task<ModemResponse> SetCharacterSetAsync(string characterSet);
+        Task<ModemResponse> SetCharacterSetAsync(CharacterSet characterSet);
 
         /// <summary>
         /// Sets the current date and time
@@ -264,13 +256,6 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <returns>Command status</returns>
         Task<bool> SetRequiredSettingsBeforePinAsync();
-
-        /// <summary>
-        /// Sets the input and output format of SMSs. Currently, only Text is supported and must be set before sending SMSs
-        /// </summary>
-        /// <param name="format">The format</param>
-        /// <returns>Command status</returns>
-        Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format);
 
         /// <summary>
         /// Sets whether or not detailed header information is shown in text mode result codes
