@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.Telit
 {
-    internal class ME910C1 : ModemBase, IModem, IME910C1
+    public class ME910C1 : ModemBase, IModem, IME910C1
     {
         /// <summary>
         /// Telit ME910C1 chipset
