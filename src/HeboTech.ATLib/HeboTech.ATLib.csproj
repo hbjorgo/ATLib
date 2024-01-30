@@ -4,10 +4,10 @@
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<Authors>HeboTech</Authors>
 		<Product>HeboTech ATLib</Product>
-		<Version>7.0.0</Version>
-		<PackageVersion>7.0.0</PackageVersion>
-		<AssemblyVersion>7.0.0.0</AssemblyVersion>
-		<FileVersion>7.0.0.0</FileVersion>
+		<Version>7.1.0-beta1</Version>
+		<PackageVersion>7.1.0-beta1</PackageVersion>
+		<AssemblyVersion>7.1.0.0</AssemblyVersion>
+		<FileVersion>7.1.0.0</FileVersion>
 		<PackageId>HeboTech.ATLib</PackageId>
 		<Title>AT command library that makes it easy to communicate with modems.</Title>
 		<Description>AT command library that makes it easy to communicate with modems.</Description>
