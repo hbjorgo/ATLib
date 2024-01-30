@@ -4,14 +4,14 @@
 		<TargetFramework>netstandard2.1</TargetFramework>
 		<Authors>HeboTech</Authors>
 		<Product>HeboTech ATLib</Product>
-		<Version>7.1.0-beta1</Version>
-		<PackageVersion>7.1.0-beta1</PackageVersion>
+		<Version>7.1.0-beta2</Version>
+		<PackageVersion>7.1.0-beta2</PackageVersion>
 		<AssemblyVersion>7.1.0.0</AssemblyVersion>
 		<FileVersion>7.1.0.0</FileVersion>
 		<PackageId>HeboTech.ATLib</PackageId>
 		<Title>AT command library that makes it easy to communicate with modems.</Title>
 		<Description>AT command library that makes it easy to communicate with modems.</Description>
-		<PackageTags>atcommand at command hayes gsm sms modem simcom d-link tp-link dwm-222 ma260 sim5320 mc55i</PackageTags>
+		<PackageTags>atcommand at command hayes gsm sms modem simcom d-link tp-link cinterion telit dwm-222 ma260 sim5320 mc55i me910c1</PackageTags>
 		<RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
