@@ -46,6 +46,9 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         event EventHandler<UssdResponseEventArgs> UssdResponseReceived;
 
+
+        event EventHandler<SmsStatusReportEventArgs> SmsStatusReportReceived;
+
         /// <summary>
         /// Indicates that an event with no specific event handler is received
         /// </summary>

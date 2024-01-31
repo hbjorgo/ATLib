@@ -40,6 +40,8 @@ namespace HeboTech.ATLib.Modems.Generic
                 SmsReceived?.Invoke(this, SmsReceivedEventArgs.CreateFromResponse(e.Line1));
             else if (e.Line1.StartsWith("+CUSD: "))
                 UssdResponseReceived?.Invoke(this, UssdResponseEventArgs.CreateFromResponse(e.Line1));
+            else if (e.Line1.StartsWith("+CDS: "))
+                SmsStatusReportReceived?.Invoke(this, SmsStatusReportEventArgs.CreateFromResponse(e.Line1, e.Line2));
             else if (AtErrorParsers.TryGetError(e.Line1, out Error error))
                 ErrorReceived?.Invoke(this, new ErrorEventArgs(error.ToString()));
             else
@@ -48,6 +50,8 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public event EventHandler<ErrorEventArgs> ErrorReceived;
         public event EventHandler<GenericEventArgs> GenericEvent;
+
+        public event EventHandler<SmsStatusReportEventArgs> SmsStatusReportReceived;
 
         #region _V_25TER
         public event EventHandler<IncomingCallEventArgs> IncomingCall;

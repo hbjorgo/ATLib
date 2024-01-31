@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems.Cinterion;
+using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
@@ -16,7 +17,7 @@ namespace HeboTech.ATLib.TestConsole
         {
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IMC55i modem = new MC55i(atChannel);
+            using IDWM222 modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -28,6 +29,7 @@ namespace HeboTech.ATLib.TestConsole
             modem.UssdResponseReceived += Modem_UssdResponseReceived;
             modem.ErrorReceived += Modem_ErrorReceived;
             modem.GenericEvent += Modem_GenericEvent;
+            modem.SmsStatusReportReceived += Modem_SmsStatusReportReceived;
 
             // Configure modem with required settings before PIN
             var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
@@ -99,7 +101,7 @@ namespace HeboTech.ATLib.TestConsole
             Console.WriteLine($"Date and time: {dateTime}");
 
 
-            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 0, 1);
+            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 1, 0);
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
             var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();
@@ -109,7 +111,7 @@ namespace HeboTech.ATLib.TestConsole
             var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.SM, MessageStorage.SM, MessageStorage.SM);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
-            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'u' to send USSD code, 'x' to send raw command, 'z' to send raw command with response, '+' to enable debug, '-' to disable debug and 'q' to exit...");
+            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'p' to delete an SMS, 'u' to send USSD code, 'x' to send raw command, 'z' to send raw command with response, '+' to enable debug, '-' to disable debug and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
             {
@@ -170,15 +172,29 @@ namespace HeboTech.ATLib.TestConsole
                             break;
                         }
                     case ConsoleKey.R:
-                        Console.WriteLine("Enter SMS index:");
-                        if (int.TryParse(Console.ReadLine(), out int smsIndex))
                         {
-                            var sms = await modem.ReadSmsAsync(smsIndex);
-                            Console.WriteLine(sms);
+                            Console.WriteLine("Enter SMS index:");
+                            if (int.TryParse(Console.ReadLine(), out int smsIndex))
+                            {
+                                var sms = await modem.ReadSmsAsync(smsIndex);
+                                Console.WriteLine(sms);
+                            }
+                            else
+                                Console.WriteLine("Invalid SMS index");
+                            break;
                         }
-                        else
-                            Console.WriteLine("Invalid SMS index");
-                        break;
+                    case ConsoleKey.P:
+                        {
+                            Console.WriteLine("Enter SMS index:");
+                            if (int.TryParse(Console.ReadLine(), out int smsIndex))
+                            {
+                                var deleteResponse = await modem.DeleteSmsAsync(smsIndex);
+                                Console.WriteLine(deleteResponse);
+                            }
+                            else
+                                Console.WriteLine("Invalid SMS index");
+                            break;
+                        }
                     case ConsoleKey.U:
                         Console.WriteLine("Enter USSD Code:");
                         var ussd = Console.ReadLine();
@@ -206,6 +222,11 @@ namespace HeboTech.ATLib.TestConsole
                         break;
                 }
             }
+        }
+
+        private static void Modem_SmsStatusReportReceived(object sender, SmsStatusReportEventArgs e)
+        {
+            Console.WriteLine($"SMS Status Report: {e.SmsStatusReport}");
         }
 
         private static void Modem_GenericEvent(object sender, GenericEventArgs e)

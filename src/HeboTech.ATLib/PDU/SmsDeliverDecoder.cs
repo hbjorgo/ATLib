@@ -1,9 +1,7 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Extensions;
 using System;
 using System.Linq;
-using System.Threading;
 
 namespace HeboTech.ATLib.PDU
 {
@@ -65,7 +63,7 @@ namespace HeboTech.ATLib.PDU
             PhoneNumberDTO serviceCenterNumber = null;
             if (smsc_length > 0)
             {
-                serviceCenterNumber = DecodePhoneNumber(bytes[offset..(offset += smsc_length)]);
+                serviceCenterNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += smsc_length)]);
             }
 
             // SMS-DELIVER start
@@ -78,7 +76,7 @@ namespace HeboTech.ATLib.PDU
             PhoneNumberDTO oa = null;
             if (tp_oa_bytes_length > 0)
             {
-                oa = DecodePhoneNumber(bytes[offset..(offset += tp_oa_bytes_length)]);
+                oa = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += tp_oa_bytes_length)]);
             }
 
             byte tp_pid = bytes[offset++];
@@ -142,43 +140,6 @@ namespace HeboTech.ATLib.PDU
                 return new SmsDeliver(serviceCenterNumber, oa, message, scts, concatenatedSms.Data[0], concatenatedSms.Data[1], concatenatedSms.Data[2]);
             else
                 return new SmsDeliver(serviceCenterNumber, oa, message, scts);
-        }
-
-        private static PhoneNumberDTO DecodePhoneNumber(ReadOnlySpan<byte> data)
-        {
-            byte ext_ton_npi = data[0];
-            TypeOfNumber ton = (TypeOfNumber)((ext_ton_npi & 0b0111_0000) >> 4);
-
-            string number = string.Empty;
-            switch (ton)
-            {
-                case TypeOfNumber.Unknown:
-                    break;
-                case TypeOfNumber.International:
-                    number = "+";
-                    break;
-                case TypeOfNumber.National:
-                    break;
-                case TypeOfNumber.NetworkSpecific:
-                    break;
-                case TypeOfNumber.Subscriber:
-                    break;
-                case TypeOfNumber.AlphaNumeric:
-                    var unpacked = Gsm7.Unpack(data[1..].ToArray());
-                    var decoded = Gsm7.DecodeFromBytes(unpacked);
-                    return new PhoneNumberDTO(decoded);
-                case TypeOfNumber.Abbreviated:
-                    break;
-                case TypeOfNumber.ReservedForExtension:
-                    break;
-                default:
-                    throw new NotImplementedException($"TON {ton} is not supported");
-            }
-
-            number += string.Join("", data[1..].ToArray().Select(x => x.SwapNibbles().ToString("X2")));
-            if (number[^1] == 'F')
-                number = number[..^1];
-            return new PhoneNumberDTO(number);
         }
     }
 }

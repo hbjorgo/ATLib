@@ -59,6 +59,7 @@ namespace HeboTech.ATLib.PDU
                                     .Initialize()
                                     .DestinationAddress(smsSubmit.PhoneNumber)
                                     .ValidityPeriod(smsSubmit.ValidityPeriod)
+                                    .EnableStatusReportRequest()
                                     .Message(smsSubmit.Message, smsSubmit.CodingScheme, smsSubmit.MessageReferenceNumber)
                                     .Build();
 
