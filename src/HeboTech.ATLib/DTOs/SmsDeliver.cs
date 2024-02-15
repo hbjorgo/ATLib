@@ -33,5 +33,10 @@ namespace HeboTech.ATLib.DTOs
         public int MessageReferenceNumber { get; }
         public int TotalNumberOfParts { get; }
         public int PartNumber { get; }
+
+        public override string ToString()
+        {
+            return $"From: {SenderNumber}. Message: {Message}. Timestamp: {Timestamp}";
+        }
     }
 }

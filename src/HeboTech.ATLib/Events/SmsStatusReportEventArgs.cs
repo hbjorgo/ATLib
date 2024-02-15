@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.Events
             if (line1Match.Success)
             {
                 byte length = byte.Parse(line1Match.Groups["length"].Value);
-                var report = SmsStatusReportDecoder.Decode(length, line2.ToByteArray());
+                var report = SmsStatusReportDecoder.Decode(line2.ToByteArray(), length);
                 return new SmsStatusReportEventArgs(report);
             }
 

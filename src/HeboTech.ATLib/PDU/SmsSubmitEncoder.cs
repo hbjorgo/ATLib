@@ -39,7 +39,7 @@ namespace HeboTech.ATLib.PDU
 
         protected SmsSubmitEncoder()
         {
-            header = (byte)MessageTypeIndicator.SMS_SUBMIT;
+            header = (byte)MessageTypeIndicatorOutbound.SMS_SUBMIT;
         }
 
         protected static SmsSubmitEncoder Initialize()
@@ -59,7 +59,7 @@ namespace HeboTech.ATLib.PDU
                                     .Initialize()
                                     .DestinationAddress(smsSubmit.PhoneNumber)
                                     .ValidityPeriod(smsSubmit.ValidityPeriod)
-                                    .EnableStatusReportRequest()
+                                    .EnableStatusReportRequest(smsSubmit.EnableStatusReportRequest)
                                     .Message(smsSubmit.Message, smsSubmit.CodingScheme, smsSubmit.MessageReferenceNumber)
                                     .Build();
 
@@ -81,7 +81,7 @@ namespace HeboTech.ATLib.PDU
 
         protected SmsSubmitEncoder EnableUserDataHeaderIndicator()
         {
-            header |= 0b0100_0000;
+            header |= (1 << 6);
             return this;
         }
 
@@ -91,13 +91,13 @@ namespace HeboTech.ATLib.PDU
         /// <returns></returns>
         protected SmsSubmitEncoder EnableReplyPath()
         {
-            header |= 0b1000_0000;
+            header |= (1 << 7);
             return this;
         }
 
         protected static byte GetAddressType(PhoneNumber phoneNumber)
         {
-            return (byte)(0b1000_0000 + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
+            return (byte)((1 << 7) + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
         }
 
         protected static string SwapPhoneNumberDigits(string data)
@@ -121,7 +121,7 @@ namespace HeboTech.ATLib.PDU
         /// <returns></returns>
         protected SmsSubmitEncoder RejectDuplicates()
         {
-            header |= 0b0000_0100;
+            header |= (1 << 2);
             return this;
         }
 
@@ -133,8 +133,7 @@ namespace HeboTech.ATLib.PDU
         protected SmsSubmitEncoder ValidityPeriod(ValidityPeriod validityPeriod)
         {
             // Set format
-            byte mask = 0b0001_1000;
-            header = (byte)((header & ~mask) | ((byte)validityPeriod.Format & mask));
+            header |= (byte)((byte)validityPeriod.Format << 3);
 
             // Set value
             vp.Clear();
@@ -143,9 +142,10 @@ namespace HeboTech.ATLib.PDU
             return this;
         }
 
-        protected SmsSubmitEncoder EnableStatusReportRequest()
+        protected SmsSubmitEncoder EnableStatusReportRequest(bool enable)
         {
-            header |= 0b0010_0000;
+            if (enable)
+                header |= (1 << 5);
             return this;
         }
 

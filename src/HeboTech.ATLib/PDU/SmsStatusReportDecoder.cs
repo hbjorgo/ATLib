@@ -11,46 +11,48 @@ namespace HeboTech.ATLib.PDU
             {
             }
 
-            public SmsStatusReportHeader(MessageTypeIndicator mti, bool mms, bool lp, bool sri, bool udhi, bool rp)
+            public SmsStatusReportHeader(MessageTypeIndicatorInbound mti, bool mms, bool lp, bool sri, bool udhi)
             {
                 MTI = mti;
                 MMS = mms;
                 LP = lp;
-                SRI = sri;
+                SRQ = sri;
                 UDHI = udhi;
-                RP = rp;
             }
 
-            public MessageTypeIndicator MTI { get; private set; }
+            public MessageTypeIndicatorInbound MTI { get; private set; }
             public bool MMS { get; private set; }
             public bool LP { get; private set; }
-            public bool SRI { get; private set; }
+            /// <summary>
+            /// If set - this is a result of an SMS-COMMAND; otherwise it is a result of an SMS-SUBMIT
+            /// 9 2 2 3
+            /// </summary>
+            public bool SRQ { get; private set; }
             public bool UDHI { get; private set; }
-            public bool RP { get; private set; }
 
             public static SmsStatusReportHeader Parse(byte header)
             {
                 SmsStatusReportHeader parsedHeader = new SmsStatusReportHeader();
 
-                parsedHeader.MTI = (MessageTypeIndicator)(header & 0b0000_0011);
-                if (parsedHeader.MTI != MessageTypeIndicator.SMS_STATUS_REPORT)
+                parsedHeader.MTI = (MessageTypeIndicatorInbound)(header & (3 << 0));
+                if (parsedHeader.MTI != MessageTypeIndicatorInbound.SMS_STATUS_REPORT)
                     throw new ArgumentException("Invalid SMS_STATUS_REPORT data");
 
-                parsedHeader.MMS = (header & 0b0000_0100) != 0;
-                parsedHeader.SRI = (header & 0b0000_1000) != 0;
-                parsedHeader.UDHI = (header & 0b0100_0000) != 0;
-                parsedHeader.RP = (header & 0b1000_0000) != 0;
+                parsedHeader.MMS = (header & (1 << 2)) != 0;
+                parsedHeader.LP = (header & (1 << 3)) != 0;
+                parsedHeader.SRQ = (header & (1 << 5)) != 0;
+                parsedHeader.UDHI = (header & (1 << 6)) != 0;
 
                 return parsedHeader;
             }
         }
 
-        public static SmsStatusReport Decode(byte length, ReadOnlySpan<byte> bytes, int timestampYearOffset = 2000)
+        public static SmsStatusReport Decode(ReadOnlySpan<byte> bytes, int timestampYearOffset = 2000)
         {
             int offset = 0;
 
             // SMSC information
-            byte smsc_length = (byte)(bytes.Length - length);
+            byte smsc_length = bytes[offset++];
             PhoneNumberDTO serviceCenterNumber = null;
             if (smsc_length > 0)
             {

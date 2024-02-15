@@ -67,5 +67,6 @@ namespace HeboTech.ATLib.DTOs
         public bool IncludeEmptySmscLength { get; set; }
         public byte MessageReferenceNumber { get; set; }
         public ValidityPeriod ValidityPeriod { get; set; }
+        public bool EnableStatusReportRequest { get; set; }
     }
 }

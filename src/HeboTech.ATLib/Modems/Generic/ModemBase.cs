@@ -36,14 +36,28 @@ namespace HeboTech.ATLib.Modems.Generic
                 CallEnded?.Invoke(this, CallEndedEventArgs.CreateFromResponse(e.Line1));
             else if (e.Line1.StartsWith("MISSED_CALL: "))
                 MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(e.Line1));
+
+            else if (e.Line1.StartsWith("+CMT: "))
+                SmsReceived?.Invoke(this, SmsReceivedEventArgs.CreateFromResponse(e.Line1, e.Line2));
             else if (e.Line1.StartsWith("+CMTI: "))
-                SmsReceived?.Invoke(this, SmsReceivedEventArgs.CreateFromResponse(e.Line1));
-            else if (e.Line1.StartsWith("+CUSD: "))
-                UssdResponseReceived?.Invoke(this, UssdResponseEventArgs.CreateFromResponse(e.Line1));
+                SmsStorageReferenceReceived?.Invoke(this, SmsReceivedStorageReferenceEventArgs.CreateFromResponse(e.Line1));
+
+            else if (e.Line1.StartsWith("+CBM: "))
+                BroadcastMessageReceived?.Invoke(this, BreadcastMessageReceivedEventArgs.CreateFromResponse(e.Line1, e.Line2));
+            else if (e.Line1.StartsWith("+CBMI: "))
+                BroadcastMessageStorageReferenceReceived?.Invoke(this, BreadcastMessageStorageReferenceReceivedEventArgs.CreateFromResponse(e.Line1));
+
             else if (e.Line1.StartsWith("+CDS: "))
                 SmsStatusReportReceived?.Invoke(this, SmsStatusReportEventArgs.CreateFromResponse(e.Line1, e.Line2));
+            else if (e.Line1.StartsWith("+CDSI: "))
+                SmsStatusReportStorageReferenceReceived?.Invoke(this, SmsStatusReportStorageReferenceEventArgs.CreateFromResponse(e.Line1));
+
+            else if (e.Line1.StartsWith("+CUSD: "))
+                UssdResponseReceived?.Invoke(this, UssdResponseEventArgs.CreateFromResponse(e.Line1));
+
             else if (AtErrorParsers.TryGetError(e.Line1, out Error error))
                 ErrorReceived?.Invoke(this, new ErrorEventArgs(error.ToString()));
+
             else
                 GenericEvent?.Invoke(this, new GenericEventArgs(e.Line1));
         }
@@ -51,7 +65,14 @@ namespace HeboTech.ATLib.Modems.Generic
         public event EventHandler<ErrorEventArgs> ErrorReceived;
         public event EventHandler<GenericEventArgs> GenericEvent;
 
+        public event EventHandler<SmsReceivedEventArgs> SmsReceived;
+        public event EventHandler<SmsReceivedStorageReferenceEventArgs> SmsStorageReferenceReceived;
+
+        public event EventHandler<BreadcastMessageReceivedEventArgs> BroadcastMessageReceived;
+        public event EventHandler<BreadcastMessageStorageReferenceReceivedEventArgs> BroadcastMessageStorageReferenceReceived;
+
         public event EventHandler<SmsStatusReportEventArgs> SmsStatusReportReceived;
+        public event EventHandler<SmsStatusReportStorageReferenceEventArgs> SmsStatusReportStorageReferenceReceived;
 
         #region _V_25TER
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
@@ -190,8 +211,6 @@ namespace HeboTech.ATLib.Modems.Generic
         #endregion
 
         #region _3GPP_TS_27_005
-        public event EventHandler<SmsReceivedEventArgs> SmsReceived;
-
         public virtual async Task<ModemResponse<string>> GetSmsMessageFormatAsync()
         {
             AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CMGF?", "+CMGF:");
@@ -224,17 +243,6 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr)
         {
-            if (mode < 0 || mode > 2)
-                throw new ArgumentOutOfRangeException(nameof(mode));
-            if (mt < 0 || mt > 3)
-                throw new ArgumentOutOfRangeException(nameof(mt));
-            if (!(bm == 0 || bm == 2))
-                throw new ArgumentOutOfRangeException(nameof(bm));
-            if (ds < 0 || ds > 2)
-                throw new ArgumentOutOfRangeException(nameof(ds));
-            if (bfr < 0 || bfr > 1)
-                throw new ArgumentOutOfRangeException(nameof(bfr));
-
             AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}");
 
             if (response.Success)
@@ -257,7 +265,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (message is null)
                 throw new ArgumentNullException(nameof(message));
 
-            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message, codingScheme) { IncludeEmptySmscLength = includeEmptySmscLength });
+            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message, codingScheme) { IncludeEmptySmscLength = includeEmptySmscLength, EnableStatusReportRequest = true });
             List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
             foreach (string pdu in pdus)
             {

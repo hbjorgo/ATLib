@@ -5,9 +5,12 @@
     /// </summary>
     public enum SmsDeliveryStatus : byte
     {
+        // Suffix _1, _2 and _3 are used to separate identical names, one suffix for each 'group' of messages
+
+        // Transaction completed
         Message_received_by_SME = 0b0000_0000,
         Forwarded_to_SME_but_unconfirmed_delivery = 0b0000_0001,
-        Message_replaced_by_SC = 0b0000_0010,
+        Message_replaced_by_the_SC = 0b0000_0010,
 
         // 000_0011..000_1111 Reserved
         // 001_0000..0011111 Values specific to each SC
@@ -38,12 +41,12 @@
         // 1010000..1011111 Values specific to each SC
 
         // Temporary error, SC is not making any more transfer attempts
-        Congestion_2 = 0b0110_0000,
-        SME_busy_2 = 0b0110_0001,
+        Congestion_3 = 0b0110_0000,
+        SME_busy_3 = 0b0110_0001,
         No_response_from_SME = 0b0110_0010,
-        Service_rejected_2 = 0b0110_0011,
+        Service_rejected_3 = 0b0110_0011,
         Quality_of_service_not_available_3 = 0b0110_0100,
-        Error_in_SME_2 = 0b0110_0101,
+        Error_in_SME_3 = 0b0110_0101,
 
         //1100110..1101001	Reserved
         //1101010..1101111	Reserved

@@ -39,7 +39,7 @@ namespace HeboTech.ATLib.Modems
         /// <summary>
         /// Indicates that an SMS is received
         /// </summary>
-        event EventHandler<SmsReceivedEventArgs> SmsReceived;
+        event EventHandler<SmsReceivedStorageReferenceEventArgs> SmsStorageReferenceReceived;
 
         /// <summary>
         /// Indicates that a USSD response is received
@@ -47,7 +47,14 @@ namespace HeboTech.ATLib.Modems
         event EventHandler<UssdResponseEventArgs> UssdResponseReceived;
 
 
+        event EventHandler<SmsReceivedEventArgs> SmsReceived;
+
+        event EventHandler<BreadcastMessageReceivedEventArgs> BroadcastMessageReceived;
+        event EventHandler<BreadcastMessageStorageReferenceReceivedEventArgs> BroadcastMessageStorageReferenceReceived;
+
         event EventHandler<SmsStatusReportEventArgs> SmsStatusReportReceived;
+        event EventHandler<SmsStatusReportStorageReferenceEventArgs> SmsStatusReportStorageReferenceReceived;
+
 
         /// <summary>
         /// Indicates that an event with no specific event handler is received

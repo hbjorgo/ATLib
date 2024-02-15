@@ -17,19 +17,29 @@ namespace HeboTech.ATLib.TestConsole
         {
             using AtChannel atChannel = AtChannel.Create(stream);
             //atChannel.EnableDebug((string line) => Console.WriteLine(line));
-            using IDWM222 modem = new DWM222(atChannel);
+            using IMC55i modem = new MC55i(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
+
+            modem.ErrorReceived += Modem_ErrorReceived;
+            
+            modem.GenericEvent += Modem_GenericEvent;
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;
             modem.CallStarted += Modem_CallStarted;
             modem.CallEnded += Modem_CallEnded;
+
+            modem.SmsStorageReferenceReceived += Modem_SmsStorageReferenceReceived;
             modem.SmsReceived += Modem_SmsReceived;
-            modem.UssdResponseReceived += Modem_UssdResponseReceived;
-            modem.ErrorReceived += Modem_ErrorReceived;
-            modem.GenericEvent += Modem_GenericEvent;
+
             modem.SmsStatusReportReceived += Modem_SmsStatusReportReceived;
+            modem.SmsStatusReportStorageReferenceReceived += Modem_SmsStatusReportStorageReferenceReceived;
+
+            modem.BroadcastMessageReceived += Modem_BroadcastMessageReceived;
+            modem.BroadcastMessageStorageReferenceReceived += Modem_BroadcastMessageStorageReferenceReceived;
+
+            modem.UssdResponseReceived += Modem_UssdResponseReceived;
 
             // Configure modem with required settings before PIN
             var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
@@ -83,14 +93,6 @@ namespace HeboTech.ATLib.TestConsole
             var batteryStatus = await modem.GetBatteryStatusAsync();
             Console.WriteLine($"Battery Status: {batteryStatus}");
 
-            {
-                if (modem is IMC55i mc55i)
-                {
-                    var mc55iBatteryStatus = await mc55i.MC55i_GetBatteryStatusAsync();
-                    Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
-                }
-            }
-
             var productInfo = await modem.GetProductIdentificationInformationAsync();
             Console.WriteLine($"Product Information:{Environment.NewLine}{productInfo}");
 
@@ -100,8 +102,7 @@ namespace HeboTech.ATLib.TestConsole
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
 
-
-            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 1, 0);
+            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 2, 1, 1); // 2, 2, 2, 1, 1 -> PDU
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
             var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();
@@ -224,6 +225,31 @@ namespace HeboTech.ATLib.TestConsole
             }
         }
 
+        private static void Modem_BroadcastMessageStorageReferenceReceived(object sender, BreadcastMessageStorageReferenceReceivedEventArgs e)
+        {
+            Console.WriteLine($"Broadcast Message. Index {e.Index} at storage location {e.Storage}");
+        }
+
+        private static void Modem_SmsStorageReferenceReceived(object sender, SmsReceivedStorageReferenceEventArgs e)
+        {
+            Console.WriteLine($"SMS Deliver. Index {e.Index} at storage location {e.Storage}");
+        }
+
+        private static void Modem_SmsStatusReportStorageReferenceReceived(object sender, SmsStatusReportStorageReferenceEventArgs e)
+        {
+            Console.WriteLine($"SMS Status Report. Index {e.Index} at storage location {e.Storage}");
+        }
+
+        private static void Modem_BroadcastMessageReceived(object sender, BreadcastMessageReceivedEventArgs e)
+        {
+            Console.WriteLine($"Broadcast Message: {e.BroadcastMessage}");
+        }
+
+        private static void Modem_SmsReceived(object sender, SmsReceivedEventArgs e)
+        {
+            Console.WriteLine($"SMS Deliver: {e.SmsDeliver}");
+        }
+
         private static void Modem_SmsStatusReportReceived(object sender, SmsStatusReportEventArgs e)
         {
             Console.WriteLine($"SMS Status Report: {e.SmsStatusReport}");
@@ -253,11 +279,6 @@ namespace HeboTech.ATLib.TestConsole
         private static void Modem_CallStarted(object sender, CallStartedEventArgs e)
         {
             Console.WriteLine("Call started");
-        }
-
-        private static void Modem_SmsReceived(object sender, SmsReceivedEventArgs e)
-        {
-            Console.WriteLine($"SMS received. Index {e.Index} at storage location {e.Storage}");
         }
 
         private static void Modem_MissedCall(object sender, MissedCallEventArgs e)

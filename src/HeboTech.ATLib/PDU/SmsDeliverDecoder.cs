@@ -13,7 +13,7 @@ namespace HeboTech.ATLib.PDU
             {
             }
 
-            public SmsDeliverHeader(MessageTypeIndicator mti, bool mms, bool lp, bool sri, bool udhi, bool rp)
+            public SmsDeliverHeader(MessageTypeIndicatorOutbound mti, bool mms, bool lp, bool sri, bool udhi, bool rp)
             {
                 MTI = mti;
                 MMS = mms;
@@ -23,7 +23,7 @@ namespace HeboTech.ATLib.PDU
                 RP = rp;
             }
 
-            public MessageTypeIndicator MTI { get; private set; }
+            public MessageTypeIndicatorOutbound MTI { get; private set; }
             public bool MMS { get; private set; }
             public bool LP { get; private set; }
             public bool SRI { get; private set; }
@@ -34,14 +34,14 @@ namespace HeboTech.ATLib.PDU
             {
                 SmsDeliverHeader parsedHeader = new SmsDeliverHeader();
 
-                parsedHeader.MTI = (MessageTypeIndicator)(header & 0b0000_0011);
-                if (parsedHeader.MTI != (byte)MessageTypeIndicator.SMS_DELIVER)
+                parsedHeader.MTI = (MessageTypeIndicatorOutbound)(header & 0b0000_0011);
+                if (parsedHeader.MTI != (byte)MessageTypeIndicatorOutbound.SMS_DELIVER)
                     throw new ArgumentException("Invalid SMS-DELIVER data");
 
-                parsedHeader.MMS = (header & 0b0000_0100) != 0;
-                parsedHeader.SRI = (header & 0b0000_1000) != 0;
-                parsedHeader.UDHI = (header & 0b0100_0000) != 0;
-                parsedHeader.RP = (header & 0b1000_0000) != 0;
+                parsedHeader.MMS = (header & (1 << 2)) != 0;
+                parsedHeader.SRI = (header & (1 << 3)) != 0;
+                parsedHeader.UDHI = (header & (1 << 6)) != 0;
+                parsedHeader.RP = (header & (1 << 7)) != 0;
 
                 return parsedHeader;
             }
