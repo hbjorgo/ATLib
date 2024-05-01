@@ -32,8 +32,8 @@ namespace HeboTech.ATLib.PDU
         protected byte pi;
         // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
         protected CharacterSet dcs;
-        // TP-Validity-Period. 'AA'-4 days
-        protected List<byte> vp = new List<byte>();
+        // TP-Validity-Period
+        protected ValidityPeriod validityPeriod = null;
         // Message
         protected Message partitionedMessage;
 
@@ -52,7 +52,7 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="smsSubmit">Data object</param>
         /// <returns>PDUs</returns>
-        public static IEnumerable<string> Encode(SmsSubmitRequest smsSubmit)
+        public static IEnumerable<string> Encode(SmsSubmitRequest smsSubmit, bool includeEmptySmscLength)
         {
             // Build TPDU
             var messageParts = SmsSubmitEncoder
@@ -68,7 +68,7 @@ namespace HeboTech.ATLib.PDU
                 StringBuilder sb = new StringBuilder();
 
                 // Length of SMSC information
-                if (smsSubmit.IncludeEmptySmscLength)
+                if (includeEmptySmscLength)
                     sb.Append("00");
 
                 sb.Append(messagePart);
@@ -136,8 +136,7 @@ namespace HeboTech.ATLib.PDU
             header |= (byte)((byte)validityPeriod.Format << 3);
 
             // Set value
-            vp.Clear();
-            vp.AddRange(validityPeriod.Value);
+            this.validityPeriod = validityPeriod;
 
             return this;
         }
@@ -215,8 +214,8 @@ namespace HeboTech.ATLib.PDU
                 sb.Append(daNumber);
                 sb.Append(pi.ToString("X2"));
                 sb.Append(((byte)dcs).ToString("X2"));
-                if (vp.Count > 0)
-                    sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
+                if (validityPeriod != null)
+                    sb.Append(String.Join("", validityPeriod.Value.Select(x => x.ToString("X2"))));
 
                 switch (dcs)
                 {

@@ -64,7 +64,6 @@ namespace HeboTech.ATLib.DTOs
         public PhoneNumber PhoneNumber { get; }
         public string Message { get; }
         public CharacterSet CodingScheme { get; }
-        public bool IncludeEmptySmscLength { get; set; }
         public byte MessageReferenceNumber { get; set; }
         public ValidityPeriod ValidityPeriod { get; set; }
         public bool EnableStatusReportRequest { get; set; }

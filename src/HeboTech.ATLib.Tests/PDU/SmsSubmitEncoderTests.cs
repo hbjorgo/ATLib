@@ -40,9 +40,8 @@ namespace HeboTech.ATLib.Tests.PDU
                     encodedMessage,
                     dataCodingScheme)
                 {
-                    IncludeEmptySmscLength = includeEmptySmscLength,
                     MessageReferenceNumber = 12
-                });
+                }, includeEmptySmscLength);
 
             Assert.Equal(answer, encoded.ToArray());
         }
@@ -57,10 +56,9 @@ namespace HeboTech.ATLib.Tests.PDU
                     new string('a', characterCount),
                     dataCodingScheme)
                     {
-                        IncludeEmptySmscLength = includeEmptySmscLength,
                         MessageReferenceNumber = 12
                     };
-            Assert.Throws<ArgumentException>(() => SmsSubmitEncoder.Encode(request).ToList());
+            Assert.Throws<ArgumentException>(() => SmsSubmitEncoder.Encode(request, includeEmptySmscLength).ToList());
         }
     }
 }

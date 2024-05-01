@@ -2,9 +2,9 @@
 
 namespace HeboTech.ATLib.Events
 {
-    public class SmsReceivedStorageReferenceEventArgs
+    public class SmsStorageReferenceReceivedEventArgs
     {
-        public SmsReceivedStorageReferenceEventArgs(string storage, int index)
+        public SmsStorageReferenceReceivedEventArgs(string storage, int index)
         {
             Storage = storage;
             Index = index;
@@ -13,14 +13,14 @@ namespace HeboTech.ATLib.Events
         public string Storage { get; }
         public int Index { get; }
 
-        public static SmsReceivedStorageReferenceEventArgs CreateFromResponse(string response)
+        public static SmsStorageReferenceReceivedEventArgs CreateFromResponse(string response)
         {
             var match = Regex.Match(response, @"\+CMTI:\s""(?<storage>[A-Z]+)"",(?<index>\d+)");
             if (match.Success)
             {
                 string storage = match.Groups["storage"].Value;
                 int index = int.Parse(match.Groups["index"].Value);
-                return new SmsReceivedStorageReferenceEventArgs(storage, index);
+                return new SmsStorageReferenceReceivedEventArgs(storage, index);
             }
             return default;
         }

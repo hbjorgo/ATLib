@@ -39,7 +39,7 @@ namespace HeboTech.ATLib.Modems
         /// <summary>
         /// Indicates that an SMS is received
         /// </summary>
-        event EventHandler<SmsReceivedStorageReferenceEventArgs> SmsStorageReferenceReceived;
+        event EventHandler<SmsStorageReferenceReceivedEventArgs> SmsStorageReferenceReceived;
 
         /// <summary>
         /// Indicates that a USSD response is received
@@ -162,7 +162,7 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="smsStatus"></param>
         /// <returns>Command status with a list of SMSs</returns>
-        Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus);
+        Task<ModemResponse<List<SmsBaseWithIndex>>> ListSmssAsync(SmsStatus smsStatus);
 
         /// <summary>
         /// Set preferred message storages
@@ -190,7 +190,7 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="index"></param>
         /// <returns>Command status with SMS</returns>
-        Task<ModemResponse<Sms>> ReadSmsAsync(int index);
+        Task<ModemResponse<SmsBase>> ReadSmsAsync(int index);
 
         /// <summary>
         /// Resets the modem to factory defaults
@@ -199,21 +199,11 @@ namespace HeboTech.ATLib.Modems
         Task<ModemResponse> ResetToFactoryDefaultsAsync();
 
         /// <summary>
-        /// Sends an SMS in PDU format. This will automatically select the Data Coding Scheme that will result in the fewest messages being sent in case of a concatenated SMS based on the content of the message.
-        /// </summary>
-        /// <param name="phoneNumber">The number to send to</param>
-        /// <param name="message">The message body</param>
-        /// <returns>Command status with SMS reference</returns>
-        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message);
-
-        /// <summary>
         /// Sends an SMS in PDU format
         /// </summary>
-        /// <param name="phoneNumber">The number to send to</param>
-        /// <param name="message">The message body</param>
-        /// <param name="codingScheme">Encoding to use</param>
+        /// <param name="request">The SMS request<param>
         /// <returns>Command status with SMS reference</returns>
-        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme = CharacterSet.UCS2);
+        Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(SmsSubmitRequest request);
 
         /// <summary>
         /// Sends an USSD code. Results in an UssdResponseReceived event
@@ -243,6 +233,13 @@ namespace HeboTech.ATLib.Modems
         /// <param name="errorFormat">Typical: 0 (disable), 1 (numeric), 2 (verbose)</param>
         /// <returns>Command status</returns>
         Task<ModemResponse> SetErrorFormatAsync(int errorFormat);
+
+        /// <summary>
+        /// Select Message Service
+        /// </summary>
+        /// <param name="service">Typical: 0, 1</param>
+        /// <returns>Command status</returns>
+        Task<ModemResponse> SetSelectMessageService(int service);
 
         /// <summary>
         /// Sets how receiving a new SMS is indicated

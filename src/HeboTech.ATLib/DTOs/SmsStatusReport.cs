@@ -1,19 +1,19 @@
-﻿using System;
+﻿using HeboTech.ATLib.PDU;
+using System;
 
 namespace HeboTech.ATLib.DTOs
 {
-    public class SmsStatusReport
+    public class SmsStatusReport : SmsBase
     {
         public SmsStatusReport(int messageReference, PhoneNumberDTO recipientAddress, DateTimeOffset serviceCenterTimestamp, DateTimeOffset dischargeTime, SmsDeliveryStatus status)
+            : base(MessageTypeIndicatorInbound.SMS_STATUS_REPORT, messageReference)
         {
-            MessageReference = messageReference;
             RecipientAddress = recipientAddress;
             ServiceCenterTimestamp = serviceCenterTimestamp;
             DischargeTime = dischargeTime;
             Status = status;
         }
 
-        public int MessageReference { get; }
         public PhoneNumberDTO RecipientAddress { get; }
         public DateTimeOffset ServiceCenterTimestamp { get; }
         public DateTimeOffset DischargeTime { get; }
@@ -21,7 +21,7 @@ namespace HeboTech.ATLib.DTOs
 
         public override string ToString()
         {
-            return $"SMS no. {MessageReference} delivered with status {Status}. RA: {RecipientAddress}. SCTS: {ServiceCenterTimestamp}. DT: {DischargeTime}.";
+            return base.ToString() + $" Delivered with status {Status}. RA: {RecipientAddress}. SCTS: {ServiceCenterTimestamp}. DT: {DischargeTime}.";
         }
     }
 }

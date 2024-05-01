@@ -73,7 +73,7 @@ namespace HeboTech.ATLib.TestConsole
             Console.ReadKey();
         }
 
-        private static void Modem_SmsReceived(object sender, Events.SmsReceivedStorageReferenceEventArgs e)
+        private static void Modem_SmsReceived(object sender, Events.SmsStorageReferenceReceivedEventArgs e)
         {
             Console.WriteLine($"SMS received. Index {e.Index} at storage location {e.Storage}");
         }
