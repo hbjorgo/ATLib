@@ -106,7 +106,7 @@ namespace HeboTech.ATLib.TestConsole
             var selectMessageService = await modem.SetSelectMessageService(0);
             Console.WriteLine($"Setting select message service: {selectMessageService}");
 
-            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 2, 0); // 2, 2, 2, 1, 1 -> PDU                           (2, 1, 2, 1, 0)
+            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 2, 0); // 2, 1, 0, 2, 0 (CSMS=0)
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
             var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();

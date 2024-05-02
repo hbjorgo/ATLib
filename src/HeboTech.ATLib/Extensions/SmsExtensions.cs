@@ -4,9 +4,9 @@ namespace HeboTech.ATLib.Extensions
 {
     internal static class SmsExtensions
     {
-        public static SmsBaseWithIndex ToSmsWithIndex(this SmsBase sms, int index)
+        public static SmsWithIndex ToSmsWithIndex(this Sms sms, int index)
         {
-            return new SmsBaseWithIndex(sms, index);
+            return new SmsWithIndex(sms, index);
         }
     }
 }

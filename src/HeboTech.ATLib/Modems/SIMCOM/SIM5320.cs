@@ -46,17 +46,17 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             return SendSmsAsync(request, false);
         }
 
-        public override async Task<ModemResponse<List<SmsBaseWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
+        public override async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
         {
             string command = $"AT+CMGL={(int)smsStatus}";
 
             AtResponse response = await channel.SendMultilineCommand(command, null);
 
-            List<SmsBaseWithIndex> smss = new List<SmsBaseWithIndex>();
+            List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
             {
                 if ((response.Intermediates.Count % 2) != 0)
-                    return ModemResponse.HasResultError<List<SmsBaseWithIndex>>();
+                    return ModemResponse.HasResultError<List<SmsWithIndex>>();
 
                 for (int i = 0; i < response.Intermediates.Count; i += 2)
                 {
@@ -71,7 +71,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                         // Sent when AT+CSDH=1 is set
                         int length = int.Parse(match.Groups["length"].Value);
 
-                        SmsBase sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
+                        Sms sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
                         smss.Add(sms.ToSmsWithIndex(index));
                     }
                 }

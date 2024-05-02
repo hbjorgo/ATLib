@@ -375,14 +375,14 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasResultError<PreferredMessageStorages>(error);
         }
 
-        public virtual async Task<ModemResponse<SmsBase>> ReadSmsAsync(int index)
+        public virtual async Task<ModemResponse<Sms>> ReadSmsAsync(int index)
         {
             AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
 
             if (pduResponse.Success)
             {
                 if (!pduResponse.Intermediates.Any())
-                    return ModemResponse.HasResultError<SmsBase>();
+                    return ModemResponse.HasResultError<Sms>();
 
                 string line1 = pduResponse.Intermediates[0];
                 var line1Match = Regex.Match(line1, @"\+CMGR:\s(?<status>\d),(""(?<alpha>\w*)"")*,(?<length>\d+)");
@@ -399,7 +399,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         if (line2Match.Success)
                         {
                             string pduString = line2Match.Groups["pdu"].Value;
-                            SmsBase sms = SmsDecoder.Decode(pduString.ToByteArray(), status);
+                            Sms sms = SmsDecoder.Decode(pduString.ToByteArray(), status);
                             return ModemResponse.IsResultSuccess(sms);
                         }
                     }
@@ -407,20 +407,20 @@ namespace HeboTech.ATLib.Modems.Generic
             }
 
             AtErrorParsers.TryGetError(pduResponse.FinalResponse, out Error pduError);
-            return ModemResponse.HasResultError<SmsBase>(pduError);
+            return ModemResponse.HasResultError<Sms>(pduError);
         }
 
-        public virtual async Task<ModemResponse<List<SmsBaseWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
+        public virtual async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
         {
             string command = $"AT+CMGL={(int)smsStatus}";
 
             AtResponse response = await channel.SendMultilineCommand(command, null);
 
-            List<SmsBaseWithIndex> smss = new List<SmsBaseWithIndex>();
+            List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
             {
                 if ((response.Intermediates.Count % 2) != 0)
-                    return ModemResponse.HasResultError<List<SmsBaseWithIndex>>();
+                    return ModemResponse.HasResultError<List<SmsWithIndex>>();
 
                 for (int i = 0; i < response.Intermediates.Count; i += 2)
                 {
@@ -435,7 +435,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         // Sent when AT+CSDH=1 is set
                         int length = int.Parse(match.Groups["length"].Value);
 
-                        SmsBase sms = SmsDecoder.Decode(messageLine.ToByteArray(), status);
+                        Sms sms = SmsDecoder.Decode(messageLine.ToByteArray(), status);
                         smss.Add(sms.ToSmsWithIndex(index));
                     }
                 }

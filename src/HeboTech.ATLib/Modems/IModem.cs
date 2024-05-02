@@ -162,7 +162,7 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="smsStatus"></param>
         /// <returns>Command status with a list of SMSs</returns>
-        Task<ModemResponse<List<SmsBaseWithIndex>>> ListSmssAsync(SmsStatus smsStatus);
+        Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus);
 
         /// <summary>
         /// Set preferred message storages
@@ -190,7 +190,7 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="index"></param>
         /// <returns>Command status with SMS</returns>
-        Task<ModemResponse<SmsBase>> ReadSmsAsync(int index);
+        Task<ModemResponse<Sms>> ReadSmsAsync(int index);
 
         /// <summary>
         /// Resets the modem to factory defaults

@@ -3,7 +3,7 @@ using System;
 
 namespace HeboTech.ATLib.DTOs
 {
-    public class SmsStatusReport : SmsBase
+    public class SmsStatusReport : Sms
     {
         public SmsStatusReport(int messageReference, PhoneNumberDTO recipientAddress, DateTimeOffset serviceCenterTimestamp, DateTimeOffset dischargeTime, SmsDeliveryStatus status)
             : base(MessageTypeIndicatorInbound.SMS_STATUS_REPORT, messageReference)

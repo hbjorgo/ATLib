@@ -6,7 +6,7 @@ namespace HeboTech.ATLib.DTOs
     /// <summary>
     /// Data object for a received SMS
     /// </summary>
-    public class SmsDeliver : SmsBase
+    public class SmsDeliver : Sms
     {
         public SmsDeliver(PhoneNumberDTO serviceCenterNumber, PhoneNumberDTO senderNumber, string message, DateTimeOffset timestamp)
             : base(MessageTypeIndicatorInbound.SMS_DELIVER)

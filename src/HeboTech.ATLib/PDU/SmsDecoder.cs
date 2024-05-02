@@ -5,7 +5,7 @@ namespace HeboTech.ATLib.PDU
 {
     internal class SmsDecoder
     {
-        public static SmsBase Decode(ReadOnlySpan<byte> bytes, SmsStatus status, int timestampYearOffset = 2000)
+        public static Sms Decode(ReadOnlySpan<byte> bytes, SmsStatus status, int timestampYearOffset = 2000)
         {
             int offset = 0;
 

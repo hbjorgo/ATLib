@@ -1,36 +1,26 @@
-﻿using System;
+﻿using HeboTech.ATLib.PDU;
 
 namespace HeboTech.ATLib.DTOs
 {
     public class Sms
     {
-        public Sms(SmsStatus status, PhoneNumberDTO sender, DateTimeOffset receiveTime, string message)
-            : this(status, sender, receiveTime, message, 0, 1, 1)
+        protected Sms(MessageTypeIndicatorInbound messageTypeIndicator)
         {
+            MessageTypeIndicator = messageTypeIndicator;
         }
 
-        public Sms(SmsStatus status, PhoneNumberDTO sender, DateTimeOffset receiveTime, string message, int messageReferenceNumber, int totalNumberOfParts, int partNumber)
+        protected Sms(MessageTypeIndicatorInbound messageTypeIndicator, int messageReference)
+            : this(messageTypeIndicator)
         {
-            Status = status;
-            Sender = sender;
-            ReceiveTime = receiveTime;
-            Message = message;
-            MessageReferenceNumber = messageReferenceNumber;
-            TotalNumberOfParts = totalNumberOfParts;
-            PartNumber = partNumber;
+            MessageReference = messageReference;
         }
 
-        public SmsStatus Status { get; }
-        public PhoneNumberDTO Sender { get; }
-        public DateTimeOffset ReceiveTime { get;}
-        public string Message { get; }
-        public int MessageReferenceNumber { get; }
-        public int TotalNumberOfParts { get; }
-        public int PartNumber { get; }
+        public int MessageReference { get; }
+        public MessageTypeIndicatorInbound MessageTypeIndicator { get; }
 
         public override string ToString()
         {
-            return $"Sender:\t\t{Sender}{Environment.NewLine}ReceiveTime:\t{ReceiveTime}{Environment.NewLine}Ref. no.:\t{MessageReferenceNumber}{Environment.NewLine}Part:\t\t{PartNumber}/{TotalNumberOfParts}{Environment.NewLine}Message:\t{Message}";
+            return $"MTI: {MessageTypeIndicator}, Msg. ref.: {MessageReference}";
         }
     }
 }
