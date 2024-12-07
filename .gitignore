@@ -4,6 +4,8 @@
 #Log folders
 Logs/
 
+**/*/launchSettings.json
+
 # User-specific files
 *.suo
 *.user
