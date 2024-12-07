@@ -132,6 +132,9 @@ namespace HeboTech.ATLib.PDU
         /// <returns></returns>
         protected SmsSubmitEncoder ValidityPeriod(ValidityPeriod validityPeriod)
         {
+            if (validityPeriod == null)
+                return this;
+
             // Set format
             header |= (byte)((byte)validityPeriod.Format << 3);
 
