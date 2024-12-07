@@ -47,6 +47,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("4142", "AB")]
         [InlineData("54686520717569636b2062726f776e20666f78206a756d7073206f76657220746865206c617a7920646f67", "The quick brown fox jumps over the lazy dog")]
         [InlineData("54616461203A29", "Tada :)")]
+        [InlineData("48454C4C4F313233", "HELLO123")]
         public void DecodeFromBytes_returns_decoded_text(string gsm7Bit, string expected)
         {
             string result = Gsm7.DecodeFromBytes(Convert.FromHexString(gsm7Bit));
