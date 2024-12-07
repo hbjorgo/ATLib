@@ -28,8 +28,7 @@ namespace HeboTech.ATLib.PDU
                 case TypeOfNumber.Subscriber:
                     break;
                 case TypeOfNumber.AlphaNumeric:
-                    var unpacked = Gsm7.Unpack(data[1..].ToArray());
-                    var decoded = Gsm7.DecodeFromBytes(unpacked);
+                    var decoded = Gsm7.DecodeFromBytes(data[1..].ToArray());
                     return new PhoneNumberDTO(decoded);
                 case TypeOfNumber.Abbreviated:
                     break;
