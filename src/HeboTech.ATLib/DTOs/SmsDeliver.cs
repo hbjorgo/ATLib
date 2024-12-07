@@ -41,7 +41,7 @@ namespace HeboTech.ATLib.DTOs
 
         public override string ToString()
         {
-            return base.ToString() +  $" From: {SenderNumber}. Message: {Message}. Timestamp: {Timestamp}";
+            return base.ToString() +  $" Timestamp: {Timestamp}. From: {SenderNumber}. Message: {Message}.";
         }
     }
 }

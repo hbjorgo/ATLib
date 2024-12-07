@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.DTOs
 
         public override string ToString()
         {
-            return $"MTI: {MessageTypeIndicator}, Msg. ref.: {MessageReference}";
+            return $"MTI: {MessageTypeIndicator}. Msg. ref.: {MessageReference}.";
         }
     }
 }
