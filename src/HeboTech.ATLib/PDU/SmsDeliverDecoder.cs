@@ -38,7 +38,7 @@ namespace HeboTech.ATLib.PDU
                 if (parsedHeader.MTI != (byte)MessageTypeIndicatorInbound.SMS_DELIVER)
                     throw new ArgumentException("Invalid SMS-DELIVER data");
 
-                parsedHeader.MMS = (header & (1 << 2)) != 0;
+                parsedHeader.MMS = (header & (1 << 2)) == 0;
                 parsedHeader.SRI = (header & (1 << 3)) != 0;
                 parsedHeader.UDHI = (header & (1 << 6)) != 0;
                 parsedHeader.RP = (header & (1 << 7)) != 0;
@@ -123,7 +123,7 @@ namespace HeboTech.ATLib.PDU
                 case CharacterSet.Gsm7:
                     int fillBits = 0;
                     if (header.UDHI)
-                        fillBits = 7 - (((1 + udh.Length) * 8) % 7);
+                        fillBits = ((1 + udh.Length) * 8) % 7;
 
                     var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
                     message = Gsm7.DecodeFromBytes(unpacked);
