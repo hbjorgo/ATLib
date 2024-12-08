@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.Tests.PDU
             Assert.NotNull(smsDeliver);
             Assert.Equal(serviceCenterNumber, smsDeliver.ServiceCenterNumber.ToString());
             Assert.Equal(senderNumber, smsDeliver.SenderNumber.ToString());
-            Assert.Equal(DateTime.Parse(timestamp), smsDeliver.Timestamp);
+            Assert.Equal(DateTimeOffset.Parse(timestamp), smsDeliver.Timestamp);
             Assert.Equal(message, smsDeliver.Message);
         }
 
@@ -38,8 +38,8 @@ namespace HeboTech.ATLib.Tests.PDU
             Assert.NotNull(smsStatusReport);
             Assert.Equal(serviceCenterNumber, smsStatusReport.ServiceCenterAddress.ToString());
             Assert.Equal(senderNumber, smsStatusReport.RecipientAddress.ToString());
-            Assert.Equal(DateTime.Parse(serviceCenterTimestamp), smsStatusReport.ServiceCenterTimestamp);
-            Assert.Equal(DateTime.Parse(dischargeTimestamp), smsStatusReport.DischargeTime);
+            Assert.Equal(DateTimeOffset.Parse(serviceCenterTimestamp), smsStatusReport.ServiceCenterTimestamp);
+            Assert.Equal(DateTimeOffset.Parse(dischargeTimestamp), smsStatusReport.DischargeTime);
             Assert.Equal(status, smsStatusReport.Status);
             Assert.Equal(MessageTypeIndicatorInbound.SMS_STATUS_REPORT, smsStatusReport.MessageTypeIndicator);
             Assert.Equal(messageReference, smsStatusReport.MessageReference);
