@@ -2,7 +2,7 @@
 
 namespace HeboTech.ATLib.DTOs
 {
-    public class Sms
+    public abstract class Sms
     {
         protected Sms(MessageTypeIndicatorInbound messageTypeIndicator)
         {

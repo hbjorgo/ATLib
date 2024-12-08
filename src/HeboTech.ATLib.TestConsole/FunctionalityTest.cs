@@ -1,7 +1,6 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems.Cinterion;
-using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
@@ -13,10 +12,28 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class FunctionalityTest
     {
+        static readonly string debugPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            "Downloads",
+            "atlog",
+            "log.txt"
+            );
+
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             using AtChannel atChannel = AtChannel.Create(stream);
-            //atChannel.EnableDebug((string line) => Console.WriteLine(line));
+            atChannel.EnableDebug((string line) =>
+            {
+                string formattedLine = $"({DateTime.Now}) {line}";
+                try
+                {
+                    System.IO.File.AppendAllLines(debugPath, [formattedLine]);
+                }
+                catch (Exception e)
+                {
+                    //Console.WriteLine($"Error while logging: {e}");
+                }
+            });
             using IMC55i modem = new MC55i(atChannel);
             //using IDWM222 modem = new DWM222(atChannel);
             atChannel.Open();

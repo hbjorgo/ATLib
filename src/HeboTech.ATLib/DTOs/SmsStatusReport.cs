@@ -5,16 +5,18 @@ namespace HeboTech.ATLib.DTOs
 {
     public class SmsStatusReport : Sms
     {
-        public SmsStatusReport(int messageReference, PhoneNumberDTO recipientAddress, DateTimeOffset serviceCenterTimestamp, DateTimeOffset dischargeTime, SmsDeliveryStatus status)
+        public SmsStatusReport(int messageReference, PhoneNumberDTO recipientAddress, PhoneNumberDTO serviceCenterAddress, DateTimeOffset serviceCenterTimestamp, DateTimeOffset dischargeTime, SmsDeliveryStatus status)
             : base(MessageTypeIndicatorInbound.SMS_STATUS_REPORT, messageReference)
         {
             RecipientAddress = recipientAddress;
+            ServiceCenterAddress = serviceCenterAddress;
             ServiceCenterTimestamp = serviceCenterTimestamp;
             DischargeTime = dischargeTime;
             Status = status;
         }
 
         public PhoneNumberDTO RecipientAddress { get; }
+        public PhoneNumberDTO ServiceCenterAddress { get; }
         public DateTimeOffset ServiceCenterTimestamp { get; }
         public DateTimeOffset DischargeTime { get; }
         public SmsDeliveryStatus Status { get; }

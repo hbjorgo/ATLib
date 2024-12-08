@@ -76,12 +76,14 @@ namespace HeboTech.ATLib.Parsers
         {
             this.debugAction = debugAction ?? throw new ArgumentNullException(nameof(debugAction));
             debugEnabled = true;
+            debugAction($"##### DEBUG ENABLED #####");
         }
 
         public void DisableDebug()
         {
             debugEnabled = false;
             debugAction = default;
+            debugAction($"##### DEBUG DISABLED #####");
         }
 
         /// <summary>
@@ -181,7 +183,7 @@ namespace HeboTech.ATLib.Parsers
                 {
                     line1 = await atReader.ReadAsync(cancellationToken);
                     if (debugEnabled)
-                        debugAction($"In: {line1}");
+                        debugAction($"In (line1): {line1}");
                 }
                 catch (OperationCanceledException)
                 {
@@ -198,7 +200,7 @@ namespace HeboTech.ATLib.Parsers
                     {
                         line2 = await atReader.ReadAsync(cancellationToken);
                         if (debugEnabled)
-                            debugAction($"In: {line2}");
+                            debugAction($"In (line2): {line2}");
                     }
                     catch (OperationCanceledException)
                     {

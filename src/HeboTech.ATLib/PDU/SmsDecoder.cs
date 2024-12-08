@@ -11,12 +11,8 @@ namespace HeboTech.ATLib.PDU
 
             // SMSC information
             byte smsc_length = bytes[offset++];
-            PhoneNumberDTO serviceCenterNumber = null;
-            if (smsc_length > 0)
-            {
-                serviceCenterNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += smsc_length)]);
-            }
-
+            // Skip SMSC information - handle it in each individual parser.
+            offset += smsc_length;
             // Header
             byte headerByte = bytes[offset++];
 
