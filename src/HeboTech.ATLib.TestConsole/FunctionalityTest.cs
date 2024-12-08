@@ -12,28 +12,30 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class FunctionalityTest
     {
-        static readonly string debugPath = System.IO.Path.Combine(
+        private static readonly string debugPath = System.IO.Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             "Downloads",
             "atlog",
             "log.txt"
             );
 
+        private static void Log(string message)
+        {
+            string formattedLine = $"({DateTime.Now}) {message}";
+            try
+            {
+                System.IO.File.AppendAllLines(debugPath, [formattedLine]);
+            }
+            catch (Exception e)
+            {
+                //Console.WriteLine($"Error while logging: {e}");
+            }
+        }
+
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             using AtChannel atChannel = AtChannel.Create(stream);
-            atChannel.EnableDebug((string line) =>
-            {
-                string formattedLine = $"({DateTime.Now}) {line}";
-                try
-                {
-                    System.IO.File.AppendAllLines(debugPath, [formattedLine]);
-                }
-                catch (Exception e)
-                {
-                    //Console.WriteLine($"Error while logging: {e}");
-                }
-            });
+            atChannel.EnableDebug(Log);
             using IMC55i modem = new MC55i(atChannel);
             //using IDWM222 modem = new DWM222(atChannel);
             atChannel.Open();
@@ -133,6 +135,7 @@ namespace HeboTech.ATLib.TestConsole
             var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.MT, MessageStorage.MT, MessageStorage.MT);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
+            Log("Initialization done");
             Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'p' to delete an SMS, 'u' to send USSD code, 'x' to send raw command, 'z' to send raw command with response, '+' to enable debug, '-' to disable debug and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
