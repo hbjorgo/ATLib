@@ -229,9 +229,8 @@ namespace HeboTech.ATLib.PDU
 
                         var gsm7 = Gsm7.Encode(part.Data, fillBits);
 
-                        int udlBits = part.Header.Length * 8 + gsm7.Length * 7;
+                        int udlBits = part.Header.Length * 8 + part.Data.Length * 7 + fillBits;
                         int udlSeptets = udlBits / 7;
-                        udlSeptets += (udlBits % 7) == 0 ? 0 : 1;
 
                         sb.Append((udlSeptets).ToString("X2"));
                         sb.Append(string.Join("", part.Header.Select(x => x.ToString("X2"))));
@@ -303,7 +302,7 @@ namespace HeboTech.ATLib.PDU
                             // Each part of the total message
                             message.Skip(i * maxMessagePartSize).Take(maxMessagePartSize).ToArray());
             }
-            
+
             return new Message(messageReferenceNumber, (byte)numberOfParts, parts);
         }
     }

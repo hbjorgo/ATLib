@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems.Cinterion;
+using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
@@ -36,8 +37,8 @@ namespace HeboTech.ATLib.TestConsole
         {
             using AtChannel atChannel = AtChannel.Create(stream);
             atChannel.EnableDebug(Log);
-            using IMC55i modem = new MC55i(atChannel);
-            //using IDWM222 modem = new DWM222(atChannel);
+            //using IMC55i modem = new MC55i(atChannel);
+            using IDWM222 modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 

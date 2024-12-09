@@ -168,7 +168,8 @@ namespace HeboTech.ATLib.CodingSchemes
             }
 
             // Convert the bit array to a byte array
-            byte[] packed = new byte[(int)Math.Ceiling(packedBits.Length / 8.0)];
+            int numberOfBytes = packedBits.Length % 8 == 0 ? packedBits.Length / 8 : (packedBits.Length / 8) + 1;
+            byte[] packed = new byte[numberOfBytes];
             packedBits.CopyTo(packed, 0);
 
             // Return the septets packed as octets
