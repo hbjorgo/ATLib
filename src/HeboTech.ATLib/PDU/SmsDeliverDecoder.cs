@@ -123,10 +123,8 @@ namespace HeboTech.ATLib.PDU
                 case CharacterSet.Gsm7:
                     int fillBits = 0;
                     if (header.UDHI)
-                        fillBits = ((1 + udh.Length) * 8) % 7;
-
-                    var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
-                    message = Gsm7.DecodeFromBytes(unpacked);
+                        fillBits = (1 + udh.Length) % 7 == 0 ? 0 : 7 - (((1 + udh.Length) * 8) % 7); // Add 1 to the udh length because the length byte isn't included in the udh length itself. If fillbits == 7 -> use 0 fillbits.
+                    message = Gsm7.Decode(payload.ToArray(), fillBits);
                     break;
                 case CharacterSet.UCS2:
                     message = UCS2.Decode(payload.ToArray());

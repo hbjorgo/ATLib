@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.CodingSchemes
         // ` is not a conversion, just a untranslatable letter
         private static readonly Dictionary<Gsm7Extension, string> regularTable = new Dictionary<Gsm7Extension, string>()
         {
-            { Gsm7Extension.Default, "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
+            { Gsm7Extension.Default, "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ\x1BÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
             { Gsm7Extension.Turkish, "@£$¥€éùıòÇLĞğCÅåΔ_ΦΓΛΩΠΨΣΘFEŞRßÉ !\"#¤%&'()ΞS,ş./0123456789*C<->?İABCDEFGHI:+L=NOPQRSTUVWXYJ;ÖMÜ§çabcdefghiZKlÑnopqrstuvwxyjÄömüà" },
             { Gsm7Extension.Spanish, "@£$¥èéùìòÇ`Øø`ÅåΔ_ΦΓΛΩΠΨΣΘΞ`ÆæßÉ !\"#¤%&'()*=,-./0123456789:;<=>?¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ`¿abcdefghijklmnopqrstuvwxyzäöñüà" },
             { Gsm7Extension.Portugese, "@£$¥êéúíóçLÔôCÁáΔ_ªÇÀ∞^\\€ÓFEÂRÊÉ !\"#º%&'()|S,â./0123456789*C<->?ÍABCDEFGHI:+L=NOPQRSTUVWXYJ;ÕMÜ§~abcdefghiZKlÚnopqrstuvwxyjÃõmüà" },
@@ -68,7 +68,11 @@ namespace HeboTech.ATLib.CodingSchemes
             return true;
         }
 
-        public static byte[] EncodeToBytes(IEnumerable<char> text, Gsm7Extension lockingShift = Gsm7Extension.Default, Gsm7Extension singleShift = Gsm7Extension.Default)
+        /// <summary>
+        /// Encodes 8-bit text (as bytes) into 7-bit text (as bytes)
+        /// </summary>
+        /// <returns></returns>
+        public static byte[] Encode(IEnumerable<char> text, int fillBits = 0, Gsm7Extension lockingShift = Gsm7Extension.Default, Gsm7Extension singleShift = Gsm7Extension.Default)
         {
             string defaultString = regularTable[lockingShift];
             string extendedString = extendedTable[singleShift];
@@ -89,29 +93,37 @@ namespace HeboTech.ATLib.CodingSchemes
                 int intExtendedTable = extendedString.IndexOf(c);
                 if (intExtendedTable != -1)
                 {
-                    byteGSMOutput.Add(27);
+                    byteGSMOutput.Add(0x1B);
                     byteGSMOutput.Add((byte)intExtendedTable);
                 }
             }
 
-            return byteGSMOutput.ToArray();
+            var packed = Pack(byteGSMOutput.ToArray(), fillBits);
+
+            return packed;
         }
 
-        public static string DecodeFromBytes(IEnumerable<byte> bytes, Gsm7Extension lockingShift = Gsm7Extension.Default, Gsm7Extension singleShift = Gsm7Extension.Default)
+        /// <summary>
+        /// Decodes 7-bit text (as bytes) into 8-bit text (as bytes)
+        /// </summary>
+        /// <returns></returns>
+        public static string Decode(IEnumerable<byte> bytes, int fillBits = 0, Gsm7Extension lockingShift = Gsm7Extension.Default, Gsm7Extension singleShift = Gsm7Extension.Default)
         {
+            var unpacked = Unpack(bytes.ToArray(), fillBits);
+
             string defaultString = regularTable[lockingShift];
             string extendedString = extendedTable[singleShift];
 
-            StringBuilder sb = new StringBuilder(bytes.Count());
+            StringBuilder sb = new StringBuilder(unpacked.Count());
 
             bool isExtended = false;
-            for (int i = 0; i < bytes.Count(); i++)
+            for (int i = 0; i < unpacked.Count(); i++)
             {
-                byte b = bytes.ElementAt(i);
+                byte b = unpacked.ElementAt(i);
 
-                if (b == 27)
+                if (b == 0x1B)
                 {
-                    if (i == bytes.Count() - 1) // If the ESC character is the last character for some reason - treat it as a space
+                    if (i == unpacked.Count() - 1) // If the ESC character is the last character for some reason - treat it as a space
                     {
                         sb.Append(' ');
                         continue;
@@ -137,10 +149,10 @@ namespace HeboTech.ATLib.CodingSchemes
             return sb.ToString();
         }
 
-        public static byte[] Pack(byte[] data, int paddingBits = 0)
+        internal static byte[] Pack(byte[] data, int paddingBits = 0)
         {
             // Array for all packed bits (n x 7)
-            BitArray packedBits = new BitArray((int)Math.Ceiling(data.Length * 7 / 8.0) * 8 + paddingBits);
+            BitArray packedBits = new BitArray((data.Length * 7) + paddingBits);
 
             // Loop through all characters
             for (int i = 0; i < data.Length; i++)
@@ -166,7 +178,36 @@ namespace HeboTech.ATLib.CodingSchemes
             return packed;
         }
 
-        public static byte[] Unpack(byte[] data, int paddingBits = 0)
+        //internal static byte[] Pack(byte[] data, int paddingBits = 0)
+        //{
+        //    // Array for all packed bits (n x 7)
+        //    BitArray packedBits = new BitArray((int)Math.Ceiling(data.Length * 7 / 8.0) * 8 + paddingBits);
+
+        //    // Loop through all characters
+        //    for (int i = 0; i < data.Length; i++)
+        //    {
+        //        // Only 7 bits in each byte is data
+        //        for (int j = 0; j < 7; j++)
+        //        {
+        //            // For each 7 bits in each byte, add it to the bit array
+        //            int index = (i * 7) + j + paddingBits;
+        //            bool isSet = (data[i] & (1 << j)) != 0;
+        //            packedBits.Set(index, isSet);
+        //        }
+        //    }
+
+        //    // Convert the bit array to a byte array
+        //    byte[] packed = new byte[(int)Math.Ceiling(packedBits.Length / 8.0)];
+        //    packedBits.CopyTo(packed, 0);
+
+        //    // Return the septets packed as octets
+        //    // If the last character is empty - skip it
+        //    if (packed[^1] == 0)
+        //        return packed[..^1];
+        //    return packed;
+        //}
+
+        internal static byte[] Unpack(byte[] data, int paddingBits = 0)
         {
             BitArray packedBits = new BitArray(data);
             packedBits.Length += paddingBits;

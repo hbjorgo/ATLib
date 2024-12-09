@@ -29,7 +29,7 @@ namespace HeboTech.ATLib.PDU
         // Phone number in semi octets. 12345678 is represented as 21436587
         protected string daNumber = string.Empty;
         // TP-PID Protocol identifier
-        protected byte pi;
+        protected byte pid;
         // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
         protected CharacterSet dcs;
         // TP-Validity-Period
@@ -185,7 +185,7 @@ namespace HeboTech.ATLib.PDU
         /// <returns></returns>
         protected SmsSubmitEncoder ProtocolIdentifier(byte value)
         {
-            pi = value;
+            pid = value;
             return this;
         }
 
@@ -215,7 +215,7 @@ namespace HeboTech.ATLib.PDU
                 sb.Append(daLength.ToString("X2"));
                 sb.Append(daType.ToString("X2"));
                 sb.Append(daNumber);
-                sb.Append(pi.ToString("X2"));
+                sb.Append(pid.ToString("X2"));
                 sb.Append(((byte)dcs).ToString("X2"));
                 if (validityPeriod != null)
                     sb.Append(String.Join("", validityPeriod.Value.Select(x => x.ToString("X2"))));
@@ -225,17 +225,16 @@ namespace HeboTech.ATLib.PDU
                     case CharacterSet.Gsm7:
                         int fillBits = 0;
                         if (UserDataHeaderIndicatorIsSet)
-                            fillBits = 7 - ((part.Header.Length * 8) % 7);
+                            fillBits = (part.Header.Length * 8) % 7 == 0 ? 0 : 7 - ((part.Header.Length * 8) % 7); //7 - ((part.Header.Length * 8) % 7);
 
-                        var gsm7 = Gsm7.EncodeToBytes(part.Data);
-                        var encoded = Gsm7.Pack(gsm7, fillBits);
+                        var gsm7 = Gsm7.Encode(part.Data, fillBits);
 
                         int udlBits = part.Header.Length * 8 + gsm7.Length * 7 + fillBits;
                         int udlSeptets = udlBits / 7;
 
                         sb.Append((udlSeptets).ToString("X2"));
                         sb.Append(string.Join("", part.Header.Select(x => x.ToString("X2"))));
-                        sb.Append(string.Join("", encoded.Select(x => x.ToString("X2"))));
+                        sb.Append(string.Join("", gsm7.Select(x => x.ToString("X2"))));
                         break;
                     case CharacterSet.UCS2:
                         var ucs2Bytes = UCS2.EncodeToBytes(part.Data.ToArray());
