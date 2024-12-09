@@ -225,12 +225,13 @@ namespace HeboTech.ATLib.PDU
                     case CharacterSet.Gsm7:
                         int fillBits = 0;
                         if (UserDataHeaderIndicatorIsSet)
-                            fillBits = (part.Header.Length * 8) % 7 == 0 ? 0 : 7 - ((part.Header.Length * 8) % 7); //7 - ((part.Header.Length * 8) % 7);
+                            fillBits = (part.Header.Length * 8) % 7 == 0 ? 0 : 7 - ((part.Header.Length * 8) % 7);
 
                         var gsm7 = Gsm7.Encode(part.Data, fillBits);
 
-                        int udlBits = part.Header.Length * 8 + gsm7.Length * 7 + fillBits;
+                        int udlBits = part.Header.Length * 8 + gsm7.Length * 7;
                         int udlSeptets = udlBits / 7;
+                        udlSeptets += (udlBits % 7) == 0 ? 0 : 1;
 
                         sb.Append((udlSeptets).ToString("X2"));
                         sb.Append(string.Join("", part.Header.Select(x => x.ToString("X2"))));
