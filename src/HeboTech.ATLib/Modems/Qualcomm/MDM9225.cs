@@ -1,5 +1,4 @@
-﻿using HeboTech.ATLib.CodingSchemes;
-using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System.Collections.Generic;
@@ -14,14 +13,9 @@ namespace HeboTech.ATLib.Modems.Qualcomm
         {
         }
 
-        public Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
+        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(SmsSubmitRequest request)
         {
-            return base.SendSmsAsync(phoneNumber, message, false);
-        }
-
-        public Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
-        {
-            return base.SendSmsAsync(phoneNumber, message, codingScheme, false);
+            return SendSmsAsync(request, false);
         }
     }
 }

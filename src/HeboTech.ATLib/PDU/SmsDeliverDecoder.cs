@@ -1,9 +1,7 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
 using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Extensions;
 using System;
 using System.Linq;
-using System.Threading;
 
 namespace HeboTech.ATLib.PDU
 {
@@ -15,7 +13,7 @@ namespace HeboTech.ATLib.PDU
             {
             }
 
-            public SmsDeliverHeader(MessageTypeIndicator mti, bool mms, bool lp, bool sri, bool udhi, bool rp)
+            public SmsDeliverHeader(MessageTypeIndicatorInbound mti, bool mms, bool lp, bool sri, bool udhi, bool rp)
             {
                 MTI = mti;
                 MMS = mms;
@@ -25,7 +23,7 @@ namespace HeboTech.ATLib.PDU
                 RP = rp;
             }
 
-            public MessageTypeIndicator MTI { get; private set; }
+            public MessageTypeIndicatorInbound MTI { get; private set; }
             public bool MMS { get; private set; }
             public bool LP { get; private set; }
             public bool SRI { get; private set; }
@@ -36,14 +34,14 @@ namespace HeboTech.ATLib.PDU
             {
                 SmsDeliverHeader parsedHeader = new SmsDeliverHeader();
 
-                parsedHeader.MTI = (MessageTypeIndicator)(header & 0b0000_0011);
-                if (parsedHeader.MTI != (byte)MessageTypeIndicator.SMS_DELIVER)
+                parsedHeader.MTI = (MessageTypeIndicatorInbound)(header & 0b0000_0011);
+                if (parsedHeader.MTI != (byte)MessageTypeIndicatorInbound.SMS_DELIVER)
                     throw new ArgumentException("Invalid SMS-DELIVER data");
 
-                parsedHeader.MMS = (header & 0b0000_0100) != 0;
-                parsedHeader.SRI = (header & 0b0000_1000) != 0;
-                parsedHeader.UDHI = (header & 0b0100_0000) != 0;
-                parsedHeader.RP = (header & 0b1000_0000) != 0;
+                parsedHeader.MMS = (header & (1 << 2)) == 0;
+                parsedHeader.SRI = (header & (1 << 3)) != 0;
+                parsedHeader.UDHI = (header & (1 << 6)) != 0;
+                parsedHeader.RP = (header & (1 << 7)) != 0;
 
                 return parsedHeader;
             }
@@ -65,7 +63,7 @@ namespace HeboTech.ATLib.PDU
             PhoneNumberDTO serviceCenterNumber = null;
             if (smsc_length > 0)
             {
-                serviceCenterNumber = DecodePhoneNumber(bytes[offset..(offset += smsc_length)]);
+                serviceCenterNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += smsc_length)]);
             }
 
             // SMS-DELIVER start
@@ -78,7 +76,7 @@ namespace HeboTech.ATLib.PDU
             PhoneNumberDTO oa = null;
             if (tp_oa_bytes_length > 0)
             {
-                oa = DecodePhoneNumber(bytes[offset..(offset += tp_oa_bytes_length)]);
+                oa = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += tp_oa_bytes_length)]);
             }
 
             byte tp_pid = bytes[offset++];
@@ -125,10 +123,8 @@ namespace HeboTech.ATLib.PDU
                 case CharacterSet.Gsm7:
                     int fillBits = 0;
                     if (header.UDHI)
-                        fillBits = 7 - (((1 + udh.Length) * 8) % 7);
-
-                    var unpacked = Gsm7.Unpack(payload.ToArray(), fillBits);
-                    message = Gsm7.DecodeFromBytes(unpacked);
+                        fillBits = (1 + udh.Length) % 7 == 0 ? 0 : 7 - (((1 + udh.Length) * 8) % 7); // Add 1 to the udh length because the length byte isn't included in the udh length itself. If fillbits == 7 -> use 0 fillbits.
+                    message = Gsm7.Decode(payload.ToArray(), fillBits);
                     break;
                 case CharacterSet.UCS2:
                     message = UCS2.Decode(payload.ToArray());
@@ -142,43 +138,6 @@ namespace HeboTech.ATLib.PDU
                 return new SmsDeliver(serviceCenterNumber, oa, message, scts, concatenatedSms.Data[0], concatenatedSms.Data[1], concatenatedSms.Data[2]);
             else
                 return new SmsDeliver(serviceCenterNumber, oa, message, scts);
-        }
-
-        private static PhoneNumberDTO DecodePhoneNumber(ReadOnlySpan<byte> data)
-        {
-            byte ext_ton_npi = data[0];
-            TypeOfNumber ton = (TypeOfNumber)((ext_ton_npi & 0b0111_0000) >> 4);
-
-            string number = string.Empty;
-            switch (ton)
-            {
-                case TypeOfNumber.Unknown:
-                    break;
-                case TypeOfNumber.International:
-                    number = "+";
-                    break;
-                case TypeOfNumber.National:
-                    break;
-                case TypeOfNumber.NetworkSpecific:
-                    break;
-                case TypeOfNumber.Subscriber:
-                    break;
-                case TypeOfNumber.AlphaNumeric:
-                    var unpacked = Gsm7.Unpack(data[1..].ToArray());
-                    var decoded = Gsm7.DecodeFromBytes(unpacked);
-                    return new PhoneNumberDTO(decoded);
-                case TypeOfNumber.Abbreviated:
-                    break;
-                case TypeOfNumber.ReservedForExtension:
-                    break;
-                default:
-                    throw new NotImplementedException($"TON {ton} is not supported");
-            }
-
-            number += string.Join("", data[1..].ToArray().Select(x => x.SwapNibbles().ToString("X2")));
-            if (number[^1] == 'F')
-                number = number[..^1];
-            return new PhoneNumberDTO(number);
         }
     }
 }

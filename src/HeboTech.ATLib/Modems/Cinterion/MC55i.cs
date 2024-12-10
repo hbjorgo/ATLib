@@ -1,5 +1,4 @@
-﻿using HeboTech.ATLib.CodingSchemes;
-using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using HeboTech.ATLib.PDU;
@@ -26,48 +25,12 @@ namespace HeboTech.ATLib.Modems.Cinterion
         {
         }
 
-        public async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
+        public override async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(SmsSubmitRequest request)
         {
-            if (phoneNumber is null)
-                throw new ArgumentNullException(nameof(phoneNumber));
-            if (message is null)
-                throw new ArgumentNullException(nameof(message));
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
 
-            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message) { IncludeEmptySmscLength = true });
-            List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
-            foreach (string pdu in pdus)
-            {
-                string cmd1 = $"AT+CMGS={(pdu.Length - 2) / 2}"; // Subtract 2 (one octet) for SMSC.
-                string cmd2 = pdu;
-                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
-
-                if (response.Success)
-                {
-                    string line = response.Intermediates.First();
-                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
-                    if (match.Success)
-                    {
-                        int mr = int.Parse(match.Groups["mr"].Value);
-                        references.Add(ModemResponse.IsResultSuccess(new SmsReference(mr)));
-                    }
-                }
-                else
-                {
-                    if (AtErrorParsers.TryGetError(response.FinalResponse, out Error error))
-                        references.Add(ModemResponse.HasResultError<SmsReference>(error));
-                }
-            }
-            return references;
-        }
-
-        public async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
-        {
-            if (phoneNumber is null)
-                throw new ArgumentNullException(nameof(phoneNumber));
-            if (message is null)
-                throw new ArgumentNullException(nameof(message));
-
-            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message, codingScheme) { IncludeEmptySmscLength = true });
+            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(request, true);
             List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
             foreach (string pdu in pdus)
             {
@@ -133,6 +96,26 @@ namespace HeboTech.ATLib.Modems.Cinterion
 
             AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
             return ModemResponse.HasResultError<MC55iBatteryStatus>(error);
+        }
+
+        /// <summary>
+        /// Sets how receiving a new SMS is indicated
+        /// </summary>
+        /// <param name="mode">mode</param>
+        /// <param name="mt">mt</param>
+        /// <param name="bm">bm</param>
+        /// <param name="ds">ds</param>
+        /// <param name="bfr">Not in use</param>
+        /// <returns>Command status</returns>
+        public override async Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr)
+        {
+            AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds}");
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
         }
     }
 }

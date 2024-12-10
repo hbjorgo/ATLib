@@ -1,6 +1,7 @@
 ﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Modems.Cinterion;
+using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
@@ -12,22 +13,54 @@ namespace HeboTech.ATLib.TestConsole
 {
     public static class FunctionalityTest
     {
+        private static readonly string debugPath = System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            "Downloads",
+            "atlog",
+            "log.txt"
+            );
+
+        private static void Log(string message)
+        {
+            string formattedLine = $"({DateTime.Now}) {message}";
+            try
+            {
+                System.IO.File.AppendAllLines(debugPath, [formattedLine]);
+            }
+            catch (Exception e)
+            {
+                //Console.WriteLine($"Error while logging: {e}");
+            }
+        }
+
         public static async Task RunAsync(System.IO.Stream stream, string pin)
         {
             using AtChannel atChannel = AtChannel.Create(stream);
-            //atChannel.EnableDebug((string line) => Console.WriteLine(line));
+            atChannel.EnableDebug(Log);
             using IMC55i modem = new MC55i(atChannel);
+            //using IDWM222 modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
+
+            modem.ErrorReceived += Modem_ErrorReceived;
+
+            modem.GenericEvent += Modem_GenericEvent;
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;
             modem.CallStarted += Modem_CallStarted;
             modem.CallEnded += Modem_CallEnded;
+
+            modem.SmsStorageReferenceReceived += Modem_SmsStorageReferenceReceived;
             modem.SmsReceived += Modem_SmsReceived;
+
+            modem.SmsStatusReportReceived += Modem_SmsStatusReportReceived;
+            modem.SmsStatusReportStorageReferenceReceived += Modem_SmsStatusReportStorageReferenceReceived;
+
+            modem.BroadcastMessageReceived += Modem_BroadcastMessageReceived;
+            modem.BroadcastMessageStorageReferenceReceived += Modem_BroadcastMessageStorageReferenceReceived;
+
             modem.UssdResponseReceived += Modem_UssdResponseReceived;
-            modem.ErrorReceived += Modem_ErrorReceived;
-            modem.GenericEvent += Modem_GenericEvent;
 
             // Configure modem with required settings before PIN
             var requiredSettingsBeforePin = await modem.SetRequiredSettingsBeforePinAsync();
@@ -81,14 +114,6 @@ namespace HeboTech.ATLib.TestConsole
             var batteryStatus = await modem.GetBatteryStatusAsync();
             Console.WriteLine($"Battery Status: {batteryStatus}");
 
-            {
-                if (modem is IMC55i mc55i)
-                {
-                    var mc55iBatteryStatus = await mc55i.MC55i_GetBatteryStatusAsync();
-                    Console.WriteLine($"MC55i Battery Status: {mc55iBatteryStatus}");
-                }
-            }
-
             var productInfo = await modem.GetProductIdentificationInformationAsync();
             Console.WriteLine($"Product Information:{Environment.NewLine}{productInfo}");
 
@@ -98,18 +123,21 @@ namespace HeboTech.ATLib.TestConsole
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
 
+            var selectMessageService = await modem.SetSelectMessageService(0);
+            Console.WriteLine($"Setting select message service: {selectMessageService}");
 
-            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 0, 1);
+            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 2, 0); // 2, 1, 0, 2, 0 (CSMS=0)
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
             var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();
             Console.WriteLine($"Supported storages:{Environment.NewLine}{supportedStorages}");
             var currentStorages = await modem.GetPreferredMessageStoragesAsync();
             Console.WriteLine($"Current storages:{Environment.NewLine}{currentStorages}");
-            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.SM, MessageStorage.SM, MessageStorage.SM);
+            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.MT, MessageStorage.MT, MessageStorage.MT);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
-            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'u' to send USSD code, 'x' to send raw command, 'z' to send raw command with response, '+' to enable debug, '-' to disable debug and 'q' to exit...");
+            Log("Initialization done");
+            Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'p' to delete an SMS, 'u' to send USSD code, 'x' to send raw command, 'z' to send raw command with response, '+' to enable debug, '-' to disable debug and 'q' to exit...");
             ConsoleKey key;
             while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
             {
@@ -164,21 +192,38 @@ namespace HeboTech.ATLib.TestConsole
                             string smsMessage = Console.ReadLine();
 
                             Console.WriteLine("Sending SMS...");
-                            IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsAsync(phoneNumber, smsMessage);
+                            IEnumerable<ModemResponse<SmsReference>> smsReferences = await modem.SendSmsAsync(new SmsSubmitRequest(phoneNumber, smsMessage) { EnableStatusReportRequest = true, ValidityPeriod = ValidityPeriod.Relative(RelativeValidityPeriods.Minutes_5) });
                             foreach (var smsReference in smsReferences)
                                 Console.WriteLine($"SMS Reference: {smsReference}");
                             break;
                         }
                     case ConsoleKey.R:
-                        Console.WriteLine("Enter SMS index:");
-                        if (int.TryParse(Console.ReadLine(), out int smsIndex))
                         {
-                            var sms = await modem.ReadSmsAsync(smsIndex);
-                            Console.WriteLine(sms);
+                            Console.WriteLine("Enter SMS index:");
+                            if (int.TryParse(Console.ReadLine(), out int smsIndex))
+                            {
+                                var sms = await modem.ReadSmsAsync(smsIndex);
+                                if (sms.Success)
+                                {
+                                    Console.WriteLine(sms.Result);
+                                }
+                            }
+                            else
+                                Console.WriteLine("Invalid SMS index");
+                            break;
                         }
-                        else
-                            Console.WriteLine("Invalid SMS index");
-                        break;
+                    case ConsoleKey.P:
+                        {
+                            Console.WriteLine("Enter SMS index:");
+                            if (int.TryParse(Console.ReadLine(), out int smsIndex))
+                            {
+                                var deleteResponse = await modem.DeleteSmsAsync(smsIndex);
+                                Console.WriteLine(deleteResponse);
+                            }
+                            else
+                                Console.WriteLine("Invalid SMS index");
+                            break;
+                        }
                     case ConsoleKey.U:
                         Console.WriteLine("Enter USSD Code:");
                         var ussd = Console.ReadLine();
@@ -188,10 +233,14 @@ namespace HeboTech.ATLib.TestConsole
                     case ConsoleKey.L:
                         Console.WriteLine("List all SMSs:");
                         var smss = await modem.ListSmssAsync(SmsStatus.ALL);
+                        Console.WriteLine($"{smss.Result.Count} SMSs:");
                         if (smss.Success && smss.Result.Any())
                         {
                             foreach (var sms in smss.Result)
-                                Console.WriteLine($"------------------------------------------------{Environment.NewLine}{sms}");
+                            {
+                                Console.WriteLine($"------------------------------------------------");
+                                Console.WriteLine($"Index: {sms.Index}, {sms.Sms}");
+                            }
                             Console.WriteLine($"------------------------------------------------");
                         }
 
@@ -206,6 +255,36 @@ namespace HeboTech.ATLib.TestConsole
                         break;
                 }
             }
+        }
+
+        private static void Modem_BroadcastMessageStorageReferenceReceived(object sender, BreadcastMessageStorageReferenceReceivedEventArgs e)
+        {
+            Console.WriteLine($"Broadcast Message. Index {e.Index} at storage location {e.Storage}");
+        }
+
+        private static void Modem_SmsStorageReferenceReceived(object sender, SmsStorageReferenceReceivedEventArgs e)
+        {
+            Console.WriteLine($"SMS Deliver. Index {e.Index} at storage location {e.Storage}");
+        }
+
+        private static void Modem_SmsStatusReportStorageReferenceReceived(object sender, SmsStatusReportStorageReferenceEventArgs e)
+        {
+            Console.WriteLine($"SMS Status Report. Index {e.Index} at storage location {e.Storage}");
+        }
+
+        private static void Modem_BroadcastMessageReceived(object sender, BreadcastMessageReceivedEventArgs e)
+        {
+            Console.WriteLine($"Broadcast Message: {e.BroadcastMessage}");
+        }
+
+        private static void Modem_SmsReceived(object sender, SmsReceivedEventArgs e)
+        {
+            Console.WriteLine($"SMS Deliver: {e.SmsDeliver}");
+        }
+
+        private static void Modem_SmsStatusReportReceived(object sender, SmsStatusReportEventArgs e)
+        {
+            Console.WriteLine($"SMS Status Report: {e.SmsStatusReport}");
         }
 
         private static void Modem_GenericEvent(object sender, GenericEventArgs e)
@@ -232,11 +311,6 @@ namespace HeboTech.ATLib.TestConsole
         private static void Modem_CallStarted(object sender, CallStartedEventArgs e)
         {
             Console.WriteLine("Call started");
-        }
-
-        private static void Modem_SmsReceived(object sender, SmsReceivedEventArgs e)
-        {
-            Console.WriteLine($"SMS received. Index {e.Index} at storage location {e.Storage}");
         }
 
         private static void Modem_MissedCall(object sender, MissedCallEventArgs e)

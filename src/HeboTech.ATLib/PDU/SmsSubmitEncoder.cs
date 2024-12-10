@@ -29,17 +29,17 @@ namespace HeboTech.ATLib.PDU
         // Phone number in semi octets. 12345678 is represented as 21436587
         protected string daNumber = string.Empty;
         // TP-PID Protocol identifier
-        protected byte pi;
+        protected byte pid;
         // TP-DCS Data Coding Scheme. '00'-7bit default alphabet. '04'-8bit
         protected CharacterSet dcs;
-        // TP-Validity-Period. 'AA'-4 days
-        protected List<byte> vp = new List<byte>();
+        // TP-Validity-Period
+        protected ValidityPeriod validityPeriod = null;
         // Message
         protected Message partitionedMessage;
 
         protected SmsSubmitEncoder()
         {
-            header = (byte)MessageTypeIndicator.SMS_SUBMIT;
+            header = (byte)MessageTypeIndicatorOutbound.SMS_SUBMIT;
         }
 
         protected static SmsSubmitEncoder Initialize()
@@ -52,13 +52,14 @@ namespace HeboTech.ATLib.PDU
         /// </summary>
         /// <param name="smsSubmit">Data object</param>
         /// <returns>PDUs</returns>
-        public static IEnumerable<string> Encode(SmsSubmitRequest smsSubmit)
+        public static IEnumerable<string> Encode(SmsSubmitRequest smsSubmit, bool includeEmptySmscLength)
         {
             // Build TPDU
             var messageParts = SmsSubmitEncoder
                                     .Initialize()
                                     .DestinationAddress(smsSubmit.PhoneNumber)
                                     .ValidityPeriod(smsSubmit.ValidityPeriod)
+                                    .EnableStatusReportRequest(smsSubmit.EnableStatusReportRequest)
                                     .Message(smsSubmit.Message, smsSubmit.CodingScheme, smsSubmit.MessageReferenceNumber)
                                     .Build();
 
@@ -67,7 +68,7 @@ namespace HeboTech.ATLib.PDU
                 StringBuilder sb = new StringBuilder();
 
                 // Length of SMSC information
-                if (smsSubmit.IncludeEmptySmscLength)
+                if (includeEmptySmscLength)
                     sb.Append("00");
 
                 sb.Append(messagePart);
@@ -80,7 +81,7 @@ namespace HeboTech.ATLib.PDU
 
         protected SmsSubmitEncoder EnableUserDataHeaderIndicator()
         {
-            header |= 0b0100_0000;
+            header |= (1 << 6);
             return this;
         }
 
@@ -90,13 +91,13 @@ namespace HeboTech.ATLib.PDU
         /// <returns></returns>
         protected SmsSubmitEncoder EnableReplyPath()
         {
-            header |= 0b1000_0000;
+            header |= (1 << 7);
             return this;
         }
 
         protected static byte GetAddressType(PhoneNumber phoneNumber)
         {
-            return (byte)(0b1000_0000 + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
+            return (byte)((1 << 7) + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
         }
 
         protected static string SwapPhoneNumberDigits(string data)
@@ -120,7 +121,7 @@ namespace HeboTech.ATLib.PDU
         /// <returns></returns>
         protected SmsSubmitEncoder RejectDuplicates()
         {
-            header |= 0b0000_0100;
+            header |= (1 << 2);
             return this;
         }
 
@@ -131,20 +132,22 @@ namespace HeboTech.ATLib.PDU
         /// <returns></returns>
         protected SmsSubmitEncoder ValidityPeriod(ValidityPeriod validityPeriod)
         {
+            if (validityPeriod == null)
+                return this;
+
             // Set format
-            byte mask = 0b0001_1000;
-            header = (byte)((header & ~mask) | ((byte)validityPeriod.Format & mask));
+            header |= (byte)((byte)validityPeriod.Format << 3);
 
             // Set value
-            vp.Clear();
-            vp.AddRange(validityPeriod.Value);
+            this.validityPeriod = validityPeriod;
 
             return this;
         }
 
-        protected SmsSubmitEncoder EnableStatusReportRequest()
+        protected SmsSubmitEncoder EnableStatusReportRequest(bool enable)
         {
-            header |= 0b0010_0000;
+            if (enable)
+                header |= (1 << 5);
             return this;
         }
 
@@ -182,7 +185,7 @@ namespace HeboTech.ATLib.PDU
         /// <returns></returns>
         protected SmsSubmitEncoder ProtocolIdentifier(byte value)
         {
-            pi = value;
+            pid = value;
             return this;
         }
 
@@ -212,27 +215,26 @@ namespace HeboTech.ATLib.PDU
                 sb.Append(daLength.ToString("X2"));
                 sb.Append(daType.ToString("X2"));
                 sb.Append(daNumber);
-                sb.Append(pi.ToString("X2"));
+                sb.Append(pid.ToString("X2"));
                 sb.Append(((byte)dcs).ToString("X2"));
-                if (vp.Count > 0)
-                    sb.Append(String.Join("", vp.Select(x => x.ToString("X2"))));
+                if (validityPeriod != null)
+                    sb.Append(String.Join("", validityPeriod.Value.Select(x => x.ToString("X2"))));
 
                 switch (dcs)
                 {
                     case CharacterSet.Gsm7:
                         int fillBits = 0;
                         if (UserDataHeaderIndicatorIsSet)
-                            fillBits = 7 - ((part.Header.Length * 8) % 7);
+                            fillBits = (part.Header.Length * 8) % 7 == 0 ? 0 : 7 - ((part.Header.Length * 8) % 7);
 
-                        var gsm7 = Gsm7.EncodeToBytes(part.Data);
-                        var encoded = Gsm7.Pack(gsm7, fillBits);
+                        var gsm7 = Gsm7.Encode(part.Data, fillBits);
 
-                        int udlBits = part.Header.Length * 8 + gsm7.Length * 7 + fillBits;
+                        int udlBits = part.Header.Length * 8 + part.Data.Length * 7 + fillBits;
                         int udlSeptets = udlBits / 7;
 
                         sb.Append((udlSeptets).ToString("X2"));
                         sb.Append(string.Join("", part.Header.Select(x => x.ToString("X2"))));
-                        sb.Append(string.Join("", encoded.Select(x => x.ToString("X2"))));
+                        sb.Append(string.Join("", gsm7.Select(x => x.ToString("X2"))));
                         break;
                     case CharacterSet.UCS2:
                         var ucs2Bytes = UCS2.EncodeToBytes(part.Data.ToArray());
@@ -300,7 +302,7 @@ namespace HeboTech.ATLib.PDU
                             // Each part of the total message
                             message.Skip(i * maxMessagePartSize).Take(maxMessagePartSize).ToArray());
             }
-            
+
             return new Message(messageReferenceNumber, (byte)numberOfParts, parts);
         }
     }

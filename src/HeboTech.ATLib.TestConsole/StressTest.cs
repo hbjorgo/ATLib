@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.TestConsole
 
             modem.IncomingCall += Modem_IncomingCall;
             modem.MissedCall += Modem_MissedCall;
-            modem.SmsReceived += Modem_SmsReceived;
+            modem.SmsStorageReferenceReceived += Modem_SmsReceived;
 
             await modem.DisableEchoAsync();
 
@@ -73,7 +73,7 @@ namespace HeboTech.ATLib.TestConsole
             Console.ReadKey();
         }
 
-        private static void Modem_SmsReceived(object sender, Events.SmsReceivedEventArgs e)
+        private static void Modem_SmsReceived(object sender, Events.SmsStorageReferenceReceivedEventArgs e)
         {
             Console.WriteLine($"SMS received. Index {e.Index} at storage location {e.Storage}");
         }

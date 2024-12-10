@@ -26,7 +26,7 @@ namespace HeboTech.ATLib.Modems.Generic
             channel.UnsolicitedEvent += Channel_UnsolicitedEvent;
         }
 
-        private void Channel_UnsolicitedEvent(object sender, UnsolicitedEventArgs e)
+        protected virtual void Channel_UnsolicitedEvent(object sender, UnsolicitedEventArgs e)
         {
             if (e.Line1 == "RING")
                 IncomingCall?.Invoke(this, new IncomingCallEventArgs());
@@ -36,18 +36,43 @@ namespace HeboTech.ATLib.Modems.Generic
                 CallEnded?.Invoke(this, CallEndedEventArgs.CreateFromResponse(e.Line1));
             else if (e.Line1.StartsWith("MISSED_CALL: "))
                 MissedCall?.Invoke(this, MissedCallEventArgs.CreateFromResponse(e.Line1));
+
+            else if (e.Line1.StartsWith("+CMT: "))
+                SmsReceived?.Invoke(this, SmsReceivedEventArgs.CreateFromResponse(e.Line1, e.Line2));
             else if (e.Line1.StartsWith("+CMTI: "))
-                SmsReceived?.Invoke(this, SmsReceivedEventArgs.CreateFromResponse(e.Line1));
+                SmsStorageReferenceReceived?.Invoke(this, SmsStorageReferenceReceivedEventArgs.CreateFromResponse(e.Line1));
+
+            else if (e.Line1.StartsWith("+CBM: "))
+                BroadcastMessageReceived?.Invoke(this, BreadcastMessageReceivedEventArgs.CreateFromResponse(e.Line1, e.Line2));
+            else if (e.Line1.StartsWith("+CBMI: "))
+                BroadcastMessageStorageReferenceReceived?.Invoke(this, BreadcastMessageStorageReferenceReceivedEventArgs.CreateFromResponse(e.Line1));
+
+            else if (e.Line1.StartsWith("+CDS: "))
+                SmsStatusReportReceived?.Invoke(this, SmsStatusReportEventArgs.CreateFromResponse(e.Line1, e.Line2));
+            else if (e.Line1.StartsWith("+CDSI: "))
+                SmsStatusReportStorageReferenceReceived?.Invoke(this, SmsStatusReportStorageReferenceEventArgs.CreateFromResponse(e.Line1));
+
             else if (e.Line1.StartsWith("+CUSD: "))
                 UssdResponseReceived?.Invoke(this, UssdResponseEventArgs.CreateFromResponse(e.Line1));
+
             else if (AtErrorParsers.TryGetError(e.Line1, out Error error))
                 ErrorReceived?.Invoke(this, new ErrorEventArgs(error.ToString()));
+
             else
                 GenericEvent?.Invoke(this, new GenericEventArgs(e.Line1));
         }
 
         public event EventHandler<ErrorEventArgs> ErrorReceived;
         public event EventHandler<GenericEventArgs> GenericEvent;
+
+        public event EventHandler<SmsReceivedEventArgs> SmsReceived;
+        public event EventHandler<SmsStorageReferenceReceivedEventArgs> SmsStorageReferenceReceived;
+
+        public event EventHandler<BreadcastMessageReceivedEventArgs> BroadcastMessageReceived;
+        public event EventHandler<BreadcastMessageStorageReferenceReceivedEventArgs> BroadcastMessageStorageReferenceReceived;
+
+        public event EventHandler<SmsStatusReportEventArgs> SmsStatusReportReceived;
+        public event EventHandler<SmsStatusReportStorageReferenceEventArgs> SmsStatusReportStorageReferenceReceived;
 
         #region _V_25TER
         public event EventHandler<IncomingCallEventArgs> IncomingCall;
@@ -186,8 +211,6 @@ namespace HeboTech.ATLib.Modems.Generic
         #endregion
 
         #region _3GPP_TS_27_005
-        public event EventHandler<SmsReceivedEventArgs> SmsReceived;
-
         public virtual async Task<ModemResponse<string>> GetSmsMessageFormatAsync()
         {
             AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CMGF?", "+CMGF:");
@@ -218,19 +241,19 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
+        public virtual async Task<ModemResponse> SetSelectMessageService(int service)
+        {
+            AtResponse response = await channel.SendCommand($"AT+CSMS={service}");
+
+            if (response.Success)
+                return ModemResponse.IsSuccess();
+
+            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+            return ModemResponse.HasError(error);
+        }
+
         public virtual async Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr)
         {
-            if (mode < 0 || mode > 2)
-                throw new ArgumentOutOfRangeException(nameof(mode));
-            if (mt < 0 || mt > 3)
-                throw new ArgumentOutOfRangeException(nameof(mt));
-            if (!(bm == 0 || bm == 2))
-                throw new ArgumentOutOfRangeException(nameof(bm));
-            if (ds < 0 || ds > 2)
-                throw new ArgumentOutOfRangeException(nameof(ds));
-            if (bfr < 0 || bfr > 1)
-                throw new ArgumentOutOfRangeException(nameof(bfr));
-
             AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}");
 
             if (response.Success)
@@ -240,20 +263,17 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        protected virtual Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, bool includeEmptySmscLength)
+        public virtual Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(SmsSubmitRequest request)
         {
-            CharacterSet characterSet = Gsm7.IsGsm7Compatible(message.ToCharArray()) ? CharacterSet.Gsm7 : CharacterSet.UCS2;
-            return SendSmsAsync(phoneNumber, message, characterSet, includeEmptySmscLength);
+            return SendSmsAsync(request, true);
         }
 
-        protected virtual async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme, bool includeEmptySmscLength)
+        protected async Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(SmsSubmitRequest request, bool includeEmptySmscLength)
         {
-            if (phoneNumber is null)
-                throw new ArgumentNullException(nameof(phoneNumber));
-            if (message is null)
-                throw new ArgumentNullException(nameof(message));
+            if (request is null)
+                throw new ArgumentNullException(nameof(request));
 
-            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(new SmsSubmitRequest(phoneNumber, message, codingScheme) { IncludeEmptySmscLength = includeEmptySmscLength });
+            IEnumerable<string> pdus = SmsSubmitEncoder.Encode(request, includeEmptySmscLength);
             List<ModemResponse<SmsReference>> references = new List<ModemResponse<SmsReference>>();
             foreach (string pdu in pdus)
             {
@@ -375,13 +395,12 @@ namespace HeboTech.ATLib.Modems.Generic
                     if (length > 0)
                     {
                         string line2 = pduResponse.Intermediates[1];
-                        var line2Match = Regex.Match(line2, @"(?<status>[0-9A-Z]*)");
+                        var line2Match = Regex.Match(line2, @"(?<pdu>[0-9A-Z]*)");
                         if (line2Match.Success)
                         {
-                            string pdu = line2Match.Groups["status"].Value;
-                            SmsDeliver pduMessage = SmsDeliverDecoder.Decode(pdu.ToByteArray());
-
-                            return ModemResponse.IsResultSuccess(pduMessage.ToSms(status));
+                            string pduString = line2Match.Groups["pdu"].Value;
+                            Sms sms = SmsDecoder.Decode(pduString.ToByteArray(), status);
+                            return ModemResponse.IsResultSuccess(sms);
                         }
                     }
                 }
@@ -416,8 +435,8 @@ namespace HeboTech.ATLib.Modems.Generic
                         // Sent when AT+CSDH=1 is set
                         int length = int.Parse(match.Groups["length"].Value);
 
-                        SmsDeliver sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
-                        smss.Add(sms.ToSmsWithIndex(index, status));
+                        Sms sms = SmsDecoder.Decode(messageLine.ToByteArray(), status);
+                        smss.Add(sms.ToSmsWithIndex(index));
                     }
                 }
             }

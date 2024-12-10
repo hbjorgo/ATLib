@@ -1,27 +1,29 @@
-﻿using System.Text.RegularExpressions;
+﻿using HeboTech.ATLib.DTOs;
+using HeboTech.ATLib.Extensions;
+using HeboTech.ATLib.PDU;
+using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Events
 {
     public class SmsReceivedEventArgs
     {
-        public SmsReceivedEventArgs(string storage, int index)
+        public SmsReceivedEventArgs(SmsDeliver smsDeliver)
         {
-            Storage = storage;
-            Index = index;
+            SmsDeliver = smsDeliver;
         }
 
-        public string Storage { get; }
-        public int Index { get; }
+        public SmsDeliver SmsDeliver { get; }
 
-        public static SmsReceivedEventArgs CreateFromResponse(string response)
+        public static SmsReceivedEventArgs CreateFromResponse(string line1, string line2)
         {
-            var match = Regex.Match(response, @"\+CMTI:\s""(?<storage>[A-Z]+)"",(?<index>\d+)");
-            if (match.Success)
+            var line1Match = Regex.Match(line1, @"\+CMT:\s(""(?<alpha>[\+0-9]*)"")?,(?<length>\d+)");
+            if (line1Match.Success)
             {
-                string storage = match.Groups["storage"].Value;
-                int index = int.Parse(match.Groups["index"].Value);
-                return new SmsReceivedEventArgs(storage, index);
+                byte length = byte.Parse(line1Match.Groups["length"].Value);
+                var smsDeliver = SmsDeliverDecoder.Decode(line2.ToByteArray());
+                return new SmsReceivedEventArgs(smsDeliver);
             }
+
             return default;
         }
     }

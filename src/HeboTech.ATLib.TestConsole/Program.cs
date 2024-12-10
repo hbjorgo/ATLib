@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
@@ -29,7 +28,9 @@ namespace HeboTech.ATLib.TestConsole
 
             Console.OutputEncoding = System.Text.Encoding.UTF8;
 
-            string pin = args[0];
+            string address = args[0];
+            int port = int.Parse(args[1]);
+            string pin = args[2];
 
 
 
@@ -45,8 +46,8 @@ namespace HeboTech.ATLib.TestConsole
 
 
             /* ######## UNCOMMENT THIS SECTION TO USE NETWORK SOCKET ######## */
-            using Socket socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect("192.168.1.144", 7000);
+            using Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            socket.Connect(address, port);
             Console.WriteLine("Network socket opened");
             Stream stream;
             stream = new NetworkStream(socket);

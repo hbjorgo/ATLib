@@ -1,5 +1,4 @@
-﻿using HeboTech.ATLib.CodingSchemes;
-using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
@@ -42,14 +41,9 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         #region _3GPP_TS_27_005
 
-        public Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message)
+        public override Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(SmsSubmitRequest request)
         {
-            return base.SendSmsAsync(phoneNumber, message, false);
-        }
-
-        public Task<IEnumerable<ModemResponse<SmsReference>>> SendSmsAsync(PhoneNumber phoneNumber, string message, CharacterSet codingScheme)
-        {
-            return base.SendSmsAsync(phoneNumber, message, codingScheme, false);
+            return SendSmsAsync(request, false);
         }
 
         public override async Task<ModemResponse<List<SmsWithIndex>>> ListSmssAsync(SmsStatus smsStatus)
@@ -77,8 +71,8 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                         // Sent when AT+CSDH=1 is set
                         int length = int.Parse(match.Groups["length"].Value);
 
-                        SmsDeliver sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
-                        smss.Add(new SmsWithIndex(index, status, sms.SenderNumber, sms.Timestamp, sms.Message));
+                        Sms sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
+                        smss.Add(sms.ToSmsWithIndex(index));
                     }
                 }
             }
