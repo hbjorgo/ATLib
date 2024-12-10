@@ -51,14 +51,11 @@ namespace HeboTech.ATLib.TestConsole
             modem.CallStarted += Modem_CallStarted;
             modem.CallEnded += Modem_CallEnded;
 
-            modem.SmsStorageReferenceReceived += Modem_SmsStorageReferenceReceived;
             modem.SmsReceived += Modem_SmsReceived;
+            modem.SmsStorageReferenceReceived += Modem_SmsStorageReferenceReceived;
 
             modem.SmsStatusReportReceived += Modem_SmsStatusReportReceived;
             modem.SmsStatusReportStorageReferenceReceived += Modem_SmsStatusReportStorageReferenceReceived;
-
-            modem.BroadcastMessageReceived += Modem_BroadcastMessageReceived;
-            modem.BroadcastMessageStorageReferenceReceived += Modem_BroadcastMessageStorageReferenceReceived;
 
             modem.UssdResponseReceived += Modem_UssdResponseReceived;
 
@@ -122,9 +119,6 @@ namespace HeboTech.ATLib.TestConsole
 
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
-
-            var selectMessageService = await modem.SetSelectMessageService(0);
-            Console.WriteLine($"Setting select message service: {selectMessageService}");
 
             var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 2, 0); // 2, 1, 0, 2, 0 (CSMS=0)
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
@@ -257,7 +251,7 @@ namespace HeboTech.ATLib.TestConsole
             }
         }
 
-        private static void Modem_BroadcastMessageStorageReferenceReceived(object sender, BreadcastMessageStorageReferenceReceivedEventArgs e)
+        private static void Modem_BroadcastMessageStorageReferenceReceived(object sender, BroadcastMessageStorageReferenceReceivedEventArgs e)
         {
             Console.WriteLine($"Broadcast Message. Index {e.Index} at storage location {e.Storage}");
         }
@@ -272,7 +266,7 @@ namespace HeboTech.ATLib.TestConsole
             Console.WriteLine($"SMS Status Report. Index {e.Index} at storage location {e.Storage}");
         }
 
-        private static void Modem_BroadcastMessageReceived(object sender, BreadcastMessageReceivedEventArgs e)
+        private static void Modem_BroadcastMessageReceived(object sender, BroadcastMessageReceivedEventArgs e)
         {
             Console.WriteLine($"Broadcast Message: {e.BroadcastMessage}");
         }

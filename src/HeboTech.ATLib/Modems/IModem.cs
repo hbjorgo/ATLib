@@ -49,8 +49,8 @@ namespace HeboTech.ATLib.Modems
 
         event EventHandler<SmsReceivedEventArgs> SmsReceived;
 
-        event EventHandler<BreadcastMessageReceivedEventArgs> BroadcastMessageReceived;
-        event EventHandler<BreadcastMessageStorageReferenceReceivedEventArgs> BroadcastMessageStorageReferenceReceived;
+        //event EventHandler<BroadcastMessageReceivedEventArgs> BroadcastMessageReceived;
+        //event EventHandler<BroadcastMessageStorageReferenceReceivedEventArgs> BroadcastMessageStorageReferenceReceived;
 
         event EventHandler<SmsStatusReportEventArgs> SmsStatusReportReceived;
         event EventHandler<SmsStatusReportStorageReferenceEventArgs> SmsStatusReportStorageReferenceReceived;
@@ -239,7 +239,7 @@ namespace HeboTech.ATLib.Modems
         /// </summary>
         /// <param name="service">Typical: 0, 1</param>
         /// <returns>Command status</returns>
-        Task<ModemResponse> SetSelectMessageService(int service);
+        //Task<ModemResponse> SetSelectMessageService(int service);
 
         /// <summary>
         /// Sets how receiving a new SMS is indicated

@@ -42,10 +42,10 @@ namespace HeboTech.ATLib.Modems.Generic
             else if (e.Line1.StartsWith("+CMTI: "))
                 SmsStorageReferenceReceived?.Invoke(this, SmsStorageReferenceReceivedEventArgs.CreateFromResponse(e.Line1));
 
-            else if (e.Line1.StartsWith("+CBM: "))
-                BroadcastMessageReceived?.Invoke(this, BreadcastMessageReceivedEventArgs.CreateFromResponse(e.Line1, e.Line2));
-            else if (e.Line1.StartsWith("+CBMI: "))
-                BroadcastMessageStorageReferenceReceived?.Invoke(this, BreadcastMessageStorageReferenceReceivedEventArgs.CreateFromResponse(e.Line1));
+            //else if (e.Line1.StartsWith("+CBM: "))
+            //    BroadcastMessageReceived?.Invoke(this, BroadcastMessageReceivedEventArgs.CreateFromResponse(e.Line1, e.Line2));
+            //else if (e.Line1.StartsWith("+CBMI: "))
+            //    BroadcastMessageStorageReferenceReceived?.Invoke(this, BroadcastMessageStorageReferenceReceivedEventArgs.CreateFromResponse(e.Line1));
 
             else if (e.Line1.StartsWith("+CDS: "))
                 SmsStatusReportReceived?.Invoke(this, SmsStatusReportEventArgs.CreateFromResponse(e.Line1, e.Line2));
@@ -68,8 +68,8 @@ namespace HeboTech.ATLib.Modems.Generic
         public event EventHandler<SmsReceivedEventArgs> SmsReceived;
         public event EventHandler<SmsStorageReferenceReceivedEventArgs> SmsStorageReferenceReceived;
 
-        public event EventHandler<BreadcastMessageReceivedEventArgs> BroadcastMessageReceived;
-        public event EventHandler<BreadcastMessageStorageReferenceReceivedEventArgs> BroadcastMessageStorageReferenceReceived;
+        //public event EventHandler<BroadcastMessageReceivedEventArgs> BroadcastMessageReceived;
+        //public event EventHandler<BroadcastMessageStorageReferenceReceivedEventArgs> BroadcastMessageStorageReferenceReceived;
 
         public event EventHandler<SmsStatusReportEventArgs> SmsStatusReportReceived;
         public event EventHandler<SmsStatusReportStorageReferenceEventArgs> SmsStatusReportStorageReferenceReceived;
@@ -241,16 +241,16 @@ namespace HeboTech.ATLib.Modems.Generic
             return ModemResponse.HasError(error);
         }
 
-        public virtual async Task<ModemResponse> SetSelectMessageService(int service)
-        {
-            AtResponse response = await channel.SendCommand($"AT+CSMS={service}");
+        //public virtual async Task<ModemResponse> SetSelectMessageService(int service)
+        //{
+        //    AtResponse response = await channel.SendCommand($"AT+CSMS={service}");
 
-            if (response.Success)
-                return ModemResponse.IsSuccess();
+        //    if (response.Success)
+        //        return ModemResponse.IsSuccess();
 
-            AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
-            return ModemResponse.HasError(error);
-        }
+        //    AtErrorParsers.TryGetError(response.FinalResponse, out Error error);
+        //    return ModemResponse.HasError(error);
+        //}
 
         public virtual async Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr)
         {
