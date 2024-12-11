@@ -4,14 +4,6 @@ namespace HeboTech.ATLib.DTOs
 {
     public class PreferredMessageStorage
     {
-        /// <summary>
-        /// SM: SIM card storage area
-        /// ME: Modem storage area
-        /// MT: All storage combined
-        /// BM: Broadcast message storage area
-        /// SR: Status report storage area
-        /// TA: Terminal adaptor storage area
-        /// </summary>
         public PreferredMessageStorage(MessageStorage storageName, int storageMessages, int storageMessageLocations)
         {
             StorageName = storageName;

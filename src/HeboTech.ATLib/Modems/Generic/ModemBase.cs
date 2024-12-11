@@ -338,9 +338,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     string[] s3Split = match.Groups["storage3"].Value.Split(',');
 
                     return ModemResponse.IsResultSuccess(new PreferredMessageStorages(
-                        new PreferredMessageStorage((MessageStorage)s1Split[0].Trim('"'), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
-                        new PreferredMessageStorage((MessageStorage)s2Split[0].Trim('"'), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
-                        new PreferredMessageStorage((MessageStorage)s3Split[0].Trim('"'), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
+                        new PreferredMessageStorage(MessageStorage.Parse(s1Split[0].Trim('"')), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
+                        new PreferredMessageStorage(MessageStorage.Parse(s2Split[0].Trim('"')), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
+                        new PreferredMessageStorage(MessageStorage.Parse(s3Split[0].Trim('"')), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
                 }
             }
 

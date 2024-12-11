@@ -21,7 +21,7 @@ namespace HeboTech.ATLib.Events
             {
                 string storage = match.Groups["storage"].Value;
                 int index = int.Parse(match.Groups["index"].Value);
-                return new SmsStatusReportStorageReferenceEventArgs((MessageStorage)storage, index);
+                return new SmsStatusReportStorageReferenceEventArgs(MessageStorage.Parse(storage), index);
             }
 
             return default;
