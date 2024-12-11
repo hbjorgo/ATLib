@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.Events
 
         public static CallEndedEventArgs CreateFromResponse(string response)
         {
-            var match = Regex.Match(response, @"VOICE CALL: END: (?<duration>\d+)");
+            var match = Regex.Match(response, @"VOICE CALL: END: (?<duration>\d+)", RegexOptions.Compiled);
             if (match.Success)
             {
                 int durationSeconds = int.Parse(match.Groups["duration"].Value);

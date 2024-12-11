@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.Events
 
         public static SmsStorageReferenceReceivedEventArgs CreateFromResponse(string response)
         {
-            var match = Regex.Match(response, @"\+CMTI:\s""(?<storage>[A-Z]+)"",(?<index>\d+)");
+            var match = Regex.Match(response, @"\+CMTI:\s""(?<storage>[A-Z]+)"",(?<index>\d+)", RegexOptions.Compiled);
             if (match.Success)
             {
                 string storage = match.Groups["storage"].Value;

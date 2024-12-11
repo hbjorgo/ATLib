@@ -102,7 +102,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"(?<imsi>\d+)");
+                var match = Regex.Match(line, @"(?<imsi>\d+)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     string imsi = match.Groups["imsi"].Value;
@@ -167,7 +167,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)");
+                var match = Regex.Match(line, @"\+CSCS:\s\((?:""(?<characterSet>\w+)"",*)+\)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     return ModemResponse.IsResultSuccess(match.Groups["characterSet"].Captures.Select(x => x.Value));
@@ -185,7 +185,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"\+CSCS: ""(?<characterSet>\w+)""");
+                var match = Regex.Match(line, @"\+CSCS: ""(?<characterSet>\w+)""", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     string characterSetString = match.Groups["characterSet"].Value;
@@ -219,7 +219,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success)
             {
                 string line = response.Intermediates.FirstOrDefault() ?? string.Empty;
-                var match = Regex.Match(line, @"(?<mode>\d)");
+                var match = Regex.Match(line, @"(?<mode>\d)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     int mode = int.Parse(match.Groups["mode"].Value);
@@ -285,7 +285,7 @@ namespace HeboTech.ATLib.Modems.Generic
                 if (response.Success)
                 {
                     string line = response.Intermediates.First();
-                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)", RegexOptions.Compiled);
                     if (match.Success)
                     {
                         int mr = int.Parse(match.Groups["mr"].Value);
@@ -308,7 +308,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success && response.Intermediates.Count > 0)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CPMS:\s\((?<s1Storages>(""\w+"",?)+)\),\((?<s2Storages>(""\w+"",?)+)\),\((?<s3Storages>(""\w+"",?)+)\)");
+                var match = Regex.Match(line, @"\+CPMS:\s\((?<s1Storages>(""\w+"",?)+)\),\((?<s2Storages>(""\w+"",?)+)\),\((?<s3Storages>(""\w+"",?)+)\)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     IEnumerable<string> s1Storages = match.Groups["s1Storages"].Value.Split(',').Select(x => x.Trim('"'));
@@ -330,7 +330,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success && response.Intermediates.Count > 0)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CPMS:\s(?<storage1>""\w+"",\d+,\d+),(?<storage2>""\w+"",\d+,\d+),(?<storage3>""\w+"",\d+,\d+)");
+                var match = Regex.Match(line, @"\+CPMS:\s(?<storage1>""\w+"",\d+,\d+),(?<storage2>""\w+"",\d+,\d+),(?<storage3>""\w+"",\d+,\d+)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     string[] s1Split = match.Groups["storage1"].Value.Split(',');
@@ -355,7 +355,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success && response.Intermediates.Count > 0)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CPMS:\s(?<s1Used>\d+),(?<s1Total>\d+),(?<s2Used>\d+),(?<s2Total>\d+),(?<s3Used>\d+),(?<s3Total>\d+)");
+                var match = Regex.Match(line, @"\+CPMS:\s(?<s1Used>\d+),(?<s1Total>\d+),(?<s2Used>\d+),(?<s2Total>\d+),(?<s3Used>\d+),(?<s3Total>\d+)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     int s1Used = int.Parse(match.Groups["s1Used"].Value);
@@ -386,7 +386,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     return ModemResponse.HasResultError<Sms>();
 
                 string line1 = pduResponse.Intermediates[0];
-                var line1Match = Regex.Match(line1, @"\+CMGR:\s(?<status>\d),(""(?<alpha>\w*)"")*,(?<length>\d+)");
+                var line1Match = Regex.Match(line1, @"\+CMGR:\s(?<status>\d),(""(?<alpha>\w*)"")*,(?<length>\d+)", RegexOptions.Compiled);
                 if (line1Match.Success)
                 {
                     int statusCode = int.Parse(line1Match.Groups["status"].Value);
@@ -396,7 +396,7 @@ namespace HeboTech.ATLib.Modems.Generic
                     if (length > 0)
                     {
                         string line2 = pduResponse.Intermediates[1];
-                        var line2Match = Regex.Match(line2, @"(?<pdu>[0-9A-Z]*)");
+                        var line2Match = Regex.Match(line2, @"(?<pdu>[0-9A-Z]*)", RegexOptions.Compiled);
                         if (line2Match.Success)
                         {
                             string pduString = line2Match.Groups["pdu"].Value;
@@ -427,7 +427,7 @@ namespace HeboTech.ATLib.Modems.Generic
                 {
                     string metaDataLine = response.Intermediates[i];
                     string messageLine = response.Intermediates[i + 1];
-                    var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),,(?<length>\d+)");
+                    var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),,(?<length>\d+)", RegexOptions.Compiled);
                     if (match.Success)
                     {
                         int index = int.Parse(match.Groups["index"].Value);
@@ -471,7 +471,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
             // CPIN? has succeeded, now look at the result
             string cpinLine = response.Intermediates.First();
-            var match = Regex.Match(cpinLine, @"\+CPIN:\s(?<pinresult>.*)");
+            var match = Regex.Match(cpinLine, @"\+CPIN:\s(?<pinresult>.*)", RegexOptions.Compiled);
             if (match.Success)
             {
                 string cpinResult = match.Groups["pinresult"].Value;
@@ -507,7 +507,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)");
+                var match = Regex.Match(line, @"\+CSQ:\s(?<rssi>\d+),(?<ber>\d+)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     int rssi = int.Parse(match.Groups["rssi"].Value);
@@ -527,7 +527,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+)");
+                var match = Regex.Match(line, @"\+CBC:\s(?<bcs>\d+),(?<bcl>\d+)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     int bcs = int.Parse(match.Groups["bcs"].Value);
@@ -563,7 +563,7 @@ namespace HeboTech.ATLib.Modems.Generic
             if (response.Success)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+CCLK:\s""(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d)?""");
+                var match = Regex.Match(line, @"\+CCLK:\s""(?<year>\d\d)/(?<month>\d\d)/(?<day>\d\d),(?<hour>\d\d):(?<minute>\d\d):(?<second>\d\d)(?<zone>[-+]\d\d)?""", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     DateTimeOffset time;
