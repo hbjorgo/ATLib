@@ -1,4 +1,5 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.Dtos;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Extensions;
@@ -199,7 +200,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SetCharacterSetAsync(CharacterSet characterSet)
         {
-            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{CharacterSetHelpers.FromEnum(characterSet)}\"");
+            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{CharacterSetHelpers.ToString(characterSet)}\"");
             if (response.Success)
             {
                 return ModemResponse.IsSuccess(response.Success);
@@ -337,9 +338,9 @@ namespace HeboTech.ATLib.Modems.Generic
                     string[] s3Split = match.Groups["storage3"].Value.Split(',');
 
                     return ModemResponse.IsResultSuccess(new PreferredMessageStorages(
-                        new PreferredMessageStorage((MessageStorage)s1Split[0].Trim('"'), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
-                        new PreferredMessageStorage((MessageStorage)s2Split[0].Trim('"'), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
-                        new PreferredMessageStorage((MessageStorage)s3Split[0].Trim('"'), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
+                        new PreferredMessageStorage(MessageStorage.Parse(s1Split[0].Trim('"')), int.Parse(s1Split[1]), int.Parse(s1Split[2])),
+                        new PreferredMessageStorage(MessageStorage.Parse(s2Split[0].Trim('"')), int.Parse(s2Split[1]), int.Parse(s2Split[2])),
+                        new PreferredMessageStorage(MessageStorage.Parse(s3Split[0].Trim('"')), int.Parse(s3Split[1]), int.Parse(s3Split[2]))));
                 }
             }
 
@@ -399,7 +400,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         if (line2Match.Success)
                         {
                             string pduString = line2Match.Groups["pdu"].Value;
-                            Sms sms = SmsDecoder.Decode(pduString.ToByteArray(), status);
+                            Sms sms = SmsDecoder.Decode(pduString.ToByteArray());
                             return ModemResponse.IsResultSuccess(sms);
                         }
                     }
@@ -435,8 +436,8 @@ namespace HeboTech.ATLib.Modems.Generic
                         // Sent when AT+CSDH=1 is set
                         int length = int.Parse(match.Groups["length"].Value);
 
-                        Sms sms = SmsDecoder.Decode(messageLine.ToByteArray(), status);
-                        smss.Add(sms.ToSmsWithIndex(index));
+                        Sms sms = SmsDecoder.Decode(messageLine.ToByteArray());
+                        smss.Add(new SmsWithIndex(sms, index));
                     }
                 }
             }

@@ -95,7 +95,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("À", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "14")]
         [InlineData("Φ", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "1B09")]
         [InlineData("ΦΣ", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "1BC90603")]
-        public void EncodeToBytes_returns_encoded_bytes_with_extension_table(string gsm7Bit, Gsm7Extension singleShift, Gsm7Extension lockingShift, string expected)
+        internal void EncodeToBytes_returns_encoded_bytes_with_extension_table(string gsm7Bit, Gsm7Extension singleShift, Gsm7Extension lockingShift, string expected)
         {
             byte[] result = Gsm7.Encode(gsm7Bit, 0, singleShift, lockingShift);
 
@@ -120,7 +120,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [InlineData("14", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "À")]
         [InlineData("1B", Gsm7Extension.Portugese, Gsm7Extension.Portugese, " ")]
         [InlineData("1B09", Gsm7Extension.Portugese, Gsm7Extension.Portugese, "Φ")]
-        public void DecodeFromBytes_returns_decoded_text_with_extension_table(string gsm7Bit, Gsm7Extension singleShift, Gsm7Extension lockingShift, string expected)
+        internal void DecodeFromBytes_returns_decoded_text_with_extension_table(string gsm7Bit, Gsm7Extension singleShift, Gsm7Extension lockingShift, string expected)
         {
             string result = Gsm7.Decode(Convert.FromHexString(gsm7Bit), 0, singleShift, lockingShift);
 

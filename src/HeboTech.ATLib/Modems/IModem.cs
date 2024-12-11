@@ -1,7 +1,7 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.Dtos;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
-using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
 using System;
 using System.Collections.Generic;

@@ -3,7 +3,7 @@ using System;
 
 namespace HeboTech.ATLib.PDU
 {
-    public static class SmsStatusReportDecoder
+    internal static class SmsStatusReportDecoder
     {
         private class SmsStatusReportHeader
         {
@@ -53,7 +53,7 @@ namespace HeboTech.ATLib.PDU
 
             // SMSC information
             byte smsc_length = bytes[offset++];
-            PhoneNumberDTO serviceCenterNumber = null;
+            PhoneNumberDto serviceCenterNumber = null;
             if (smsc_length > 0)
             {
                 serviceCenterNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += smsc_length)]);
@@ -64,8 +64,14 @@ namespace HeboTech.ATLib.PDU
             SmsStatusReportHeader header = SmsStatusReportHeader.Parse(headerByte);
 
             byte tp_mr = bytes[offset++];
-            byte tp_ra_length = (byte)((bytes[offset++] / 2) + 1);
-            ReadOnlySpan<byte> tp_ra = bytes[offset..(offset += tp_ra_length)];
+
+            byte tp_ra_nibbles_length = bytes[offset++];
+            byte tp_ra_bytes_length = (byte)(tp_ra_nibbles_length % 2 == 0 ? tp_ra_nibbles_length / 2 : (tp_ra_nibbles_length + 1) / 2);
+            tp_ra_bytes_length++;
+            ReadOnlySpan<byte> tp_ra = bytes[offset..(offset += tp_ra_bytes_length)];
+
+            //byte tp_ra_length = (byte)((bytes[offset++] / 2) + 1);
+            //ReadOnlySpan<byte> tp_ra = bytes[offset..(offset += tp_ra_length)];
             ReadOnlySpan<byte> tp_scts = bytes[offset..(offset += 7)];
             ReadOnlySpan<byte> tp_dt = bytes[offset..(offset += 7)];
             byte tp_st = bytes[offset++];

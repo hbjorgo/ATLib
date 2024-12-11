@@ -179,35 +179,6 @@ namespace HeboTech.ATLib.CodingSchemes
             return packed;
         }
 
-        //internal static byte[] Pack(byte[] data, int paddingBits = 0)
-        //{
-        //    // Array for all packed bits (n x 7)
-        //    BitArray packedBits = new BitArray((int)Math.Ceiling(data.Length * 7 / 8.0) * 8 + paddingBits);
-
-        //    // Loop through all characters
-        //    for (int i = 0; i < data.Length; i++)
-        //    {
-        //        // Only 7 bits in each byte is data
-        //        for (int j = 0; j < 7; j++)
-        //        {
-        //            // For each 7 bits in each byte, add it to the bit array
-        //            int index = (i * 7) + j + paddingBits;
-        //            bool isSet = (data[i] & (1 << j)) != 0;
-        //            packedBits.Set(index, isSet);
-        //        }
-        //    }
-
-        //    // Convert the bit array to a byte array
-        //    byte[] packed = new byte[(int)Math.Ceiling(packedBits.Length / 8.0)];
-        //    packedBits.CopyTo(packed, 0);
-
-        //    // Return the septets packed as octets
-        //    // If the last character is empty - skip it
-        //    if (packed[^1] == 0)
-        //        return packed[..^1];
-        //    return packed;
-        //}
-
         internal static byte[] Unpack(byte[] data, int paddingBits = 0)
         {
             BitArray packedBits = new BitArray(data);

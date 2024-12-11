@@ -3,9 +3,9 @@
     /// <summary>
     /// Phone number received from the modem
     /// </summary>
-    public class PhoneNumberDTO
+    public class PhoneNumberDto
     {
-        public PhoneNumberDTO(string number)
+        public PhoneNumberDto(string number)
         {
             Number = number;
         }

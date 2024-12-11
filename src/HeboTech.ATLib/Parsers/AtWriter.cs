@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtWriter : IAtWriter, IDisposable
+    internal class AtWriter : IAtWriter, IDisposable
     {
         private Stream stream;
         private bool isDisposed;

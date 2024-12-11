@@ -19,7 +19,7 @@ namespace HeboTech.ATLib.Tests.PDU
         [Fact]
         public void Parse_returns_udh()
         {
-            Udh result = Udh.Parse(5, new byte[] { 0x00, 0x03, 0x04, 0x02, 0x01 });
+            Udh result = Udh.Parse(5, [0x00, 0x03, 0x04, 0x02, 0x01]);
 
             Assert.Equal(5, result.Length);
             Assert.Single(result.InformationElements);

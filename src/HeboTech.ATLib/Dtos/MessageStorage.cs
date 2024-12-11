@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HeboTech.ATLib.Modems.Generic
+namespace HeboTech.ATLib.Dtos
 {
     /// <summary>
     /// Message Storage Areas
@@ -39,7 +39,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public string Value { get; }
 
-        protected static MessageStorage ParseString(string value)
+        public static MessageStorage Parse(string value)
         {
             if (value == SM.ToString())
                 return SM;
@@ -63,7 +63,6 @@ namespace HeboTech.ATLib.Modems.Generic
         }
 
         public static implicit operator string(MessageStorage value) => value.Value;
-        public static explicit operator MessageStorage(string value) => ParseString(value);
 
         public override string ToString()
         {

@@ -4,14 +4,9 @@ namespace HeboTech.ATLib.CodingSchemes
 {
     internal class DataCodingScheme
     {
-        private static readonly DataCodingScheme[] dataCodingSchemes = new DataCodingScheme[0xFF];
-
-        static DataCodingScheme()
-        {
-            dataCodingSchemes[0x00] = new DataCodingScheme(CharacterSet.Gsm7, MessageClass.Default, CodingGroup.GeneralDataCoding);
-            dataCodingSchemes[0x08] = new DataCodingScheme(CharacterSet.UCS2, MessageClass.Default, CodingGroup.GeneralDataCoding);
-            dataCodingSchemes[0x11] = new DataCodingScheme(CharacterSet.Gsm7, MessageClass.Class1, CodingGroup.GeneralDataCoding);
-        }
+        private static readonly DataCodingScheme dcs_0x00 = new DataCodingScheme(CharacterSet.Gsm7, MessageClass.Default, CodingGroup.GeneralDataCoding);
+        private static readonly DataCodingScheme dcs_0x08 = new DataCodingScheme(CharacterSet.UCS2, MessageClass.Default, CodingGroup.GeneralDataCoding);
+        private static readonly DataCodingScheme dcs_0x11 = new DataCodingScheme(CharacterSet.Gsm7, MessageClass.Class1, CodingGroup.GeneralDataCoding);
 
         protected DataCodingScheme(CharacterSet characterSet, MessageClass messageClass, CodingGroup codingGroup)
         {
@@ -26,7 +21,13 @@ namespace HeboTech.ATLib.CodingSchemes
 
         public static DataCodingScheme ParseByte(byte value)
         {
-            return dataCodingSchemes[value] ?? throw new NotImplementedException($"Data Coding Scheme no. {value} is not supported");
+            return value switch
+            {
+                0x00 => dcs_0x00,
+                0x08 => dcs_0x08,
+                0x11 => dcs_0x11,
+                _ => throw new ArgumentException($"Data Coding Scheme no. {value} is not supported"),
+            };
         }
     }
 }

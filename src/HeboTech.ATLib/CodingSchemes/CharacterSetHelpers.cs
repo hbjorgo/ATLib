@@ -14,7 +14,7 @@ namespace HeboTech.ATLib.CodingSchemes
             throw new ArgumentException("Unknown characterset");
         }
 
-        public static string FromEnum(CharacterSet characterSet)
+        public static string ToString(CharacterSet characterSet)
         {
             return characterSet switch
             {

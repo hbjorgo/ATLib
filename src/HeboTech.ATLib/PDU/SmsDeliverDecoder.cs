@@ -60,7 +60,7 @@ namespace HeboTech.ATLib.PDU
 
             // SMSC information
             byte smsc_length = bytes[offset++];
-            PhoneNumberDTO serviceCenterNumber = null;
+            PhoneNumberDto serviceCenterNumber = null;
             if (smsc_length > 0)
             {
                 serviceCenterNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += smsc_length)]);
@@ -73,7 +73,7 @@ namespace HeboTech.ATLib.PDU
             byte tp_oa_nibbles_length = bytes[offset++];
             byte tp_oa_bytes_length = (byte)(tp_oa_nibbles_length % 2 == 0 ? tp_oa_nibbles_length / 2 : (tp_oa_nibbles_length + 1) / 2);
             tp_oa_bytes_length++;
-            PhoneNumberDTO oa = null;
+            PhoneNumberDto oa = null;
             if (tp_oa_bytes_length > 0)
             {
                 oa = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += tp_oa_bytes_length)]);

@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public interface IAtWriter
+    internal interface IAtWriter
     {
         Task WriteLineAsync(string command, CancellationToken cancellationToken = default);
         Task WriteSmsPduAndCtrlZAsync(string smsPdu, CancellationToken cancellationToken = default);

@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.CodingSchemes
 {
-    public enum Gsm7Extension : byte
+    internal enum Gsm7Extension : byte
     {
         Default = 0x00,
         Turkish = 0x01,

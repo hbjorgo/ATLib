@@ -46,7 +46,7 @@ namespace HeboTech.ATLib.Parsers
         private AtCommand currentCommand;
         private AtResponse currentResponse;
 
-        public AtChannel(IAtReader atReader, IAtWriter atWriter)
+        internal AtChannel(IAtReader atReader, IAtWriter atWriter)
         {
             this.atReader = atReader;
             this.atWriter = atWriter;

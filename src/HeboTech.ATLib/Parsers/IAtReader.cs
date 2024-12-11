@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public interface IAtReader
+    internal interface IAtReader
     {
         ValueTask<string> ReadAsync(CancellationToken cancellationToken = default);
         void Open();
