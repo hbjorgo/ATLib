@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.Events
 
         public static BroadcastMessageReceivedEventArgs CreateFromResponse(string line1, string line2)
         {
-            var line1Match = Regex.Match(line1, @"\+CBM:\s(?<length>\d+)");
+            var line1Match = Regex.Match(line1, @"\+CBM:\s(?<length>\d+)", RegexOptions.Compiled);
             if (line1Match.Success)
             {
                 throw new NotImplementedException();

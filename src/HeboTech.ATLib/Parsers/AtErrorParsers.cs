@@ -11,7 +11,7 @@ namespace HeboTech.ATLib.Parsers
         */
         public static bool TryGetError(string response, out Error error)
         {
-            Match errorMatch = Regex.Match(response, @"\+(?<errorType>[A-Z]{3})\sERROR:\s(?<errorCode>\d+)");
+            Match errorMatch = Regex.Match(response, @"\+(?<errorType>[A-Z]{3})\sERROR:\s(?<errorCode>\d+)", RegexOptions.Compiled);
             if (errorMatch.Success)
             {
                 string errorType = errorMatch.Groups["errorType"].Value;

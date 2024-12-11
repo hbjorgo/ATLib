@@ -15,7 +15,7 @@ namespace HeboTech.ATLib.Events
 
         public static BroadcastMessageStorageReferenceReceivedEventArgs CreateFromResponse(string response)
         {
-            var match = Regex.Match(response, @"\+CBMI:\s""(?<storage>[A-Z]+)"",(?<index>\d+)");
+            var match = Regex.Match(response, @"\+CBMI:\s""(?<storage>[A-Z]+)"",(?<index>\d+)", RegexOptions.Compiled);
             if (match.Success)
             {
                 string storage = match.Groups["storage"].Value;

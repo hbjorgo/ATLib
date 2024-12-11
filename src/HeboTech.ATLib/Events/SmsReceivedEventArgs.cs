@@ -16,7 +16,7 @@ namespace HeboTech.ATLib.Events
 
         public static SmsReceivedEventArgs CreateFromResponse(string line1, string line2)
         {
-            var line1Match = Regex.Match(line1, @"\+CMT:\s(""(?<alpha>[\+0-9]*)"")?,(?<length>\d+)");
+            var line1Match = Regex.Match(line1, @"\+CMT:\s(""(?<alpha>[\+0-9]*)"")?,(?<length>\d+)", RegexOptions.Compiled);
             if (line1Match.Success)
             {
                 byte length = byte.Parse(line1Match.Groups["length"].Value);
