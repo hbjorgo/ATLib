@@ -3,7 +3,7 @@ using System;
 
 namespace HeboTech.ATLib.PDU
 {
-    internal class SmsDecoder
+    public class SmsDecoder
     {
         public static Sms Decode(ReadOnlySpan<byte> bytes, int timestampYearOffset = 2000)
         {

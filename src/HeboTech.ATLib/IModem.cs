@@ -7,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace HeboTech.ATLib.Modems
+namespace HeboTech.ATLib
 {
     public interface IModem : IDisposable
     {

@@ -2,7 +2,7 @@
 
 namespace HeboTech.ATLib.CodingSchemes
 {
-    internal static class CharacterSetHelpers
+    public static class CharacterSetHelpers
     {
         public static CharacterSet FromString(string characterSet)
         {
