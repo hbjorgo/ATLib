@@ -1,4 +1,4 @@
-﻿using HeboTech.ATLib.Modems.Generic;
+﻿using HeboTech.ATLib.Dtos;
 using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Events

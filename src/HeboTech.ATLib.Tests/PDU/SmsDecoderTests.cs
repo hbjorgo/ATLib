@@ -13,10 +13,11 @@ namespace HeboTech.ATLib.Tests.PDU
         public void Decode_SmsDeliver(string data, string serviceCenterNumber, string senderNumber, string timestamp, string message)
         {
             var bytes = Convert.FromHexString(data);
-            Sms sms = SmsDecoder.Decode(bytes, SmsStatus.REC_UNREAD);
+            Sms sms = SmsDecoder.Decode(bytes);
             SmsDeliver smsDeliver = sms as SmsDeliver;
 
             Assert.NotNull(sms);
+            Assert.Equal(MessageTypeIndicatorInbound.SMS_DELIVER, sms.MessageTypeIndicator);
             Assert.NotNull(smsDeliver);
             Assert.Equal(serviceCenterNumber, smsDeliver.ServiceCenterNumber.ToString());
             Assert.Equal(senderNumber, smsDeliver.SenderNumber.ToString());
@@ -31,10 +32,11 @@ namespace HeboTech.ATLib.Tests.PDU
         public void Decode_SmsStatusReport(string data, string serviceCenterNumber, string senderNumber, string serviceCenterTimestamp, string dischargeTimestamp, int messageReference, SmsDeliveryStatus status)
         {
             var bytes = Convert.FromHexString(data);
-            Sms sms = SmsDecoder.Decode(bytes, SmsStatus.REC_UNREAD);
+            Sms sms = SmsDecoder.Decode(bytes);
             SmsStatusReport smsStatusReport = sms as SmsStatusReport;
 
             Assert.NotNull(sms);
+            Assert.Equal(MessageTypeIndicatorInbound.SMS_STATUS_REPORT, sms.MessageTypeIndicator);
             Assert.NotNull(smsStatusReport);
             Assert.Equal(serviceCenterNumber, smsStatusReport.ServiceCenterAddress.ToString());
             Assert.Equal(senderNumber, smsStatusReport.RecipientAddress.ToString());

@@ -8,7 +8,7 @@ namespace HeboTech.ATLib.DTOs
     /// </summary>
     public class SmsDeliver : Sms
     {
-        public SmsDeliver(PhoneNumberDTO serviceCenterNumber, PhoneNumberDTO senderNumber, string message, DateTimeOffset timestamp)
+        public SmsDeliver(PhoneNumberDto serviceCenterNumber, PhoneNumberDto senderNumber, string message, DateTimeOffset timestamp)
             : base(MessageTypeIndicatorInbound.SMS_DELIVER)
         {
             ServiceCenterNumber = serviceCenterNumber;
@@ -17,7 +17,7 @@ namespace HeboTech.ATLib.DTOs
             Timestamp = timestamp;
         }
 
-        public SmsDeliver(PhoneNumberDTO serviceCenterNumber, PhoneNumberDTO senderNumber, string message, DateTimeOffset timestamp, int messageReference, int totalNumberOfParts, int partNumber)
+        public SmsDeliver(PhoneNumberDto serviceCenterNumber, PhoneNumberDto senderNumber, string message, DateTimeOffset timestamp, int messageReference, int totalNumberOfParts, int partNumber)
             : base(MessageTypeIndicatorInbound.SMS_DELIVER, messageReference)
         {
             ServiceCenterNumber = serviceCenterNumber;
@@ -28,8 +28,8 @@ namespace HeboTech.ATLib.DTOs
             PartNumber = partNumber;
         }
 
-        public PhoneNumberDTO ServiceCenterNumber { get; }
-        public PhoneNumberDTO SenderNumber { get; }
+        public PhoneNumberDto ServiceCenterNumber { get; }
+        public PhoneNumberDto SenderNumber { get; }
         public string Message { get; }
         public DateTimeOffset Timestamp { get; }
         public int TotalNumberOfParts { get; }

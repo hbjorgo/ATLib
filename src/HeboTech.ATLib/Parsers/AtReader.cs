@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class AtReader : IAtReader, IDisposable
+    internal class AtReader : IAtReader, IDisposable
     {
         private static readonly byte[] eolSequence = new byte[] { (byte)'\r', (byte)'\n' };
         private static readonly byte[] smsPromptSequence = new byte[] { (byte)'>', (byte)' ' };

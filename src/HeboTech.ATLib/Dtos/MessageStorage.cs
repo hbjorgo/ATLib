@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HeboTech.ATLib.Modems.Generic
+namespace HeboTech.ATLib.Dtos
 {
     /// <summary>
     /// Message Storage Areas

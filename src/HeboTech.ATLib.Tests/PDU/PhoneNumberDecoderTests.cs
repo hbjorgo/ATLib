@@ -25,7 +25,7 @@ namespace HeboTech.ATLib.Tests.PDU
         public void Decode_PhoneNumber_tests(string data, string number)
         {
             var bytes = Convert.FromHexString(data);
-            PhoneNumberDTO phoneNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes);
+            PhoneNumberDto phoneNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes);
 
             Assert.NotNull(phoneNumber);
             Assert.Equal(number, phoneNumber.Number);

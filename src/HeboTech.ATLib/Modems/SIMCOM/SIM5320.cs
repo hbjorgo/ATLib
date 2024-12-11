@@ -72,7 +72,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                         int length = int.Parse(match.Groups["length"].Value);
 
                         Sms sms = SmsDeliverDecoder.Decode(messageLine.ToByteArray());
-                        smss.Add(sms.ToSmsWithIndex(index));
+                        smss.Add(new SmsWithIndex(sms, index));
                     }
                 }
             }

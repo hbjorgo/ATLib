@@ -1,4 +1,5 @@
 ﻿using HeboTech.ATLib.CodingSchemes;
+using HeboTech.ATLib.Dtos;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Extensions;
@@ -199,7 +200,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SetCharacterSetAsync(CharacterSet characterSet)
         {
-            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{CharacterSetHelpers.FromEnum(characterSet)}\"");
+            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{CharacterSetHelpers.ToString(characterSet)}\"");
             if (response.Success)
             {
                 return ModemResponse.IsSuccess(response.Success);
@@ -399,7 +400,7 @@ namespace HeboTech.ATLib.Modems.Generic
                         if (line2Match.Success)
                         {
                             string pduString = line2Match.Groups["pdu"].Value;
-                            Sms sms = SmsDecoder.Decode(pduString.ToByteArray(), status);
+                            Sms sms = SmsDecoder.Decode(pduString.ToByteArray());
                             return ModemResponse.IsResultSuccess(sms);
                         }
                     }
@@ -435,8 +436,8 @@ namespace HeboTech.ATLib.Modems.Generic
                         // Sent when AT+CSDH=1 is set
                         int length = int.Parse(match.Groups["length"].Value);
 
-                        Sms sms = SmsDecoder.Decode(messageLine.ToByteArray(), status);
-                        smss.Add(sms.ToSmsWithIndex(index));
+                        Sms sms = SmsDecoder.Decode(messageLine.ToByteArray());
+                        smss.Add(new SmsWithIndex(sms, index));
                     }
                 }
             }

@@ -2,7 +2,7 @@
 
 namespace HeboTech.ATLib.Parsers
 {
-    public class InvalidResponseException : Exception
+    internal class InvalidResponseException : Exception
     {
         public InvalidResponseException()
         {
