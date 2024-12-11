@@ -1,7 +1,6 @@
 ﻿using HeboTech.ATLib.Dtos;
 using HeboTech.ATLib.DTOs;
 using HeboTech.ATLib.Events;
-using HeboTech.ATLib.Modems.Cinterion;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;

@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace HeboTech.ATLib.Extensions
 {
-    internal static class StringExtensions
+    public static class StringExtensions
     {
         public static byte[] ToByteArray(this string hexString)
         {

@@ -1,5 +1,4 @@
 ﻿using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Parsers;
 using System;

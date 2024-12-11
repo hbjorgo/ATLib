@@ -8,7 +8,7 @@ using System.Text;
 
 namespace HeboTech.ATLib.PDU
 {
-    internal class SmsSubmitEncoder
+    public class SmsSubmitEncoder
     {
         protected const int MAX_SINGLE_MESSAGE_SIZE_GSM7 = 160;
         protected const int MAX_SINGLE_MESSAGE_SIZE_UCS2 = 70;
@@ -307,7 +307,7 @@ namespace HeboTech.ATLib.PDU
         }
     }
 
-    internal class Message
+    public class Message
     {
         public Message(byte messageReferenceNumber, byte numberOfParts, params MessagePart[] parts)
         {
@@ -326,7 +326,7 @@ namespace HeboTech.ATLib.PDU
         }
     }
 
-    internal class MessagePart
+    public class MessagePart
     {
         public MessagePart(byte[] header, char[] data)
         {

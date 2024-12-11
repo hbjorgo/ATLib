@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace HeboTech.ATLib.PDU
 {
-    internal class SmsDeliverDecoder
+    public class SmsDeliverDecoder
     {
         private class SmsDeliverHeader
         {
