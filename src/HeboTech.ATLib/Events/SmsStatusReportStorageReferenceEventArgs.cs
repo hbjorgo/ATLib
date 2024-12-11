@@ -16,7 +16,7 @@ namespace HeboTech.ATLib.Events
 
         public static SmsStatusReportStorageReferenceEventArgs CreateFromResponse(string line1)
         {
-            var match = Regex.Match(line1, @"\+CDSI:\s""(?<storage>[a-zA-Z]+)"",(?<index>\d+)");
+            var match = Regex.Match(line1, @"\+CDSI:\s""(?<storage>[a-zA-Z]+)"",(?<index>\d+)", RegexOptions.Compiled);
             if (match.Success)
             {
                 string storage = match.Groups["storage"].Value;

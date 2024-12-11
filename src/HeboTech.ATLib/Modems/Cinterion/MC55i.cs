@@ -41,7 +41,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
                 if (response.Success)
                 {
                     string line = response.Intermediates.First();
-                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)");
+                    var match = Regex.Match(line, @"\+CMGS:\s(?<mr>\d+)", RegexOptions.Compiled);
                     if (match.Success)
                     {
                         int mr = int.Parse(match.Groups["mr"].Value);
@@ -64,7 +64,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
             if (response.Success)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\^SBC:\s(?<bcs>\d+),(?<bcl>\d+),(?<mpc>\d+)");
+                var match = Regex.Match(line, @"\^SBC:\s(?<bcs>\d+),(?<bcl>\d+),(?<mpc>\d+)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     int bcs = int.Parse(match.Groups["bcs"].Value);
@@ -84,7 +84,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
             if (response.Success)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\^SBC:\s(?<bcs>\d+),(?<bcl>\d+),(?<mpc>\d+)");
+                var match = Regex.Match(line, @"\^SBC:\s(?<bcs>\d+),(?<bcl>\d+),(?<mpc>\d+)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     int bcs = int.Parse(match.Groups["bcs"].Value);

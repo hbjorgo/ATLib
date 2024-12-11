@@ -25,7 +25,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
             if (response.Success)
             {
                 string line = response.Intermediates.First();
-                var match = Regex.Match(line, @"\+SPIC:\s(?<pin1>\d+),(?<pin2>\d+),(?<puk1>\d+),(?<puk2>\d+)");
+                var match = Regex.Match(line, @"\+SPIC:\s(?<pin1>\d+),(?<pin2>\d+),(?<puk1>\d+),(?<puk2>\d+)", RegexOptions.Compiled);
                 if (match.Success)
                 {
                     int pin1 = int.Parse(match.Groups["pin1"].Value);
@@ -62,7 +62,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
                 {
                     string metaDataLine = response.Intermediates[i];
                     string messageLine = response.Intermediates[i + 1];
-                    var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),"""",(?<length>\d+)");
+                    var match = Regex.Match(metaDataLine, @"\+CMGL:\s(?<index>\d+),(?<status>\d+),"""",(?<length>\d+)", RegexOptions.Compiled);
                     if (match.Success)
                     {
                         int index = int.Parse(match.Groups["index"].Value);

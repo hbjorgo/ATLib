@@ -7,7 +7,7 @@ namespace HeboTech.ATLib.DTOs
     {
         public PersonalIdentificationNumber(string pin)
         {
-            if (pin == null || !Regex.IsMatch(pin, @"^\d{4}$"))
+            if (pin == null || !Regex.IsMatch(pin, @"^\d{4}$", RegexOptions.Compiled))
                 throw new ArgumentException("Invalid PIN");
             Pin = pin;
         }
