@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Numbering
 {
@@ -25,6 +26,24 @@ namespace HeboTech.ATLib.Numbering
             NationalNumber = nationalNumber;
             TypeOfNumber = ton;
             NumberingPlanIdentification = npi;
+        }
+
+        public static PhoneNumber Create(string number)
+        {
+            string sanitizedNumber = Regex.Replace(number, @"[\s-()./]", "", RegexOptions.Compiled);
+            var match = Regex.Match(sanitizedNumber, @"^(?<prefix>\+?)(?<digits>\d+)$", RegexOptions.Compiled);
+            if (!match.Success)
+                throw new ArgumentException("Invalid phone number");
+
+            if (match.Groups["prefix"].Length > 0)
+            {
+                string numberOnly = match.Groups["digits"].Value;
+                var orderedCodes = CountryCodes.Items.OrderByDescending(x => x.Code);
+                var countryCode = orderedCodes.FirstOrDefault(x => numberOnly.StartsWith(x.CodeAsString));
+                string nationalNumber = numberOnly[countryCode.CodeAsString.Length..];
+                return CreateInternationalNumber(countryCode.CodeAsString, nationalNumber);
+            }
+            return CreateNationalNumber(sanitizedNumber);
         }
 
         /// <summary>
