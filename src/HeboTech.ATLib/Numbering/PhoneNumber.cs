@@ -8,7 +8,7 @@ namespace HeboTech.ATLib.Numbering
     /// </summary>
     public class PhoneNumber
     {
-        public PhoneNumber(string countryCode, string nationalNumber, TypeOfNumber ton, NumberPlanIdentification npi)
+        public PhoneNumber(string countryCode, string nationalNumber, TypeOfNumber ton, NumberingPlanIdentification npi)
         {
             if (nationalNumber == null)
                 throw new ArgumentNullException(nameof(nationalNumber), "Number cannot be empty");
@@ -24,7 +24,7 @@ namespace HeboTech.ATLib.Numbering
             CountryCode = countryCode ?? string.Empty;
             NationalNumber = nationalNumber;
             TypeOfNumber = ton;
-            NumberPlanIdentification = npi;
+            NumberingPlanIdentification = npi;
         }
 
         /// <summary>
@@ -33,7 +33,7 @@ namespace HeboTech.ATLib.Numbering
         /// <param name="number"></param>
         /// <returns></returns>
         public static PhoneNumber CreateNationalNumber(string number) =>
-            new PhoneNumber(string.Empty, number, TypeOfNumber.National, NumberPlanIdentification.ISDN);
+            new PhoneNumber(string.Empty, number, TypeOfNumber.National, NumberingPlanIdentification.ISDN);
 
         /// <summary>
         /// Creates an international PhoneNumber. Digits only. Exclude leading '+';
@@ -42,7 +42,7 @@ namespace HeboTech.ATLib.Numbering
         /// <param name="number">Number</param>
         /// <returns></returns>
         public static PhoneNumber CreateInternationalNumber(string countryCode, string number) =>
-            new PhoneNumber(countryCode, number, TypeOfNumber.International, NumberPlanIdentification.ISDN);
+            new PhoneNumber(countryCode, number, TypeOfNumber.International, NumberingPlanIdentification.ISDN);
 
         /// <summary>
         /// Creates a national or international PhoneNumber.
@@ -60,7 +60,7 @@ namespace HeboTech.ATLib.Numbering
         }
 
         public static PhoneNumber CreateAlphaNumericNumber(string number) =>
-            new PhoneNumber(null, number, TypeOfNumber.AlphaNumeric, NumberPlanIdentification.Unknown);
+            new PhoneNumber(null, number, TypeOfNumber.AlphaNumeric, NumberingPlanIdentification.Unknown);
 
         /// <summary>
         /// Country code
@@ -72,8 +72,15 @@ namespace HeboTech.ATLib.Numbering
         /// </summary>
         public string NationalNumber { get; }
 
+        /// <summary>
+        /// Type of number
+        /// </summary>
         public TypeOfNumber TypeOfNumber { get; }
-        public NumberPlanIdentification NumberPlanIdentification { get; }
+
+        /// <summary>
+        /// Numbering plan identification
+        /// </summary>
+        public NumberingPlanIdentification NumberingPlanIdentification { get; }
 
         public override string ToString()
         {

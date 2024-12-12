@@ -45,7 +45,7 @@ namespace HeboTech.ATLib.Tests.Numbering
         {
             PhoneNumber dut = PhoneNumber.CreateNationalOrInternationalNumber("1", "23456789");
 
-            Assert.Equal(NumberPlanIdentification.ISDN, dut.NumberPlanIdentification);
+            Assert.Equal(NumberingPlanIdentification.ISDN, dut.NumberingPlanIdentification);
         }
 
         [Fact]
@@ -53,7 +53,7 @@ namespace HeboTech.ATLib.Tests.Numbering
         {
             PhoneNumber dut = PhoneNumber.CreateNationalOrInternationalNumber(null, "123456789");
 
-            Assert.Equal(NumberPlanIdentification.Unknown, dut.NumberPlanIdentification);
+            Assert.Equal(NumberingPlanIdentification.Unknown, dut.NumberingPlanIdentification);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace HeboTech.ATLib.Numbering
 {
-    public enum NumberPlanIdentification : byte
+    public enum NumberingPlanIdentification : byte
     {
         Unknown = 0x00,
         ISDN = 0x01,
