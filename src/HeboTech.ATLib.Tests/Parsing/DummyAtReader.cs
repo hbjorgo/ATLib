@@ -1,9 +1,9 @@
-﻿using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Parsing;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace HeboTech.ATLib.Tests.Parsers
+namespace HeboTech.ATLib.Tests.Parsing
 {
     internal class DummyAtReader : IAtReader
     {

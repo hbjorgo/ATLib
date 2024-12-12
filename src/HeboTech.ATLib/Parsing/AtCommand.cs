@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HeboTech.ATLib.Parsers
+namespace HeboTech.ATLib.Parsing
 {
     internal class AtCommand
     {

@@ -1,4 +1,4 @@
-﻿namespace HeboTech.ATLib.Parsers
+﻿namespace HeboTech.ATLib.Parsing
 {
     internal enum AtError
     {

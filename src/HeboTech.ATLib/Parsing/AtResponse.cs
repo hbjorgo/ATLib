@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace HeboTech.ATLib.Parsers
+namespace HeboTech.ATLib.Parsing
 {
     public class AtResponse
     {

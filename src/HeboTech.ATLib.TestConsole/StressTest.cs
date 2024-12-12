@@ -1,6 +1,6 @@
 ﻿using HeboTech.ATLib.Messaging;
 using HeboTech.ATLib.Modems.D_LINK;
-using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.Parsing;
 using HeboTech.ATLib.Sys;
 using System;
 using System.Threading;

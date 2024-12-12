@@ -1,5 +1,5 @@
 ﻿using HeboTech.ATLib.Modems.Qualcomm;
-using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.Parsing;
 
 namespace HeboTech.ATLib.Modems.D_LINK
 {

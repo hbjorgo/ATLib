@@ -2,7 +2,7 @@
 using UnitsNet;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.System
+namespace HeboTech.ATLib.Tests.Sys
 {
     public class BatteryStatusTests
     {

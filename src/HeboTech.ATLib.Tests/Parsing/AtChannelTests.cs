@@ -1,4 +1,4 @@
-﻿using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Parsing;
 using Moq;
 using System;
 using System.Linq;
@@ -6,7 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.Parsers
+namespace HeboTech.ATLib.Tests.Parsing
 {
     public class AtChannelTests
     {

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
-namespace HeboTech.ATLib.Parsers
+namespace HeboTech.ATLib.Parsing
 {
     public static class AtErrorParsers
     {

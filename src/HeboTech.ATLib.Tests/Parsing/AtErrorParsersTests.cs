@@ -1,7 +1,7 @@
-﻿using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Parsing;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.Parsers
+namespace HeboTech.ATLib.Tests.Parsing
 {
     public class AtErrorParsersTests
     {

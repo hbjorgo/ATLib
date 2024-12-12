@@ -1,5 +1,5 @@
 ﻿using HeboTech.ATLib.Modems.SIMCOM;
-using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.Parsing;
 using HeboTech.ATLib.Messaging;
 using System.Threading.Tasks;
 

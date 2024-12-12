@@ -1,6 +1,6 @@
 ﻿using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Modems.Generic;
-using HeboTech.ATLib.Parsers;
+using HeboTech.ATLib.Parsing;
 using HeboTech.ATLib.Messaging;
 using HeboTech.ATLib.Sys;
 using System.Collections.Generic;

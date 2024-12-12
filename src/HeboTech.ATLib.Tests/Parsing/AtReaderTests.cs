@@ -1,10 +1,10 @@
-﻿using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Parsing;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.Parsers
+namespace HeboTech.ATLib.Tests.Parsing
 {
     public class AtReaderTests
     {

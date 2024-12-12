@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace HeboTech.ATLib.Parsers
+namespace HeboTech.ATLib.Parsing
 {
     internal class AtReader : IAtReader, IDisposable
     {

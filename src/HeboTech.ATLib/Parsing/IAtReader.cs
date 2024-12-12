@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace HeboTech.ATLib.Parsers
+namespace HeboTech.ATLib.Parsing
 {
     internal interface IAtReader
     {

@@ -1,7 +1,7 @@
 ﻿using HeboTech.ATLib.Sys;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.System
+namespace HeboTech.ATLib.Tests.Sys
 {
     public class ImsiTests
     {
