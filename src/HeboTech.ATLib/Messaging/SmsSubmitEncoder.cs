@@ -96,7 +96,7 @@ namespace HeboTech.ATLib.Messaging
 
         protected static byte GetAddressType(PhoneNumber phoneNumber)
         {
-            return (byte)((1 << 7) + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
+            return (byte)((1 << 7) + ((byte)phoneNumber.TypeOfNumber << 4) + (byte)phoneNumber.NumberPlanIdentification);
         }
 
         protected static string SwapPhoneNumberDigits(string data)

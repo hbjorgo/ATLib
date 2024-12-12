@@ -8,7 +8,7 @@ namespace HeboTech.ATLib.Tests.Numbering
         [Fact]
         public void Properties_are_set()
         {
-            PhoneNumber dut = new("1", "23456789");
+            PhoneNumber dut = PhoneNumber.CreateNationalOrInternationalNumber("1", "23456789");
 
             Assert.Equal("1", dut.CountryCode);
             Assert.Equal("23456789", dut.NationalNumber);
@@ -19,7 +19,7 @@ namespace HeboTech.ATLib.Tests.Numbering
         [InlineData("1", "23456789", "+123456789")]
         public void ToString_returns_number(string countryCode, string nationalNumber, string expected)
         {
-            PhoneNumber dut = new(countryCode, nationalNumber);
+            PhoneNumber dut = PhoneNumber.CreateNationalOrInternationalNumber(countryCode, nationalNumber);
 
             Assert.Equal(expected, dut.ToString());
         }
@@ -27,33 +27,33 @@ namespace HeboTech.ATLib.Tests.Numbering
         [Fact]
         public void GetTypeOfNumber_returns_international()
         {
-            PhoneNumber dut = new("1", "23456789");
+            PhoneNumber dut = PhoneNumber.CreateNationalOrInternationalNumber("1", "23456789");
 
-            Assert.Equal(TypeOfNumber.International, dut.GetTypeOfNumber());
+            Assert.Equal(TypeOfNumber.International, dut.TypeOfNumber);
         }
 
         [Fact]
         public void GetTypeOfNumber_returns_national()
         {
-            PhoneNumber dut = new("123456789");
+            PhoneNumber dut = PhoneNumber.CreateNationalNumber("123456789");
 
-            Assert.Equal(TypeOfNumber.National, dut.GetTypeOfNumber());
+            Assert.Equal(TypeOfNumber.National, dut.TypeOfNumber);
         }
 
         [Fact]
         public void GetNumberPlanIdentification_returns_ISDN()
         {
-            PhoneNumber dut = new("1", "23456789");
+            PhoneNumber dut = PhoneNumber.CreateNationalOrInternationalNumber("1", "23456789");
 
-            Assert.Equal(NumberPlanIdentification.ISDN, dut.GetNumberPlanIdentification());
+            Assert.Equal(NumberPlanIdentification.ISDN, dut.NumberPlanIdentification);
         }
 
         [Fact]
         public void GetNumberPlanIdentification_returns_Unknown()
         {
-            PhoneNumber dut = new("123456789");
+            PhoneNumber dut = PhoneNumber.CreateNationalOrInternationalNumber(null, "123456789");
 
-            Assert.Equal(NumberPlanIdentification.Unknown, dut.GetNumberPlanIdentification());
+            Assert.Equal(NumberPlanIdentification.Unknown, dut.NumberPlanIdentification);
         }
     }
 }

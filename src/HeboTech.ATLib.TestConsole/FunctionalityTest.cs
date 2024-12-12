@@ -165,9 +165,11 @@ namespace HeboTech.ATLib.TestConsole
                         break;
                     case ConsoleKey.D:
                         {
+                            Console.WriteLine("Please enter country code:");
+                            string countryCode = Console.ReadLine();
                             Console.WriteLine("Please enter phone number:");
-                            string phoneNumberString = Console.ReadLine();
-                            PhoneNumber phoneNumber = new(phoneNumberString);
+                            string nationalNumber = Console.ReadLine();
+                            PhoneNumber phoneNumber = PhoneNumber.CreateNationalOrInternationalNumber(countryCode, nationalNumber);
 
                             var dialStatus = await modem.DialAsync(phoneNumber);
                             Console.WriteLine($"Dial Status: {dialStatus}");
@@ -179,9 +181,11 @@ namespace HeboTech.ATLib.TestConsole
                         break;
                     case ConsoleKey.S:
                         {
+                            Console.WriteLine("Please enter country code:");
+                            string countryCode = Console.ReadLine();
                             Console.WriteLine("Please enter phone number:");
-                            string phoneNumberString = Console.ReadLine();
-                            PhoneNumber phoneNumber = new(phoneNumberString);
+                            string nationalNumber = Console.ReadLine();
+                            PhoneNumber phoneNumber = PhoneNumber.CreateNationalOrInternationalNumber(countryCode, nationalNumber);
 
                             Console.WriteLine("Please enter SMS message:");
                             string smsMessage = Console.ReadLine();

@@ -11,6 +11,7 @@ namespace HeboTech.ATLib.Numbering
         {
             byte ext_ton_npi = data[0];
             TypeOfNumber ton = (TypeOfNumber)((ext_ton_npi & 0b0111_0000) >> 4);
+            NumberPlanIdentification npi = (NumberPlanIdentification)(ext_ton_npi & 0b0000_1111);
 
             string number = string.Empty;
             switch (ton)

@@ -37,7 +37,7 @@ namespace HeboTech.ATLib.Tests.Messaging
         {
             IEnumerable<string> encoded = SmsSubmitEncoder.Encode(
                 new SmsSubmitRequest(
-                    new PhoneNumber(countryCode, subscriberNumber),
+                    PhoneNumber.CreateNationalOrInternationalNumber(countryCode, subscriberNumber),
                     encodedMessage,
                     dataCodingScheme)
                 {
@@ -56,7 +56,7 @@ namespace HeboTech.ATLib.Tests.Messaging
         public void Encode_SmsSubmit_message_too_long_test(string countryCode, string subscriberNumber, int characterCount, CharacterSet dataCodingScheme, bool includeEmptySmscLength)
         {
             var request = new SmsSubmitRequest(
-                    new PhoneNumber(countryCode, subscriberNumber),
+                    PhoneNumber.CreateNationalOrInternationalNumber(countryCode, subscriberNumber),
                     new string('a', characterCount),
                     dataCodingScheme)
             {
@@ -71,7 +71,7 @@ namespace HeboTech.ATLib.Tests.Messaging
         public void Encode_SmsSubmit_message_max_length_test(string countryCode, string subscriberNumber, int characterCount, CharacterSet dataCodingScheme, bool includeEmptySmscLength, int expectedMessageParts)
         {
             var request = new SmsSubmitRequest(
-                    new PhoneNumber(countryCode, subscriberNumber),
+                    PhoneNumber.CreateNationalOrInternationalNumber(countryCode, subscriberNumber),
                     new string('a', characterCount),
                     dataCodingScheme)
             {

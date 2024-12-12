@@ -8,33 +8,59 @@ namespace HeboTech.ATLib.Numbering
     /// </summary>
     public class PhoneNumber
     {
-        /// <summary>
-        /// Initializes a new instance
-        /// </summary>
-        /// <param name="nationalNumber">National Number (National Destination Code and Subscriber Number)</param>
-        public PhoneNumber(string nationalNumber)
-            : this(string.Empty, nationalNumber)
+        public PhoneNumber(string countryCode, string nationalNumber, TypeOfNumber ton, NumberPlanIdentification npi)
         {
-        }
-
-        /// <summary>
-        /// Initializes a new instance
-        /// </summary>
-        /// <param name="countryCode">Country Code</param>
-        /// <param name="nationalNumber">National Number (National Destination Code and Subscriber Number)</param>
-        /// <exception cref="ArgumentException"></exception>
-        public PhoneNumber(string countryCode, string nationalNumber)
-        {
-            if (!countryCode.All(char.IsDigit))
-                throw new ArgumentException("Must be numeric only", nameof(countryCode));
-            if (!nationalNumber.All(char.IsDigit))
-                throw new ArgumentException("Must be numeric only", nameof(nationalNumber));
-            if (countryCode.Length + nationalNumber.Length > 15)
+            if (nationalNumber == null)
+                throw new ArgumentNullException(nameof(nationalNumber), "Number cannot be empty");
+            if (nationalNumber.Length < 1)
+                throw new ArgumentNullException(nameof(nationalNumber), "Number cannot be empty");
+            //if (!nationalNumber.All(char.IsDigit))
+            //    throw new ArgumentException("Must be numeric", nameof(nationalNumber));
+            if (countryCode != null && !countryCode.All(char.IsDigit))
+                throw new ArgumentException("Must be numeric", nameof(countryCode));
+            if ((countryCode?.Length ?? 0) + nationalNumber.Length > 15)
                 throw new ArgumentException("Total phone number length cannot exceed 15 characters");
 
-            CountryCode = countryCode;
+            CountryCode = countryCode ?? string.Empty;
             NationalNumber = nationalNumber;
+            TypeOfNumber = ton;
+            NumberPlanIdentification = npi;
         }
+
+        /// <summary>
+        /// Creates a national PhoneNumber. Digits only.
+        /// </summary>
+        /// <param name="number"></param>
+        /// <returns></returns>
+        public static PhoneNumber CreateNationalNumber(string number) =>
+            new PhoneNumber(string.Empty, number, TypeOfNumber.National, NumberPlanIdentification.ISDN);
+
+        /// <summary>
+        /// Creates an international PhoneNumber. Digits only. Exclude leading '+';
+        /// </summary>
+        /// <param name="countryCode">Country code</param>
+        /// <param name="number">Number</param>
+        /// <returns></returns>
+        public static PhoneNumber CreateInternationalNumber(string countryCode, string number) =>
+            new PhoneNumber(countryCode, number, TypeOfNumber.International, NumberPlanIdentification.ISDN);
+
+        /// <summary>
+        /// Creates a national or international PhoneNumber.
+        /// If country code is included, it will be international, else it will be national.
+        /// Digits only.
+        /// </summary>
+        /// <param name="countryCode">Country code</param>
+        /// <param name="number">Number</param>
+        /// <returns></returns>
+        public static PhoneNumber CreateNationalOrInternationalNumber(string countryCode, string number)
+        {
+            if (countryCode == null || countryCode == string.Empty)
+                return CreateNationalNumber(number);
+            return CreateInternationalNumber(countryCode, number);
+        }
+
+        public static PhoneNumber CreateAlphaNumericNumber(string number) =>
+            new PhoneNumber(null, number, TypeOfNumber.AlphaNumeric, NumberPlanIdentification.Unknown);
 
         /// <summary>
         /// Country code
@@ -46,29 +72,8 @@ namespace HeboTech.ATLib.Numbering
         /// </summary>
         public string NationalNumber { get; }
 
-        /// <summary>
-        /// Get Type Of Number (TON)
-        /// </summary>
-        /// <returns>Type Of Number (TON)</returns>
-        public TypeOfNumber GetTypeOfNumber()
-        {
-            if (CountryCode != string.Empty)
-                return TypeOfNumber.International;
-            else
-                return TypeOfNumber.National;
-        }
-
-        /// <summary>
-        /// Get Number Plan Identification (NPI)
-        /// </summary>
-        /// <returns>Number Plan Identification (NPI)</returns>
-        public NumberPlanIdentification GetNumberPlanIdentification()
-        {
-            if (CountryCode != string.Empty)
-                return NumberPlanIdentification.ISDN;
-            else
-                return NumberPlanIdentification.Unknown;
-        }
+        public TypeOfNumber TypeOfNumber { get; }
+        public NumberPlanIdentification NumberPlanIdentification { get; }
 
         public override string ToString()
         {
