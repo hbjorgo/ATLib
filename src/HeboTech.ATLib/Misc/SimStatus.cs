@@ -1,4 +1,4 @@
-﻿namespace HeboTech.ATLib.Sys
+﻿namespace HeboTech.ATLib.Misc
 {
     public enum SimStatus
     {

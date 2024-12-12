@@ -1,8 +1,8 @@
 ﻿using HeboTech.ATLib.Extensions;
-using HeboTech.ATLib.Sys;
+using HeboTech.ATLib.Misc;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.Sys
+namespace HeboTech.ATLib.Tests.Misc
 {
     public class BatteryChargeStatusTests
     {

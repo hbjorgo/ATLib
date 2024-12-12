@@ -1,6 +1,6 @@
 ﻿using UnitsNet;
 
-namespace HeboTech.ATLib.Sys
+namespace HeboTech.ATLib.Misc
 {
     public class SignalStrength
     {

@@ -1,8 +1,8 @@
-﻿using HeboTech.ATLib.Sys;
+﻿using HeboTech.ATLib.Misc;
 using System;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.Sys
+namespace HeboTech.ATLib.Tests.Misc
 {
     public class PersonalIdentificationNumberTests
     {

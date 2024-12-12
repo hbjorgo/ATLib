@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace HeboTech.ATLib.Sys
+namespace HeboTech.ATLib.Misc
 {
     public enum BatteryChargeStatus : byte
     {
