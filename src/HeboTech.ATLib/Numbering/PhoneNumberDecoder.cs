@@ -28,7 +28,6 @@ namespace HeboTech.ATLib.Numbering
                     break;
                 case TypeOfNumber.AlphaNumeric:
                     var decoded = Gsm7.Decode(data[1..].ToArray());
-                    //var decoded = Gsm7.DecodeFromBytes(data[1..].ToArray());
                     return new PhoneNumberDto(decoded);
                 case TypeOfNumber.Abbreviated:
                     break;
