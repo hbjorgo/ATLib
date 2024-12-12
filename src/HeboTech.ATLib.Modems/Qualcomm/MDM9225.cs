@@ -1,6 +1,6 @@
-﻿using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Modems.Generic;
-using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Modems.Generic;
+using HeboTech.ATLib.Parsing;
+using HeboTech.ATLib.Messaging;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

@@ -1,7 +1,6 @@
-﻿using HeboTech.ATLib.CodingSchemes;
-using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Modems.SIMCOM;
-using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Modems.SIMCOM;
+using HeboTech.ATLib.Parsing;
+using HeboTech.ATLib.Messaging;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.Adafruit

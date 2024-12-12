@@ -1,5 +1,5 @@
-﻿using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Parsing;
+using HeboTech.ATLib.Misc;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.SIMCOM

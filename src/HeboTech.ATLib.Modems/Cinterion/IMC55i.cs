@@ -1,4 +1,4 @@
-﻿using HeboTech.ATLib.Parsers;
+﻿using HeboTech.ATLib.Parsing;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.Modems.Cinterion

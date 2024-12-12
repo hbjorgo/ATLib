@@ -1,4 +1,4 @@
-﻿using HeboTech.ATLib.DTOs;
+﻿using HeboTech.ATLib.Messaging;
 using System;
 using System.Text.RegularExpressions;
 
