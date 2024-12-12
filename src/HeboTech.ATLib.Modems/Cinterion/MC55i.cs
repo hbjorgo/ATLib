@@ -1,7 +1,7 @@
-﻿using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Modems.Generic;
+﻿using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
-using HeboTech.ATLib.PDU;
+using HeboTech.ATLib.Messaging;
+using HeboTech.ATLib.Sys;
 using System;
 using System.Collections.Generic;
 using System.Linq;

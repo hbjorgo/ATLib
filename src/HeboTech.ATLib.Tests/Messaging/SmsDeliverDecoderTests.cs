@@ -1,0 +1,35 @@
+﻿using HeboTech.ATLib.Extensions;
+using HeboTech.ATLib.Messaging;
+using System;
+using Xunit;
+
+namespace HeboTech.ATLib.Tests.Messaging
+{
+    public class SmsDeliverDecoderTests
+    {
+        [Theory]
+        [InlineData("07917238010010F5040BC87238880900F10000993092516195800AE8329BFD4697D9EC37", "+27831000015", "27838890001", "29.03.2099 15:16:59 +02:00", "hellohello")]
+        [InlineData("07911326040000F0040B911346610089F60000208062917314800CC8F71D14969741F977FD07", "+31624000000", "+31641600986", "2002.08.26 19:37:41 +02:00", "How are you?")]
+
+        [InlineData("069174290021104009D0D4323B1D06000042218091255540A0060804E2C30401D6327BFD6EB7CB6E103DCD06BDE7F31048589E33D6207A999D0EBBDCEFD7FAEDA687DD7479F90C32BFE5A00768FD6EB7CBA034E81C769F41ED3219B47EBBE961377DFD96D3CB7410394DA7BB40D2F2393DA7CBCBF2B4FB3C87CBDFF3F27C5E7683D0613948CC4ED3E9A0B29B2C2FD341EF33A8FD00B91FA0B39A212FCF41F007885E66A7C3", "+4792001201", "Telia", "08.12.2024 19:52:55 +01:00", "Velkommen til oss! Besøk telia.no/kontantreg for å komme i gang med kontantkortet ditt. Registreringsprosessen har blitt endret og må nå gjøres på telia")]
+
+        // Three part message
+        // Part 1
+        [InlineData("06917429002120440A916425068179000042219011816540A0050003020301986F79B90D4AC3E7F53688FC66BFE5A0799A0E0AB7CB741668FC76CFCB637A995E9783C2E4343C3D4F8FD3EE33A8CC4ED359A079990C22BF41E5747DDE7E9341F4721BFE9683D2EE719A9C26D7DD74509D0E6287C56F791954A683C86FF65B5E06B5C36777181466A7E3F5B0AB4A0795DDE936284C06B5D3EE741B642FBBD3E1360B14AFA7E7", "+4792001202", "+4652601897", "09.12.2024 11:18:56 +01:00", "Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.Ut enim ad minim veniam, quis")]
+        // Part 2
+        [InlineData("06917429002120400A916425068179000042219011816540A005000302030240EEF79C2EAF9341657C593E4ED3C3F4F4DB0DAAB3D9E1F6F80D6287C56F797A0E72A7E769509D0E0AB3D3F17A1A0E2AE341E53068FC6EB7DFE43768FC76CFCBF17A98EE22D6D37350B84E2F83D2F2BABC0C22BFD96F3928ED06C9CB7079195D7693CBF2341D947683EC6F761D4E0FD3CB207B999DA683CAF37919344EB3D9F53688FC66BFE5", "+4792001202", "+4652601897", "09.12.2024 11:18:56 +01:00", " nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolor")]
+        // Part 3
+        [InlineData("06917429002120440A91642506817900004221901181754090050003020303CAA0721D64AE9FD3613AC85D67B3C32078589E0ED3EB7257113F2EC3E9E5BA1C344FBBE9A0F7781C2E8FC374D0B80E4F93C3F4301DE47EBB4170F93B4D2EBBE92CD0BCEEA683D26ED0B8CE868741F17A1AF4369BD3E37418442ECFCBF2BA9B0E6ABFD9EC341D1476A7DBA03419549ED341ECB0F82DAFB75D", "+4792001202", "+4652601897", "09.12.2024 11:18:57 +01:00", "e eu fugiat nulla pariatur.Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.")]
+        public void Decode_SmsDeliver_tests(string data, string serviceCenterNumber, string senderNumber, string timestamp, string message)
+        {
+            var bytes = data.ToByteArray();
+            SmsDeliver pduMessage = SmsDeliverDecoder.Decode(bytes);
+
+            Assert.NotNull(pduMessage);
+            Assert.Equal(serviceCenterNumber, pduMessage.ServiceCenterNumber.ToString());
+            Assert.Equal(senderNumber, pduMessage.SenderNumber.ToString());
+            Assert.Equal(DateTimeOffset.Parse(timestamp), pduMessage.Timestamp);
+            Assert.Equal(message, pduMessage.Message);
+        }
+    }
+}

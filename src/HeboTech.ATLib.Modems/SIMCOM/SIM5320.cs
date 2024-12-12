@@ -1,8 +1,8 @@
-﻿using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Extensions;
+﻿using HeboTech.ATLib.Extensions;
 using HeboTech.ATLib.Modems.Generic;
 using HeboTech.ATLib.Parsers;
-using HeboTech.ATLib.PDU;
+using HeboTech.ATLib.Messaging;
+using HeboTech.ATLib.Sys;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;

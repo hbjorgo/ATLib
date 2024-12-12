@@ -1,6 +1,5 @@
-﻿using HeboTech.ATLib.DTOs;
-using HeboTech.ATLib.Extensions;
-using HeboTech.ATLib.PDU;
+﻿using HeboTech.ATLib.Extensions;
+using HeboTech.ATLib.Messaging;
 using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Events
