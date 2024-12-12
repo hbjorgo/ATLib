@@ -17,7 +17,7 @@ namespace HeboTech.ATLib.Numbering
                 throw new ArgumentNullException(nameof(nationalNumber), "Number cannot be empty");
             //if (!nationalNumber.All(char.IsDigit))
             //    throw new ArgumentException("Must be numeric", nameof(nationalNumber));
-            if (countryCode != null && !countryCode.All(char.IsDigit))
+            if (countryCode != null && countryCode.Length > 0 && !countryCode.All(char.IsDigit))
                 throw new ArgumentException("Must be numeric", nameof(countryCode));
             if ((countryCode?.Length ?? 0) + nationalNumber.Length > 15)
                 throw new ArgumentException("Total phone number length cannot exceed 15 characters");
