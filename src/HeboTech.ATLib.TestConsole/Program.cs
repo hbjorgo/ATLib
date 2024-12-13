@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.IO.Ports;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection;
@@ -35,27 +36,33 @@ namespace HeboTech.ATLib.TestConsole
 
 
             /* ######## UNCOMMENT THIS SECTION TO USE SERIAL PORT ######## */
-            //using SerialPort serialPort = new("COM1", 9600, Parity.None, 8, StopBits.One)
+            //using (SerialPort serialPort = new("COM1", 9600, Parity.None, 8, StopBits.One)
+            //    {
+            //        Handshake = Handshake.RequestToSend
+            //    })
             //{
-            //    Handshake = Handshake.RequestToSend
-            //};
-            //serialPort.Open();
-            //Console.WriteLine("Serialport opened");
-            //Stream stream;
-            //stream = serialPort.BaseStream;
+            //    serialPort.Open();
+            //    Console.WriteLine("Serialport opened");
+            //    Stream stream;
+            //    stream = serialPort.BaseStream;
+
+            //    // ### Choose what to run
+            //    await FunctionalityTest.RunAsync(stream, pin);
+            //    //await StressTest.RunAsync(stream, pin);
+            //}
 
 
             /* ######## UNCOMMENT THIS SECTION TO USE NETWORK SOCKET ######## */
-            using Socket socket = new(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect(address, port);
-            Console.WriteLine("Network socket opened");
-            Stream stream;
-            stream = new NetworkStream(socket);
-
-
-            // ### Choose what to run
-            await FunctionalityTest.RunAsync(stream, pin);
-            //await StressTest.RunAsync(stream, pin);
+            using (TcpClient tcpClient = new TcpClient(address, port))
+            {
+                using (NetworkStream stream = tcpClient.GetStream())
+                {
+                    Console.WriteLine("Network socket opened");
+                    // ### Choose what to run
+                    await FunctionalityTest.RunAsync(stream, pin);
+                    //await StressTest.RunAsync(stream, pin);
+                }
+            }
         }
     }
 }
