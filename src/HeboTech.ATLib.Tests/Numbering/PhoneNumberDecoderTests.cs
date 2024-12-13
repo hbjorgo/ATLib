@@ -1,5 +1,4 @@
-﻿using HeboTech.ATLib.Extensions;
-using HeboTech.ATLib.Numbering;
+﻿using HeboTech.ATLib.Numbering;
 using System;
 using Xunit;
 
@@ -9,7 +8,7 @@ namespace HeboTech.ATLib.Tests.Numbering
     {
         [Theory]
         // National
-        [InlineData("8189674523F1", "987654321")]
+        [InlineData("A189674523F1", "987654321")]
 
         // International
         [InlineData("912143658709", "+1234567890")]
@@ -24,10 +23,10 @@ namespace HeboTech.ATLib.Tests.Numbering
         public void Decode_PhoneNumber_tests(string data, string number)
         {
             var bytes = Convert.FromHexString(data);
-            PhoneNumberDto phoneNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes);
+            PhoneNumber phoneNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes);
 
             Assert.NotNull(phoneNumber);
-            Assert.Equal(number, phoneNumber.Number);
+            Assert.Equal(number, phoneNumber.ToString());
         }
     }
 }

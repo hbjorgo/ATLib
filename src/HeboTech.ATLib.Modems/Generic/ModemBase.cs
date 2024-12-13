@@ -122,7 +122,7 @@ namespace HeboTech.ATLib.Modems.Generic
         public virtual async Task<ModemResponse> DialAsync(PhoneNumber phoneNumber, bool hideCallerNumber = false, bool closedUserGroup = false)
         {
             string command = $"ATD{phoneNumber}{(hideCallerNumber ? 'I' : 'i')}{(closedUserGroup ? 'G' : 'g')};";
-            AtResponse response = await channel.SendCommand(command);
+            AtResponse response = await channel.SendCommand(command, TimeSpan.FromSeconds(60));
             return ModemResponse.IsSuccess(response.Success);
         }
 
@@ -151,7 +151,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> HangupAsync()
         {
-            AtResponse response = await channel.SendCommand($"AT+CHUP");
+            AtResponse response = await channel.SendCommand($"ATH");
 
             if (response.Success)
                 return ModemResponse.IsSuccess();

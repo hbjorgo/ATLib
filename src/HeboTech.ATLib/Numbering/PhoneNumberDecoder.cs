@@ -7,7 +7,7 @@ namespace HeboTech.ATLib.Numbering
 {
     internal class PhoneNumberDecoder
     {
-        public static PhoneNumberDto DecodePhoneNumber(ReadOnlySpan<byte> data)
+        public static PhoneNumber DecodePhoneNumber(ReadOnlySpan<byte> data)
         {
             byte ext_ton_npi = data[0];
             TypeOfNumber ton = (TypeOfNumber)((ext_ton_npi & 0b0111_0000) >> 4);
@@ -29,7 +29,7 @@ namespace HeboTech.ATLib.Numbering
                     break;
                 case TypeOfNumber.AlphaNumeric:
                     var decoded = Gsm7.Decode(data[1..].ToArray());
-                    return new PhoneNumberDto(decoded, ton, npi);
+                    return PhoneNumber.Create(decoded, ton, npi);
                 case TypeOfNumber.Abbreviated:
                     break;
                 case TypeOfNumber.ReservedForExtension:
@@ -41,7 +41,7 @@ namespace HeboTech.ATLib.Numbering
             number += string.Join("", data[1..].ToArray().Select(x => x.SwapNibbles().ToString("X2")));
             if (number[^1] == 'F')
                 number = number[..^1];
-            return new PhoneNumberDto(number, ton, npi);
+            return PhoneNumber.Create(number, ton, npi);
         }
     }
 }

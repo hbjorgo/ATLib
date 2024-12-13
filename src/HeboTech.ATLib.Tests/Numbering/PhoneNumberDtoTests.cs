@@ -8,11 +8,11 @@ namespace HeboTech.ATLib.Tests.Numbering
         [Fact]
         internal void Sets_properties()
         {
-            PhoneNumberDto sut = new("12345678", TypeOfNumber.National, NumberingPlanIdentification.ISDN);
+            PhoneNumber sut = PhoneNumber.Create("12345678", TypeOfNumber.National, NumberingPlanIdentification.ISDN);
 
-            Assert.Equal("12345678", sut.Number);
-            Assert.Equal(TypeOfNumber.National, sut.Ton);
-            Assert.Equal(NumberingPlanIdentification.ISDN, sut.Npi);
+            Assert.Equal("12345678", sut.ToString());
+            Assert.Equal(TypeOfNumber.National, sut.TypeOfNumber);
+            Assert.Equal(NumberingPlanIdentification.ISDN, sut.NumberingPlanIdentification);
         }
     }
 }

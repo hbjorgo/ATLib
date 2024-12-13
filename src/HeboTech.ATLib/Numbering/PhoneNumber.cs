@@ -9,7 +9,7 @@ namespace HeboTech.ATLib.Numbering
     /// </summary>
     public class PhoneNumber
     {
-        public PhoneNumber(string countryCode, string nationalNumber, TypeOfNumber ton, NumberingPlanIdentification npi)
+        protected PhoneNumber(string countryCode, string nationalNumber, TypeOfNumber ton, NumberingPlanIdentification npi)
         {
             if (nationalNumber == null)
                 throw new ArgumentNullException(nameof(nationalNumber), "Number cannot be empty");
@@ -41,45 +41,47 @@ namespace HeboTech.ATLib.Numbering
                 var orderedCodes = CountryCodes.Items.OrderByDescending(x => x.Code);
                 var countryCode = orderedCodes.FirstOrDefault(x => numberOnly.StartsWith(x.CodeAsString));
                 string nationalNumber = numberOnly[countryCode.CodeAsString.Length..];
-                return CreateInternationalNumber(countryCode.CodeAsString, nationalNumber);
+                return new PhoneNumber(countryCode.CodeAsString, nationalNumber, TypeOfNumber.International, NumberingPlanIdentification.ISDN);
             }
-            return CreateNationalNumber(sanitizedNumber);
+            return new PhoneNumber(string.Empty, sanitizedNumber, TypeOfNumber.National, NumberingPlanIdentification.ISDN);
         }
 
-        /// <summary>
-        /// Creates a national PhoneNumber. Digits only.
-        /// </summary>
-        /// <param name="number"></param>
-        /// <returns></returns>
-        public static PhoneNumber CreateNationalNumber(string number) =>
-            new PhoneNumber(string.Empty, number, TypeOfNumber.National, NumberingPlanIdentification.ISDN);
-
-        /// <summary>
-        /// Creates an international PhoneNumber. Digits only. Exclude leading '+';
-        /// </summary>
-        /// <param name="countryCode">Country code</param>
-        /// <param name="number">Number</param>
-        /// <returns></returns>
-        public static PhoneNumber CreateInternationalNumber(string countryCode, string number) =>
-            new PhoneNumber(countryCode, number, TypeOfNumber.International, NumberingPlanIdentification.ISDN);
-
-        /// <summary>
-        /// Creates a national or international PhoneNumber.
-        /// If country code is included, it will be international, else it will be national.
-        /// Digits only.
-        /// </summary>
-        /// <param name="countryCode">Country code</param>
-        /// <param name="number">Number</param>
-        /// <returns></returns>
-        public static PhoneNumber CreateNationalOrInternationalNumber(string countryCode, string number)
+        public static PhoneNumber Create(string number, TypeOfNumber ton, NumberingPlanIdentification npi)
         {
-            if (countryCode == null || countryCode == string.Empty)
-                return CreateNationalNumber(number);
-            return CreateInternationalNumber(countryCode, number);
-        }
+            string sanitizedNumber = Regex.Replace(number, @"[\s-()./]", "", RegexOptions.Compiled);
+            var numericNumberMatch = Regex.Match(sanitizedNumber, @"^(?<prefix>\+?)(?<digits>\d+)$", RegexOptions.Compiled);
 
-        public static PhoneNumber CreateAlphaNumericNumber(string number) =>
-            new PhoneNumber(null, number, TypeOfNumber.AlphaNumeric, NumberingPlanIdentification.Unknown);
+            switch (ton)
+            {
+                case TypeOfNumber.Unknown:
+                    break;
+                case TypeOfNumber.International:
+                    if (!numericNumberMatch.Success)
+                        throw new ArgumentException("Invalid number. Expected international type.");
+                    string numberOnly = numericNumberMatch.Groups["digits"].Value;
+                    var orderedCodes = CountryCodes.Items.OrderByDescending(x => x.Code);
+                    var countryCode = orderedCodes.FirstOrDefault(x => numberOnly.StartsWith(x.CodeAsString));
+                    string nationalNumber = numberOnly[countryCode.CodeAsString.Length..];
+                    return new PhoneNumber(countryCode.CodeAsString, nationalNumber, ton, npi);
+                case TypeOfNumber.National:
+                    if (!numericNumberMatch.Success)
+                        throw new ArgumentException("Invalid number. Expected national type.");
+                    return new PhoneNumber(string.Empty, sanitizedNumber, ton, npi);
+                case TypeOfNumber.NetworkSpecific:
+                    break;
+                case TypeOfNumber.Subscriber:
+                    break;
+                case TypeOfNumber.AlphaNumeric:
+                    return new PhoneNumber(null, number, ton, npi);
+                case TypeOfNumber.Abbreviated:
+                    break;
+                case TypeOfNumber.ReservedForExtension:
+                    break;
+                default:
+                    throw new NotSupportedException("The number type is not supported");
+            }
+            return new PhoneNumber(null, number, ton, npi);
+        }
 
         /// <summary>
         /// Country code
