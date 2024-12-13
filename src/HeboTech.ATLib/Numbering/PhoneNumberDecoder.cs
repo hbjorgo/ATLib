@@ -29,7 +29,7 @@ namespace HeboTech.ATLib.Numbering
                     break;
                 case TypeOfNumber.AlphaNumeric:
                     var decoded = Gsm7.Decode(data[1..].ToArray());
-                    return PhoneNumber.Create(decoded, ton, npi);
+                    return new AlphaNumericPhoneNumber(decoded, npi);
                 case TypeOfNumber.Abbreviated:
                     break;
                 case TypeOfNumber.ReservedForExtension:
@@ -41,7 +41,7 @@ namespace HeboTech.ATLib.Numbering
             number += string.Join("", data[1..].ToArray().Select(x => x.SwapNibbles().ToString("X2")));
             if (number[^1] == 'F')
                 number = number[..^1];
-            return PhoneNumber.Create(number, ton, npi);
+            return PhoneNumberFactory.Create(number, ton, npi);
         }
     }
 }

@@ -168,7 +168,7 @@ namespace HeboTech.ATLib.TestConsole
                         {
                             Console.WriteLine("Please enter phone number:");
                             string number = Console.ReadLine();
-                            PhoneNumber phoneNumber = PhoneNumber.Create(number);
+                            PhoneNumber phoneNumber = PhoneNumberFactory.Create(number);
 
                             var dialStatus = await modem.DialAsync(phoneNumber);
                             Console.WriteLine($"Dial Status: {dialStatus}");
@@ -182,7 +182,7 @@ namespace HeboTech.ATLib.TestConsole
                         {
                             Console.WriteLine("Please enter phone number:");
                             string number = Console.ReadLine();
-                            PhoneNumber phoneNumber = PhoneNumber.Create(number);
+                            PhoneNumber phoneNumber = PhoneNumberFactory.Create(number);
 
                             Console.WriteLine("Please enter SMS message:");
                             string smsMessage = Console.ReadLine();
