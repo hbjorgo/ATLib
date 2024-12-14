@@ -151,7 +151,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> HangupAsync()
         {
-            AtResponse response = await channel.SendCommand($"ATH");
+            AtResponse response = await channel.SendCommand($"AT+CHUP");
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
