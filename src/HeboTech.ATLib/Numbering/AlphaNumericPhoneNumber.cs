@@ -1,5 +1,8 @@
 ﻿namespace HeboTech.ATLib.Numbering
 {
+    /// <summary>
+    /// PhoneNumber with TypeOfNumber (TON) 0x05
+    /// </summary>
     public class AlphaNumericPhoneNumber : PhoneNumber
     {
         internal AlphaNumericPhoneNumber(string number, NumberingPlanIdentification npi)

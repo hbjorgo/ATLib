@@ -1,5 +1,8 @@
 ﻿namespace HeboTech.ATLib.Numbering
 {
+    /// <summary>
+    /// PhoneNumber with TypeOfNumber (TON) 0x00
+    /// </summary>
     internal class UnknownPhoneNumber : PhoneNumber
     {
         public UnknownPhoneNumber(string number, NumberingPlanIdentification npi)

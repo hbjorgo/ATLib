@@ -1,5 +1,8 @@
 ﻿namespace HeboTech.ATLib.Numbering
 {
+    /// <summary>
+    /// PhoneNumber with TypeOfNumber (TON) 0x06
+    /// </summary>
     public class AbbreviatedPhoneNumber : PhoneNumber
     {
         internal protected AbbreviatedPhoneNumber(string number, NumberingPlanIdentification npi)

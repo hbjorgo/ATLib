@@ -1,5 +1,8 @@
 ﻿namespace HeboTech.ATLib.Numbering
 {
+    /// <summary>
+    /// PhoneNumber with TypeOfNumber (TON) 0x04
+    /// </summary>
     public class SubscriberPhoneNumber : PhoneNumber
     {
         internal SubscriberPhoneNumber(string number, NumberingPlanIdentification npi)

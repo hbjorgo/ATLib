@@ -2,6 +2,9 @@
 
 namespace HeboTech.ATLib.Numbering
 {
+    /// <summary>
+    /// PhoneNumber with TypeOfNumber (TON) 0x02
+    /// </summary>
     public class NationalPhoneNumber : PhoneNumber
     {
         internal NationalPhoneNumber(string number, NumberingPlanIdentification npi)
