@@ -20,15 +20,6 @@ namespace HeboTech.ATLib.Numbering
                 throw new ArgumentException("Phone number length cannot exceed 15 characters", nameof(number));
         }
 
-        //protected PhoneNumber Parse(string number, NumberingPlanIdentification npi)
-        //{
-        //    string sanitizedNumber = Regex.Replace(number, @"[\s-()./]", "", RegexOptions.Compiled);
-        //    var numericNumberMatch = Regex.Match(sanitizedNumber, @"^(?<prefix>\+?)(?<digits>\d+)$", RegexOptions.Compiled);
-        //    if (!numericNumberMatch.Success)
-        //        throw new ArgumentException("Invalid number. Expected national type.");
-        //    return new NationalPhoneNumber(sanitizedNumber, npi);
-        //}
-
         public override string Number { get; }
     }
 }

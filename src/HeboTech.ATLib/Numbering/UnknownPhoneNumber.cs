@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace HeboTech.ATLib.Numbering
+﻿namespace HeboTech.ATLib.Numbering
 {
     internal class UnknownPhoneNumber : PhoneNumber
     {

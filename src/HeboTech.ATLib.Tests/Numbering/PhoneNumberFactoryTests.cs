@@ -9,9 +9,9 @@ namespace HeboTech.ATLib.Tests.Numbering
         [Theory]
         [InlineData(null)]
         [InlineData("")]
-        [InlineData("123457A")]
+        [InlineData("1234567A")]
         [InlineData("ABCD")]
-        [InlineData("+123457A")]
+        [InlineData("+1234567A")]
         [InlineData("+ABCD")]
         public void CreateCommonIsdn_throws_on_not_supported_numbers(string number)
         {
@@ -21,6 +21,8 @@ namespace HeboTech.ATLib.Tests.Numbering
         [Theory]
         [InlineData("12345678", TypeOfNumber.National, NumberingPlanIdentification.ISDN, "12345678", "12345678", typeof(NationalPhoneNumber))]
         [InlineData("+12345678", TypeOfNumber.International, NumberingPlanIdentification.ISDN, "12345678", "+12345678", typeof(InternationalPhoneNumber))]
+        [InlineData(" 12345678 ", TypeOfNumber.National, NumberingPlanIdentification.ISDN, "12345678", "12345678", typeof(NationalPhoneNumber))]
+        [InlineData(" +12345678 ", TypeOfNumber.International, NumberingPlanIdentification.ISDN, "12345678", "+12345678", typeof(InternationalPhoneNumber))]
         public void CreateCommonIsdn_creates_correct_number(string number, TypeOfNumber ton, NumberingPlanIdentification npi, string expectedNumber, string expectedStringRepresentation, Type expectedType)
         {
             PhoneNumber sut = PhoneNumberFactory.CreateCommonIsdn(number);

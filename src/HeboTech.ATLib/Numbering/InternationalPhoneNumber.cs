@@ -14,18 +14,6 @@ namespace HeboTech.ATLib.Numbering
             Number = sanitizedNumber[1..];
         }
 
-        //public InternationalPhoneNumber(string countryCode, string nationalNumber, NumberingPlanIdentification npi)
-        //    : base(TypeOfNumber.International, npi)
-        //{
-        //    ThrowIfNotValid($"+{countryCode}{nationalNumber}");
-
-        //    string sanitizedCountryCode = GetSanitizedNumber(countryCode);
-        //    string sanitizedNationalNumber = GetSanitizedNumber(nationalNumber);
-
-        //    NumberWithPrefix = $"+{sanitizedCountryCode}{sanitizedNationalNumber}";
-        //    NumberWithoutPrefix = $"{sanitizedCountryCode}{sanitizedNationalNumber}";
-        //}
-
         protected static void ThrowIfNotValid(string number)
         {
             if (!number.StartsWith('+'))
