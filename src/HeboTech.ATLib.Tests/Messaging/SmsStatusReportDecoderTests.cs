@@ -16,9 +16,9 @@ namespace HeboTech.ATLib.Tests.Messaging
             SmsStatusReport report = SmsStatusReportDecoder.Decode(bytes);
 
             Assert.NotNull(report);
-            Assert.Equal(serviceCenterNumber, report.ServiceCenterAddress?.Number);
+            Assert.Equal(serviceCenterNumber, report.ServiceCenterAddress?.ToString());
             Assert.Equal(SmsDeliveryStatus.Message_received_by_SME, report.Status);
-            Assert.Equal(recipientAddress, report.RecipientAddress?.Number);
+            Assert.Equal(recipientAddress, report.RecipientAddress?.ToString());
             Assert.Equal(messageReference, report.MessageReference);
             Assert.Equal(DateTimeOffset.Parse(serviceCenterTimestamp), report.ServiceCenterTimestamp);
             Assert.Equal(DateTimeOffset.Parse(dischargeTime), report.DischargeTime);

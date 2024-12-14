@@ -9,6 +9,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using HeboTech.ATLib.Modems.Cinterion;
 
 namespace HeboTech.ATLib.TestConsole
 {
@@ -166,8 +167,8 @@ namespace HeboTech.ATLib.TestConsole
                     case ConsoleKey.D:
                         {
                             Console.WriteLine("Please enter phone number:");
-                            string phoneNumberString = Console.ReadLine();
-                            PhoneNumber phoneNumber = new(phoneNumberString);
+                            string number = Console.ReadLine();
+                            PhoneNumber phoneNumber = PhoneNumberFactory.CreateCommonIsdn(number);
 
                             var dialStatus = await modem.DialAsync(phoneNumber);
                             Console.WriteLine($"Dial Status: {dialStatus}");
@@ -180,8 +181,8 @@ namespace HeboTech.ATLib.TestConsole
                     case ConsoleKey.S:
                         {
                             Console.WriteLine("Please enter phone number:");
-                            string phoneNumberString = Console.ReadLine();
-                            PhoneNumber phoneNumber = new(phoneNumberString);
+                            string number = Console.ReadLine();
+                            PhoneNumber phoneNumber = PhoneNumberFactory.CreateCommonIsdn(number);
 
                             Console.WriteLine("Please enter SMS message:");
                             string smsMessage = Console.ReadLine();

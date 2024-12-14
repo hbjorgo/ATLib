@@ -1,80 +1,52 @@
 ﻿using System;
-using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Numbering
 {
     /// <summary>
     /// Phone Number
     /// </summary>
-    public class PhoneNumber
+    public abstract class PhoneNumber
     {
-        /// <summary>
-        /// Initializes a new instance
-        /// </summary>
-        /// <param name="nationalNumber">National Number (National Destination Code and Subscriber Number)</param>
-        public PhoneNumber(string nationalNumber)
-            : this(string.Empty, nationalNumber)
+        internal protected PhoneNumber(TypeOfNumber ton, NumberingPlanIdentification npi)
         {
+            TypeOfNumber = ton;
+            NumberingPlanIdentification = npi;
         }
 
         /// <summary>
-        /// Initializes a new instance
+        /// Type of number
         /// </summary>
-        /// <param name="countryCode">Country Code</param>
-        /// <param name="nationalNumber">National Number (National Destination Code and Subscriber Number)</param>
-        /// <exception cref="ArgumentException"></exception>
-        public PhoneNumber(string countryCode, string nationalNumber)
-        {
-            if (!countryCode.All(char.IsDigit))
-                throw new ArgumentException("Must be numeric only", nameof(countryCode));
-            if (!nationalNumber.All(char.IsDigit))
-                throw new ArgumentException("Must be numeric only", nameof(nationalNumber));
-            if (countryCode.Length + nationalNumber.Length > 15)
-                throw new ArgumentException("Total phone number length cannot exceed 15 characters");
-
-            CountryCode = countryCode;
-            NationalNumber = nationalNumber;
-        }
+        public TypeOfNumber TypeOfNumber { get; }
 
         /// <summary>
-        /// Country code
+        /// Numbering plan identification
         /// </summary>
-        public string CountryCode { get; }
+        public NumberingPlanIdentification NumberingPlanIdentification { get; }
 
         /// <summary>
-        /// National number
+        /// Full number (without any prefixes (if any))
         /// </summary>
-        public string NationalNumber { get; }
+        public abstract string Number { get; }
 
         /// <summary>
-        /// Get Type Of Number (TON)
+        /// Remove any characters used for readability
         /// </summary>
-        /// <returns>Type Of Number (TON)</returns>
-        public TypeOfNumber GetTypeOfNumber()
+        /// <param name="number"></param>
+        /// <returns></returns>
+        internal static string GetSanitizedNumber(string number) =>
+            Regex.Replace(number, @"[\s-()./]", "", RegexOptions.Compiled);
+
+        protected static void ThrowIfEmpty(string number)
         {
-            if (CountryCode != string.Empty)
-                return TypeOfNumber.International;
-            else
-                return TypeOfNumber.National;
+            if (string.IsNullOrWhiteSpace(number))
+                throw new ArgumentException("Number cannot be empty", nameof(number));
         }
 
-        /// <summary>
-        /// Get Number Plan Identification (NPI)
-        /// </summary>
-        /// <returns>Number Plan Identification (NPI)</returns>
-        public NumberPlanIdentification GetNumberPlanIdentification()
-        {
-            if (CountryCode != string.Empty)
-                return NumberPlanIdentification.ISDN;
-            else
-                return NumberPlanIdentification.Unknown;
-        }
+        public static implicit operator string(PhoneNumber phoneNumber) =>
+            phoneNumber.ToString();
 
-        public override string ToString()
-        {
-            if (CountryCode != string.Empty)
-                return $"+{CountryCode}{NationalNumber}";
-            return NationalNumber.ToString();
-        }
+        public override string ToString() =>
+            Number;
     }
 }

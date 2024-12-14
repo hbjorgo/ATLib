@@ -96,7 +96,7 @@ namespace HeboTech.ATLib.Messaging
 
         protected static byte GetAddressType(PhoneNumber phoneNumber)
         {
-            return (byte)((1 << 7) + ((byte)phoneNumber.GetTypeOfNumber() << 4) + (byte)phoneNumber.GetNumberPlanIdentification());
+            return (byte)((1 << 7) | ((byte)phoneNumber.TypeOfNumber << 4) | (byte)phoneNumber.NumberingPlanIdentification);
         }
 
         protected static string SwapPhoneNumberDigits(string data)
@@ -171,9 +171,9 @@ namespace HeboTech.ATLib.Messaging
         {
             if (phoneNumber == null)
                 throw new ArgumentNullException(nameof(phoneNumber));
-            daLength = (byte)(phoneNumber.CountryCode.Length + phoneNumber.NationalNumber.Length);
+            daLength = (byte)(phoneNumber.Number.Length);
             daType = GetAddressType(phoneNumber);
-            daNumber = SwapPhoneNumberDigits(phoneNumber.CountryCode + phoneNumber.NationalNumber); // TODO: Old: .TrimStart('+')
+            daNumber = SwapPhoneNumberDigits(phoneNumber.Number);
             return this;
         }
 

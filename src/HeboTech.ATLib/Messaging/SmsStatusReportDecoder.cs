@@ -53,7 +53,7 @@ namespace HeboTech.ATLib.Messaging
 
             // SMSC information
             byte smsc_length = bytes[offset++];
-            PhoneNumberDto serviceCenterNumber = null;
+            PhoneNumber serviceCenterNumber = null;
             if (smsc_length > 0)
             {
                 serviceCenterNumber = PhoneNumberDecoder.DecodePhoneNumber(bytes[offset..(offset += smsc_length)]);
