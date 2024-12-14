@@ -3,7 +3,7 @@ using Xunit;
 
 namespace HeboTech.ATLib.Tests.Numbering
 {
-    public class NumberplanIdentificationTests
+    public class NumberingPlanIdentificationTests
     {
         [Theory]
         [InlineData(NumberingPlanIdentification.Unknown, 0x00)]
@@ -16,7 +16,7 @@ namespace HeboTech.ATLib.Tests.Numbering
         [InlineData(NumberingPlanIdentification.PrivateNumbering, 0x09)]
         [InlineData(NumberingPlanIdentification.ErmesNumbering, 0x0A)]
         [InlineData(NumberingPlanIdentification.ReservedForExtension, 0x0F)]
-        internal void Has_correct_values(NumberingPlanIdentification numberplanIdentification, int expectedValue)
+        internal void Has_correct_value(NumberingPlanIdentification numberplanIdentification, int expectedValue)
         {
             Assert.Equal(expectedValue, (int)numberplanIdentification);
         }

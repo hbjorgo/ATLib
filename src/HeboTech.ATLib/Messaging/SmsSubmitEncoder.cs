@@ -171,9 +171,9 @@ namespace HeboTech.ATLib.Messaging
         {
             if (phoneNumber == null)
                 throw new ArgumentNullException(nameof(phoneNumber));
-            daLength = (byte)(phoneNumber.NumberWithoutPrefix.Length);
+            daLength = (byte)(phoneNumber.Number.Length);
             daType = GetAddressType(phoneNumber);
-            daNumber = SwapPhoneNumberDigits(phoneNumber.NumberWithoutPrefix); // TODO: Old: .TrimStart('+')
+            daNumber = SwapPhoneNumberDigits(phoneNumber.Number);
             return this;
         }
 

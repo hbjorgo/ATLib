@@ -1,9 +1,9 @@
 ﻿using HeboTech.ATLib.Extensions;
-using HeboTech.ATLib.Messaging;
+using HeboTech.ATLib.Numbering;
 using System;
 using System.Linq;
 
-namespace HeboTech.ATLib.Numbering
+namespace HeboTech.ATLib.Messaging
 {
     internal class PhoneNumberDecoder
     {
@@ -41,7 +41,19 @@ namespace HeboTech.ATLib.Numbering
             number += string.Join("", data[1..].ToArray().Select(x => x.SwapNibbles().ToString("X2")));
             if (number[^1] == 'F')
                 number = number[..^1];
-            return PhoneNumberFactory.Create(number, ton, npi);
+
+            return ton switch
+            {
+                TypeOfNumber.Unknown => new UnknownPhoneNumber(number, npi),
+                TypeOfNumber.International => new InternationalPhoneNumber(number, npi),
+                TypeOfNumber.National => new NationalPhoneNumber(number, npi),
+                TypeOfNumber.NetworkSpecific => new NetworkSpecificPhoneNumber(number, npi),
+                TypeOfNumber.Subscriber => new SubscriberPhoneNumber(number, npi),
+                TypeOfNumber.AlphaNumeric => new AlphaNumericPhoneNumber(number, npi),
+                TypeOfNumber.Abbreviated => new AbbreviatedPhoneNumber(number, npi),
+                TypeOfNumber.ReservedForExtension => throw new NotSupportedException("Number type not supported"),
+                _ => throw new NotSupportedException("Number type not supported")
+            };
         }
     }
 }

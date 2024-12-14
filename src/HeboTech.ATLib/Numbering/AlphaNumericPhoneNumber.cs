@@ -2,19 +2,13 @@
 {
     public class AlphaNumericPhoneNumber : PhoneNumber
     {
-        public AlphaNumericPhoneNumber(string number, NumberingPlanIdentification npi)
+        internal AlphaNumericPhoneNumber(string number, NumberingPlanIdentification npi)
             : base(TypeOfNumber.AlphaNumeric, npi)
         {
-            ThrowIfNotValid(number);
-
-            NumberWithPrefix = number;
-            NumberWithoutPrefix = number;
+            ThrowIfEmpty(number);
+            Number = number;
         }
 
-        /// <summary>
-        /// Full number
-        /// </summary>
-        public override string NumberWithPrefix { get; }
-        public override string NumberWithoutPrefix { get; }
+        public override string Number { get; }
     }
 }

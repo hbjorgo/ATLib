@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Data;
 using System.Text.RegularExpressions;
 
 namespace HeboTech.ATLib.Numbering
@@ -9,7 +8,7 @@ namespace HeboTech.ATLib.Numbering
     /// </summary>
     public abstract class PhoneNumber
     {
-        protected PhoneNumber(TypeOfNumber ton, NumberingPlanIdentification npi)
+        internal protected PhoneNumber(TypeOfNumber ton, NumberingPlanIdentification npi)
         {
             TypeOfNumber = ton;
             NumberingPlanIdentification = npi;
@@ -26,32 +25,28 @@ namespace HeboTech.ATLib.Numbering
         public NumberingPlanIdentification NumberingPlanIdentification { get; }
 
         /// <summary>
-        /// Full number with prefix (if any)
+        /// Full number (without any prefixes (if any))
         /// </summary>
-        public abstract string NumberWithPrefix { get; }
+        public abstract string Number { get; }
 
         /// <summary>
-        /// Full number without prefix
+        /// Remove any characters used for readability
         /// </summary>
-        public abstract string NumberWithoutPrefix { get; }
-
-        protected static void ThrowIfNotValid(string number)
-        {
-            if (number == null)
-                throw new ArgumentNullException(nameof(number), "Number cannot be empty");
-            if (string.IsNullOrEmpty(number))
-                throw new ArgumentNullException(nameof(number), "Number cannot be empty");
-            if (number.Length > 15)
-                throw new ArgumentException("Total phone number length cannot exceed 15 characters");
-        }
-
-        protected static string GetSanitizedNumber(string number) =>
+        /// <param name="number"></param>
+        /// <returns></returns>
+        internal static string GetSanitizedNumber(string number) =>
             Regex.Replace(number, @"[\s-()./]", "", RegexOptions.Compiled);
+
+        protected static void ThrowIfEmpty(string number)
+        {
+            if (string.IsNullOrWhiteSpace(number))
+                throw new ArgumentException("Number cannot be empty", nameof(number));
+        }
 
         public static implicit operator string(PhoneNumber phoneNumber) =>
             phoneNumber.ToString();
 
         public override string ToString() =>
-            NumberWithPrefix;
+            Number;
     }
 }

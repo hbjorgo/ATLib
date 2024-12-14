@@ -36,7 +36,7 @@ namespace HeboTech.ATLib.Tests.Messaging
         {
             IEnumerable<string> encoded = SmsSubmitEncoder.Encode(
                 new SmsSubmitRequest(
-                    PhoneNumberFactory.Create(number),
+                    PhoneNumberFactory.CreateCommonIsdn(number),
                     encodedMessage,
                     dataCodingScheme)
                 {
@@ -55,7 +55,7 @@ namespace HeboTech.ATLib.Tests.Messaging
         public void Encode_SmsSubmit_message_too_long_test(string number, int characterCount, CharacterSet dataCodingScheme, bool includeEmptySmscLength)
         {
             var request = new SmsSubmitRequest(
-                    PhoneNumberFactory.Create(number),
+                    PhoneNumberFactory.CreateCommonIsdn(number),
                     new string('a', characterCount),
                     dataCodingScheme)
             {
@@ -70,7 +70,7 @@ namespace HeboTech.ATLib.Tests.Messaging
         public void Encode_SmsSubmit_message_max_length_test(string number, int characterCount, CharacterSet dataCodingScheme, bool includeEmptySmscLength, int expectedMessageParts)
         {
             var request = new SmsSubmitRequest(
-                    PhoneNumberFactory.Create(number),
+                    PhoneNumberFactory.CreateCommonIsdn(number),
                     new string('a', characterCount),
                     dataCodingScheme)
             {

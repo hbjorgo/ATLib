@@ -1,8 +1,9 @@
-﻿using HeboTech.ATLib.Numbering;
+﻿using HeboTech.ATLib.Messaging;
+using HeboTech.ATLib.Numbering;
 using System;
 using Xunit;
 
-namespace HeboTech.ATLib.Tests.Numbering
+namespace HeboTech.ATLib.Tests.Messaging
 {
     public class PhoneNumberDecoderTests
     {

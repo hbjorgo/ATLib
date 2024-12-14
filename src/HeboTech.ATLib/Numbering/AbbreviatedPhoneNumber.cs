@@ -1,9 +1,9 @@
 ﻿namespace HeboTech.ATLib.Numbering
 {
-    public class NetworkSpecificPhoneNumber : PhoneNumber
+    public class AbbreviatedPhoneNumber : PhoneNumber
     {
-        internal NetworkSpecificPhoneNumber(string number, NumberingPlanIdentification npi)
-            : base(TypeOfNumber.NetworkSpecific, npi)
+        internal protected AbbreviatedPhoneNumber(string number, NumberingPlanIdentification npi)
+            : base(TypeOfNumber.Abbreviated, npi)
         {
             ThrowIfEmpty(number);
             string sanitizedNumber = GetSanitizedNumber(number);
