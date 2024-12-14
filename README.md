@@ -76,10 +76,10 @@ namespace HeboTech.ATLib.TestConsole
 {
     public class GetStartedExample
     {
-        public static async Task RunAsync(string portName, string pin, string recepientPhoneNumber)
+        public static async Task RunAsync(string portName, int baudRate, string pin, string recepientPhoneNumber)
         {
             // Set up serial port
-            using SerialPort serialPort = new SerialPort(portName, 9600, Parity.None, 8, StopBits.One)
+            using SerialPort serialPort = new SerialPort(portName, baudRate, Parity.None, 8, StopBits.One)
             {
                 Handshake = Handshake.RequestToSend
             };
