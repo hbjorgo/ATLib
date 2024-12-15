@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HeboTech.ATLib.Modems.Cinterion;
+using HeboTech.ATLib.Modems.Adafruit;
 
 namespace HeboTech.ATLib.TestConsole
 {
@@ -39,8 +40,9 @@ namespace HeboTech.ATLib.TestConsole
         {
             using AtChannel atChannel = AtChannel.Create(stream);
             atChannel.EnableDebug(Log);
+            using IFona3G modem = new Fona3G(atChannel);
             //using IMC55i modem = new MC55i(atChannel);
-            using IDWM222 modem = new DWM222(atChannel);
+            //using IDWM222 modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 

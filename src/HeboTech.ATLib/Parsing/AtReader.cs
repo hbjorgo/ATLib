@@ -58,7 +58,7 @@ namespace HeboTech.ATLib.Parsing
                 ReadResult result;
                 try
                 {
-                    result = await reader.ReadAsync(cancellationToken);
+                    result = await reader.ReadAsync(cancellationToken).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException)
                 {
@@ -70,7 +70,7 @@ namespace HeboTech.ATLib.Parsing
                 {
                     try
                     {
-                        await channel.Writer.WriteAsync(line, cancellationToken);
+                        await channel.Writer.WriteAsync(line, cancellationToken).ConfigureAwait(false);
                     }
                     catch (OperationCanceledException)
                     {
@@ -89,7 +89,7 @@ namespace HeboTech.ATLib.Parsing
             }
 
             // Mark the PipeReader as complete.
-            await reader.CompleteAsync();
+            await reader.CompleteAsync().ConfigureAwait(false);
         }
 
         private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out string line)

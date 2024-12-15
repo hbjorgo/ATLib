@@ -18,21 +18,21 @@ namespace HeboTech.ATLib.Parsing
 
         public async Task WriteLineAsync(string command, CancellationToken cancellationToken = default)
         {
-            await WriteAsync(command, cancellationToken);
-            await WriteAsync("\r", cancellationToken);
+            await WriteAsync(command, cancellationToken).ConfigureAwait(false);
+            await WriteAsync("\r", cancellationToken).ConfigureAwait(false);
         }
 
         public async Task WriteSmsPduAndCtrlZAsync(string smsPdu, CancellationToken cancellationToken = default)
         {
-            await WriteAsync(smsPdu, cancellationToken);
-            await WriteAsync("\x1A", cancellationToken);
+            await WriteAsync(smsPdu, cancellationToken).ConfigureAwait(false);
+            await WriteAsync("\x1A", cancellationToken).ConfigureAwait(false);
         }
 
         protected async Task WriteAsync(string text, CancellationToken cancellationToken = default)
         {
             byte[] buffer = Encoding.UTF8.GetBytes(text);
-            await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken);
-            await stream.FlushAsync(cancellationToken);
+            await stream.WriteAsync(buffer, 0, buffer.Length, cancellationToken).ConfigureAwait(false);
+            await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public void Close()
