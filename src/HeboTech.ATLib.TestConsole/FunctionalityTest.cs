@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using HeboTech.ATLib.Modems.Cinterion;
-using HeboTech.ATLib.Modems.Adafruit;
 
 namespace HeboTech.ATLib.TestConsole
 {
