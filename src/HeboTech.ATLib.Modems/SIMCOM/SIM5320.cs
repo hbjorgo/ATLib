@@ -20,7 +20,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         #region Custom
         public virtual async Task<RemainingPinPukAttempts> GetRemainingPinPukAttemptsAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+SPIC", "+SPIC:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -50,7 +50,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
         {
             string command = $"AT+CMGL={(int)smsStatus}";
 
-            AtResponse response = await channel.SendMultilineCommand(command, null);
+            AtResponse response = await channel.SendMultilineCommand(command, null).ConfigureAwait(false);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
@@ -82,7 +82,7 @@ namespace HeboTech.ATLib.Modems.SIMCOM
 
         public virtual async Task<ModemResponse> ReInitializeSimAsync()
         {
-            AtResponse response = await channel.SendCommand($"AT+CRFSIM");
+            AtResponse response = await channel.SendCommand($"AT+CRFSIM").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();

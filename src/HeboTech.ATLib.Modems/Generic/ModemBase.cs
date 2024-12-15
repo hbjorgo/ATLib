@@ -83,10 +83,10 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<bool> SetRequiredSettingsBeforePinAsync()
         {
-            ModemResponse echo = await DisableEchoAsync();
-            ModemResponse errorFormat = await SetErrorFormatAsync(1);
-            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2);
-            ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU);
+            ModemResponse echo = await DisableEchoAsync().ConfigureAwait(false);
+            ModemResponse errorFormat = await SetErrorFormatAsync(1).ConfigureAwait(false);
+            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2).ConfigureAwait(false);
+            ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU).ConfigureAwait(false);
             return echo.Success && errorFormat.Success && currentCharacterSet.Success && smsMessageFormat.Success;
         }
 
@@ -97,7 +97,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<Imsi>> GetImsiAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CIMI", string.Empty);
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CIMI", string.Empty).ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -115,26 +115,26 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> AnswerIncomingCallAsync()
         {
-            AtResponse response = await channel.SendCommand("ATA");
+            AtResponse response = await channel.SendCommand("ATA").ConfigureAwait(false);
             return ModemResponse.IsSuccess(response.Success);
         }
 
         public virtual async Task<ModemResponse> DialAsync(PhoneNumber phoneNumber, bool hideCallerNumber = false, bool closedUserGroup = false)
         {
             string command = $"ATD{phoneNumber}{(hideCallerNumber ? 'I' : 'i')}{(closedUserGroup ? 'G' : 'g')};";
-            AtResponse response = await channel.SendCommand(command, TimeSpan.FromSeconds(45));
+            AtResponse response = await channel.SendCommand(command, TimeSpan.FromSeconds(45)).ConfigureAwait(false);
             return ModemResponse.IsSuccess(response.Success);
         }
 
         public virtual async Task<ModemResponse> DisableEchoAsync()
         {
-            AtResponse response = await channel.SendCommand("ATE0");
+            AtResponse response = await channel.SendCommand("ATE0").ConfigureAwait(false);
             return ModemResponse.IsSuccess(response.Success);
         }
 
         public virtual async Task<ModemResponse<ProductIdentificationInformation>> GetProductIdentificationInformationAsync()
         {
-            AtResponse response = await channel.SendMultilineCommand("ATI", null);
+            AtResponse response = await channel.SendMultilineCommand("ATI", null).ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -151,7 +151,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> HangupAsync()
         {
-            AtResponse response = await channel.SendCommand($"AT+CHUP");
+            AtResponse response = await channel.SendCommand($"AT+CHUP").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -162,7 +162,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<IEnumerable<string>>> GetAvailableCharacterSetsAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS=?", "+CSCS:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS=?", "+CSCS:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -180,7 +180,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<CharacterSet>> GetCurrentCharacterSetAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CSCS?", "+CSCS:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -200,7 +200,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SetCharacterSetAsync(CharacterSet characterSet)
         {
-            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{CharacterSetHelpers.ToString(characterSet)}\"");
+            AtResponse response = await channel.SendCommand($"AT+CSCS=\"{CharacterSetHelpers.ToString(characterSet)}\"").ConfigureAwait(false);
             if (response.Success)
             {
                 return ModemResponse.IsSuccess(response.Success);
@@ -214,7 +214,7 @@ namespace HeboTech.ATLib.Modems.Generic
         #region _3GPP_TS_27_005
         public virtual async Task<ModemResponse<string>> GetSmsMessageFormatAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CMGF?", "+CMGF:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CMGF?", "+CMGF:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -233,7 +233,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SetSmsMessageFormatAsync(SmsTextFormat format)
         {
-            AtResponse response = await channel.SendCommand($"AT+CMGF={(int)format}");
+            AtResponse response = await channel.SendCommand($"AT+CMGF={(int)format}").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess(response.Success);
@@ -244,7 +244,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         //public virtual async Task<ModemResponse> SetSelectMessageService(int service)
         //{
-        //    AtResponse response = await channel.SendCommand($"AT+CSMS={service}");
+        //    AtResponse response = await channel.SendCommand($"AT+CSMS={service}").ConfigureAwait(false);
 
         //    if (response.Success)
         //        return ModemResponse.IsSuccess();
@@ -255,7 +255,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr)
         {
-            AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}");
+            AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds},{bfr}").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -280,7 +280,7 @@ namespace HeboTech.ATLib.Modems.Generic
             {
                 string cmd1 = $"AT+CMGS={(pdu.Length) / 2}";
                 string cmd2 = pdu;
-                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
+                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
                 if (response.Success)
                 {
@@ -303,7 +303,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<SupportedPreferredMessageStorages>> GetSupportedPreferredMessageStoragesAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=?", "+CPMS:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=?", "+CPMS:").ConfigureAwait(false);
 
             if (response.Success && response.Intermediates.Count > 0)
             {
@@ -325,7 +325,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<PreferredMessageStorages>> GetPreferredMessageStoragesAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS?", "+CPMS:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS?", "+CPMS:").ConfigureAwait(false);
 
             if (response.Success && response.Intermediates.Count > 0)
             {
@@ -350,7 +350,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<PreferredMessageStorages>> SetPreferredMessageStorageAsync(MessageStorage storage1Name, MessageStorage storage2Name, MessageStorage storage3Name)
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=\"{storage1Name}\",\"{storage2Name}\",\"{storage3Name}\"", "+CPMS:");
+            AtResponse response = await channel.SendSingleLineCommandAsync($"AT+CPMS=\"{storage1Name}\",\"{storage2Name}\",\"{storage3Name}\"", "+CPMS:").ConfigureAwait(false);
 
             if (response.Success && response.Intermediates.Count > 0)
             {
@@ -378,7 +378,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<Sms>> ReadSmsAsync(int index)
         {
-            AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
+            AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null).ConfigureAwait(false);
 
             if (pduResponse.Success)
             {
@@ -415,7 +415,7 @@ namespace HeboTech.ATLib.Modems.Generic
         {
             string command = $"AT+CMGL={(int)smsStatus}";
 
-            AtResponse response = await channel.SendMultilineCommand(command, null);
+            AtResponse response = await channel.SendMultilineCommand(command, null).ConfigureAwait(false);
 
             List<SmsWithIndex> smss = new List<SmsWithIndex>();
             if (response.Success)
@@ -446,7 +446,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> DeleteSmsAsync(int index)
         {
-            AtResponse response = await channel.SendCommand($"AT+CMGD={index}");
+            AtResponse response = await channel.SendCommand($"AT+CMGD={index}").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -461,7 +461,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<SimStatus>> GetSimStatusAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:", TimeSpan.FromSeconds(10));
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CPIN?", "+CPIN:", TimeSpan.FromSeconds(10)).ConfigureAwait(false);
 
             if (!response.Success)
             {
@@ -491,7 +491,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> EnterSimPinAsync(PersonalIdentificationNumber pin)
         {
-            AtResponse response = await channel.SendCommand($"AT+CPIN={pin}");
+            AtResponse response = await channel.SendCommand($"AT+CPIN={pin}").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -502,7 +502,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<SignalStrength>> GetSignalStrengthAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CSQ", "+CSQ:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -522,7 +522,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<BatteryStatus>> GetBatteryStatusAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CBC", "+CBC:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CBC", "+CBC:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -547,7 +547,7 @@ namespace HeboTech.ATLib.Modems.Generic
             sb.Append(value.ToString(@"yy/MM/dd,HH:mm:ss", CultureInfo.InvariantCulture));
             sb.Append(offsetQuarters.ToString("+00;-#", CultureInfo.InvariantCulture));
             sb.Append("\"");
-            AtResponse response = await channel.SendCommand(sb.ToString());
+            AtResponse response = await channel.SendCommand(sb.ToString()).ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -558,7 +558,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<DateTimeOffset>> GetDateTimeAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CCLK?", "+CCLK:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT+CCLK?", "+CCLK:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -591,7 +591,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SendUssdAsync(string code, int codingScheme = 15)
         {
-            AtResponse response = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}");
+            AtResponse response = await channel.SendCommand($"AT+CUSD=1,\"{code}\",{codingScheme}").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -603,7 +603,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SetErrorFormatAsync(int errorFormat)
         {
-            AtResponse response = await channel.SendCommand($"AT+CMEE={errorFormat}");
+            AtResponse response = await channel.SendCommand($"AT+CMEE={errorFormat}").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -614,7 +614,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> ShowSmsTextModeParametersAsync(bool activate)
         {
-            AtResponse response = await channel.SendCommand($"AT+CSDH={(activate ? "1" : "0")}");
+            AtResponse response = await channel.SendCommand($"AT+CSDH={(activate ? "1" : "0")}").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -625,7 +625,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> ResetToFactoryDefaultsAsync()
         {
-            AtResponse response = await channel.SendCommand($"AT&F");
+            AtResponse response = await channel.SendCommand($"AT&F").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -636,7 +636,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> RawCommandAsync(string command)
         {
-            AtResponse response = await channel.SendCommand(command);
+            AtResponse response = await channel.SendCommand(command).ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -647,7 +647,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse<List<string>>> RawCommandWithResponseAsync(string command, string responsePrefix)
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync(command, responsePrefix);
+            AtResponse response = await channel.SendSingleLineCommandAsync(command, responsePrefix).ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsResultSuccess(response.Intermediates);
@@ -658,9 +658,9 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> RestoreUserSettingsAsync()
         {
-            AtResponse response = await channel.SendCommand("ATZ0");
+            AtResponse response = await channel.SendCommand("ATZ0").ConfigureAwait(false);
 
-            await Task.Delay(TimeSpan.FromMilliseconds(300));
+            await Task.Delay(TimeSpan.FromMilliseconds(300)).ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -671,7 +671,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> SaveUserSettingsAsync()
         {
-            AtResponse response = await channel.SendCommand("AT&W0");
+            AtResponse response = await channel.SendCommand("AT&W0").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
@@ -682,7 +682,7 @@ namespace HeboTech.ATLib.Modems.Generic
 
         public virtual async Task<ModemResponse> ResetUserSettingsAsync()
         {
-            AtResponse response = await channel.SendCommand("AT&F0");
+            AtResponse response = await channel.SendCommand("AT&F0").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();
