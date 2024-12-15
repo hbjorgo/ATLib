@@ -94,7 +94,7 @@ namespace HeboTech.ATLib.Parsing
         {
             for (int i = 0; i < atReader.AvailableItems(); i++)
             {
-                await atReader.ReadAsync(cancellationToken);
+                await atReader.ReadAsync(cancellationToken).ConfigureAwait(false);
             }
         }
 
@@ -111,7 +111,7 @@ namespace HeboTech.ATLib.Parsing
 
         public virtual async Task<AtResponse> SendSingleLineCommandAsync(string command, string responsePrefix, TimeSpan? timeout = null)
         {
-            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, null, timeout ?? DefaultCommandTimeout));
+            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, null, timeout ?? DefaultCommandTimeout)).ConfigureAwait(false);
 
             if (response != null && response.Success && !response.Intermediates.Any())
             {
@@ -130,7 +130,7 @@ namespace HeboTech.ATLib.Parsing
 
         public virtual async Task<AtResponse> SendSmsAsync(string command, string pdu, string responsePrefix, TimeSpan? timeout = null)
         {
-            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, pdu, timeout ?? DefaultCommandTimeout));
+            AtResponse response = await SendFullCommandAsync(new AtCommand(AtCommandType.SINGELLINE, command, responsePrefix, pdu, timeout ?? DefaultCommandTimeout)).ConfigureAwait(false);
 
             if (response != null && response.Success && !response.Intermediates.Any())
             {
@@ -160,9 +160,9 @@ namespace HeboTech.ATLib.Parsing
 
                 if (debugEnabled)
                     debugAction($"Out: {command.Command}");
-                await atWriter.WriteLineAsync(command.Command);
+                await atWriter.WriteLineAsync(command.Command).ConfigureAwait(false);
 
-                if (!await waitingForCommandResponse.WaitAsync(command.Timeout, cancellationToken))
+                if (!await waitingForCommandResponse.WaitAsync(command.Timeout, cancellationToken).ConfigureAwait(false))
                     throw new TimeoutException("Timed out while waiting for command response");
 
                 return currentResponse;
@@ -181,7 +181,7 @@ namespace HeboTech.ATLib.Parsing
                 string line1;
                 try
                 {
-                    line1 = await atReader.ReadAsync(cancellationToken);
+                    line1 = await atReader.ReadAsync(cancellationToken).ConfigureAwait(false);
                     if (debugEnabled)
                         debugAction($"In (line1): {line1}");
                 }
@@ -198,7 +198,7 @@ namespace HeboTech.ATLib.Parsing
                     string line2;
                     try
                     {
-                        line2 = await atReader.ReadAsync(cancellationToken);
+                        line2 = await atReader.ReadAsync(cancellationToken).ConfigureAwait(false);
                         if (debugEnabled)
                             debugAction($"In (line2): {line2}");
                     }

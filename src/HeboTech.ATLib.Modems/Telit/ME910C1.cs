@@ -18,15 +18,15 @@ namespace HeboTech.ATLib.Modems.Telit
 
         public override async Task<bool> SetRequiredSettingsBeforePinAsync()
         {
-            ModemResponse echo = await DisableEchoAsync();
-            ModemResponse errorFormat = await SetErrorFormatAsync(1);
+            ModemResponse echo = await DisableEchoAsync().ConfigureAwait(false);
+            ModemResponse errorFormat = await SetErrorFormatAsync(1).ConfigureAwait(false);
             return echo.Success && errorFormat.Success;
         }
 
         public override async Task<bool> SetRequiredSettingsAfterPinAsync()
         {
-            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2);
-            ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU);
+            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2).ConfigureAwait(false);
+            ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU).ConfigureAwait(false);
             return currentCharacterSet.Success && smsMessageFormat.Success;
         }
 

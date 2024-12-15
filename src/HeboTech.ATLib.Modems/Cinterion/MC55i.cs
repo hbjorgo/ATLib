@@ -36,7 +36,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
             {
                 string cmd1 = $"AT+CMGS={(pdu.Length - 2) / 2}"; // Subtract 2 (one octet) for SMSC.
                 string cmd2 = pdu;
-                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30));
+                AtResponse response = await channel.SendSmsAsync(cmd1, cmd2, "+CMGS:", TimeSpan.FromSeconds(30)).ConfigureAwait(false);
 
                 if (response.Success)
                 {
@@ -59,7 +59,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
 
         public override async Task<ModemResponse<BatteryStatus>> GetBatteryStatusAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT^SBC?", "^SBC:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT^SBC?", "^SBC:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -79,7 +79,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
 
         public async Task<ModemResponse<MC55iBatteryStatus>> MC55i_GetBatteryStatusAsync()
         {
-            AtResponse response = await channel.SendSingleLineCommandAsync("AT^SBC?", "^SBC:");
+            AtResponse response = await channel.SendSingleLineCommandAsync("AT^SBC?", "^SBC:").ConfigureAwait(false);
 
             if (response.Success)
             {
@@ -109,7 +109,7 @@ namespace HeboTech.ATLib.Modems.Cinterion
         /// <returns>Command status</returns>
         public override async Task<ModemResponse> SetNewSmsIndicationAsync(int mode, int mt, int bm, int ds, int bfr)
         {
-            AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds}");
+            AtResponse response = await channel.SendCommand($"AT+CNMI={mode},{mt},{bm},{ds}").ConfigureAwait(false);
 
             if (response.Success)
                 return ModemResponse.IsSuccess();

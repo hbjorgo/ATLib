@@ -20,15 +20,15 @@ namespace HeboTech.ATLib.Modems.Adafruit
 
         public override async Task<bool> SetRequiredSettingsBeforePinAsync()
         {
-            ModemResponse echo = await DisableEchoAsync();
-            ModemResponse errorFormat = await SetErrorFormatAsync(1);
+            ModemResponse echo = await DisableEchoAsync().ConfigureAwait(false);
+            ModemResponse errorFormat = await SetErrorFormatAsync(1).ConfigureAwait(false);
             return echo.Success && errorFormat.Success;
         }
 
         public override async Task<bool> SetRequiredSettingsAfterPinAsync()
         {
-            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2);
-            ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU);
+            ModemResponse currentCharacterSet = await SetCharacterSetAsync(CharacterSet.UCS2).ConfigureAwait(false);
+            ModemResponse smsMessageFormat = await SetSmsMessageFormatAsync(SmsTextFormat.PDU).ConfigureAwait(false);
             return currentCharacterSet.Success && smsMessageFormat.Success;
         }
 
@@ -37,7 +37,7 @@ namespace HeboTech.ATLib.Modems.Adafruit
         //    switch (smsTextFormat)
         //    {
         //        case SmsTextFormat.PDU:
-        //            AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
+        //            AtResponse pduResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null).ConfigureAwait(false);
 
         //            if (pduResponse.Success)
         //            {
@@ -60,7 +60,7 @@ namespace HeboTech.ATLib.Modems.Adafruit
         //            }
         //            break;
         //        case SmsTextFormat.Text:
-        //            AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null);
+        //            AtResponse textResponse = await channel.SendMultilineCommand($"AT+CMGR={index}", null).ConfigureAwait(false);
 
         //            if (textResponse.Success && textResponse.Intermediates.Count > 0)
         //            {
@@ -114,7 +114,7 @@ namespace HeboTech.ATLib.Modems.Adafruit
         //        _ => throw new Exception("Unknown SMS Text Format")
         //    };
 
-        //    AtResponse response = await channel.SendMultilineCommand(command, null);
+        //    AtResponse response = await channel.SendMultilineCommand(command, null).ConfigureAwait(false);
 
         //    List<SmsWithIndex> smss = new List<SmsWithIndex>();
         //    if (response.Success)
