@@ -1,5 +1,6 @@
 ﻿using HeboTech.ATLib.Messaging;
 using HeboTech.ATLib.Misc;
+using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.Adafruit;
 using HeboTech.ATLib.Numbering;
 using HeboTech.ATLib.Parsing;

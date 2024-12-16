@@ -1,15 +1,16 @@
 ﻿using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Messaging;
-using HeboTech.ATLib.Modems.D_LINK;
+using HeboTech.ATLib.Misc;
+using HeboTech.ATLib.Modems;
+using HeboTech.ATLib.Modems.Adafruit;
+using HeboTech.ATLib.Modems.Cinterion;
 using HeboTech.ATLib.Numbering;
 using HeboTech.ATLib.Parsing;
 using HeboTech.ATLib.Storage;
-using HeboTech.ATLib.Misc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using HeboTech.ATLib.Modems.Cinterion;
 
 namespace HeboTech.ATLib.TestConsole
 {
@@ -39,8 +40,7 @@ namespace HeboTech.ATLib.TestConsole
         {
             using AtChannel atChannel = AtChannel.Create(stream);
             atChannel.EnableDebug(Log);
-            //using IMC55i modem = new MC55i(atChannel);
-            using IDWM222 modem = new DWM222(atChannel);
+            using IModem modem = new MC55i(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -129,7 +129,8 @@ namespace HeboTech.ATLib.TestConsole
             Console.WriteLine($"Supported storages:{Environment.NewLine}{supportedStorages}");
             var currentStorages = await modem.GetPreferredMessageStoragesAsync();
             Console.WriteLine($"Current storages:{Environment.NewLine}{currentStorages}");
-            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.MT, MessageStorage.MT, MessageStorage.MT);
+            //var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.MT, MessageStorage.MT, MessageStorage.MT);
+            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.ME, MessageStorage.ME, MessageStorage.ME);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
             Log("Initialization done");

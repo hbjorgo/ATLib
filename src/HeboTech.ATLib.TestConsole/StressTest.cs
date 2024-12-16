@@ -5,6 +5,7 @@ using HeboTech.ATLib.Misc;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using HeboTech.ATLib.Modems;
 
 namespace HeboTech.ATLib.TestConsole
 {
