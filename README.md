@@ -18,6 +18,7 @@ Feedback is very much welcome and please request features 🙂
 - List SMSs
 - Read SMS (PDU format (GSM 7 bit or UCS2 encoding))
 - Delete SMS
+- Get SMS Status Report (delivery status)
 - Dial number
 - Answer incoming call
 - Hang up call
@@ -40,6 +41,7 @@ Feedback is very much welcome and please request features 🙂
 - Call started
 - Call ended
 - SMS received
+- SMS Status Report received
 - Error received
 - USSD response received
 - Generic event
