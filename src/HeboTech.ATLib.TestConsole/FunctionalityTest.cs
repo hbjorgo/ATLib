@@ -129,8 +129,8 @@ namespace HeboTech.ATLib.TestConsole
             Console.WriteLine($"Supported storages:{Environment.NewLine}{supportedStorages}");
             var currentStorages = await modem.GetPreferredMessageStoragesAsync();
             Console.WriteLine($"Current storages:{Environment.NewLine}{currentStorages}");
-            //var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.MT, MessageStorage.MT, MessageStorage.MT);
-            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.ME, MessageStorage.ME, MessageStorage.ME);
+            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.MT, MessageStorage.MT, MessageStorage.MT);
+            //var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.ME, MessageStorage.ME, MessageStorage.ME);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
             Log("Initialization done");
