@@ -22,13 +22,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<None Include="README.md" Pack="true" PackagePath="\"/>
+		<None Include="README.md" Pack="true" PackagePath="\" />
 	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
 		<PackageReference Include="System.Threading.Channels" Version="9.0.0" />
-		<PackageReference Include="UnitsNet" Version="5.60.0" />
+		<PackageReference Include="UnitsNet" Version="5.61.0" />
 	</ItemGroup>
 
 	<ItemGroup>
