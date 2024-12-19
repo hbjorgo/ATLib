@@ -4,14 +4,14 @@
 		<TargetFrameworks>netstandard2.1;net6.0;net8.0</TargetFrameworks>
 		<Authors>HeboTech</Authors>
 		<Product>HeboTech ATLib</Product>
-		<Version>8.0.0-rc1</Version>
-		<PackageVersion>8.0.0-rc1</PackageVersion>
+		<Version>8.0.0</Version>
+		<PackageVersion>8.0.0</PackageVersion>
 		<AssemblyVersion>8.0.0.0</AssemblyVersion>
 		<FileVersion>8.0.0.0</FileVersion>
 		<PackageId>HeboTech.ATLib</PackageId>
 		<Title>AT command library that makes it easy to communicate with modems.</Title>
 		<Description>AT command library that makes it easy to communicate with modems.</Description>
-		<PackageTags>atcommand at command hayes gsm sms modem simcom d-link tp-link cinterion telit dwm-222 dwm222 ma260 sim5320 mc55i me910c1</PackageTags>
+		<PackageTags>atcommand at command hayes gsm sms modem simcom d-link tp-link cinterion dwm-222 dwm222 ma260 sim5320 mc55i</PackageTags>
 		<RepositoryUrl>https://github.com/hbjorgo/ATLib</RepositoryUrl>
 		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
