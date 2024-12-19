@@ -17,8 +17,13 @@
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageProjectUrl>https://github.com/hbjorgo/ATLib</PackageProjectUrl>
 		<PackageReleaseNotes>https://github.com/hbjorgo/ATLib/releases</PackageReleaseNotes>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<UserSecretsId>b8328b1a-795d-4e26-9238-43eee2160ffc</UserSecretsId>
 	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\..\README.md" Pack="true" PackagePath="\"/>
+	</ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
