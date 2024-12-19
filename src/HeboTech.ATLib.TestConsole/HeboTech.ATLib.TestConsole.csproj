@@ -14,7 +14,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\HeboTech.ATLib.Modems\HeboTech.ATLib.Modems.csproj" />
 		<ProjectReference Include="..\HeboTech.ATLib\HeboTech.ATLib.csproj" />
 	</ItemGroup>
 
