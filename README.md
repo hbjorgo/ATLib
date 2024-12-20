@@ -66,12 +66,12 @@ Using a serial port to communicate with a modem is easy:
 ```csharp
 using HeboTech.ATLib.Messaging;
 using HeboTech.ATLib.Misc;
+using HeboTech.ATLib.Modems;
 using HeboTech.ATLib.Modems.Adafruit;
 using HeboTech.ATLib.Numbering;
 using HeboTech.ATLib.Parsing;
 using System;
 using System.IO.Ports;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace HeboTech.ATLib.TestConsole
@@ -93,6 +93,18 @@ namespace HeboTech.ATLib.TestConsole
             // Create the modem
             using IModem modem = new Fona3G(atChannel);
 
+            // Listen to incoming SMSs
+            modem.SmsReceived += (sender, args) =>
+            {
+                Console.WriteLine($"SMS received: {args.SmsDeliver}");
+            };
+
+            // Listen to incoming SMSs stored in memory
+            modem.SmsStorageReferenceReceived += (sender, args) =>
+            {
+                Console.WriteLine($"SMS received. Index {args.Index} at storage location {args.Storage}");
+            };
+
             // Open AT channel
             atChannel.Open();
 
@@ -113,11 +125,17 @@ namespace HeboTech.ATLib.TestConsole
             // Configure modem with required settings after PIN
             var requiredSettingsAfterPin = await modem.SetRequiredSettingsAfterPinAsync();
 
+            // Read SMS at index 1
+            var sms = await modem.ReadSmsAsync(1);
+            if (sms.Success)
+                Console.WriteLine(sms.Result);
+
             // Send SMS to the specified number
             PhoneNumber phoneNumber = PhoneNumberFactory.CreateCommonIsdn(recepientPhoneNumber);
             string message = "Hello ATLib!";
             var smsReferences = await modem.SendSmsAsync(new SmsSubmitRequest(phoneNumber, message));
-            Console.WriteLine($"SMS Reference: {smsReferences.First()}");
+            foreach (var smsReference in smsReferences)
+                Console.WriteLine($"SMS Reference: {smsReference}");
         }
     }
 }
