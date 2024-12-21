@@ -9,8 +9,6 @@ Hayes command set (commonly known as AT commands) is a command set frequently us
 
 Feedback is very much welcome and please request features 🙂
 
-[HeboTech.GsmApi](https://github.com/hbjorgo/GsmApi) is a REST API wrapping this library.
-
 ## Supported commands:
 - Send SMS in PDU format (GSM 7 bit or UCS2 encoding)
 - Send concatenated SMS (message that spans over multiple SMSs) in PDU format (GSM 7 bit or UCS2 encoding)
