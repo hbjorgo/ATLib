@@ -107,6 +107,8 @@ namespace HeboTech.ATLib.TestConsole
                 rootCommand.Subcommands.Add(serialCommand);
                 await rootCommand.Parse(args).InvokeAsync();
             #endregion
+
+            Console.WriteLine("Goodbye!");
         }
     }
 }
