@@ -82,8 +82,8 @@ namespace HeboTech.ATLib.Parsing
         public void DisableDebug()
         {
             debugEnabled = false;
-            debugAction = default;
             debugAction($"##### DEBUG DISABLED #####");
+            debugAction = default;
         }
 
         /// <summary>
