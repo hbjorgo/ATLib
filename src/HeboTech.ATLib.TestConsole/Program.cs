@@ -1,4 +1,6 @@
 ﻿using System;
+using System.CommandLine;
+using System.CommandLine.Help;
 using System.IO;
 using System.IO.Ports;
 using System.Linq;
@@ -13,56 +15,95 @@ namespace HeboTech.ATLib.TestConsole
     {
         static async Task Main(string[] args)
         {
-            // Set specifically to support more character sets than default
-            Console.InputEncoding = System.Text.Encoding.Unicode;
-            Console.OutputEncoding = System.Text.Encoding.Unicode;
-            Console.WriteLine($"Console input encoding: {Console.InputEncoding}.");
-            Console.WriteLine($"Console output encoding: {Console.OutputEncoding}.");
-
-            // Because of multi targeting, print out current framework target for information
-            var targetFrameworkAttribute = Assembly.GetExecutingAssembly()
-                .GetCustomAttributes(typeof(TargetFrameworkAttribute), false)
-                .SingleOrDefault() as TargetFrameworkAttribute;
-            Console.WriteLine($"Current target: {targetFrameworkAttribute.FrameworkName}");
-
-
-
-            Console.OutputEncoding = System.Text.Encoding.UTF8;
-
-            string address = args[0];
-            int port = int.Parse(args[1]);
-            string pin = args[2];
-
-
-
-            /* ######## UNCOMMENT THIS SECTION TO USE SERIAL PORT ######## */
-            //using (SerialPort serialPort = new("COM1", 9600, Parity.None, 8, StopBits.One)
-            //    {
-            //        Handshake = Handshake.RequestToSend
-            //    })
-            //{
-            //    serialPort.Open();
-            //    Console.WriteLine("Serialport opened");
-            //    Stream stream;
-            //    stream = serialPort.BaseStream;
-
-            //    // ### Choose what to run
-            //    await FunctionalityTest.RunAsync(stream, pin);
-            //    //await StressTest.RunAsync(stream, pin);
-            //}
-
-
-            /* ######## UNCOMMENT THIS SECTION TO USE NETWORK SOCKET ######## */
-            using (TcpClient tcpClient = new TcpClient(address, port))
+            Option<string> pinOption = new("--pin")
             {
-                using (NetworkStream stream = tcpClient.GetStream())
-                {
-                    Console.WriteLine("Network socket opened");
-                    // ### Choose what to run
-                    await FunctionalityTest.RunAsync(stream, pin);
-                    //await StressTest.RunAsync(stream, pin);
-                }
-            }
+                Description = "SIM PIN"
+            };
+
+            Option<string> serialPortNameOption = new("--port")
+            {
+                Description = "Serial port.",
+            };
+            Option<int> serialBaudRateOption = new("--baudrate")
+            {
+                Description = "Serial baud rate. Default: 9600.",
+                DefaultValueFactory = parseResult => 9600
+            };
+            Option<Parity> serialParityOption = new("--parity")
+            {
+                Description = "Serial parity. Default: none.",
+                DefaultValueFactory = parseResult => Parity.None
+            };
+            Option<int> serialDataBitsOption = new("--databits")
+            {
+                Description = "Serial data bits. Default: 8",
+                DefaultValueFactory = parseResult => 8
+            };
+            Option<StopBits> serialStopBitsOption = new("--stopbits")
+            {
+                Description = "Serial stop bits. Default: 1.",
+                DefaultValueFactory = parseResult => StopBits.One
+            };
+            
+            Command serialCommand = new("--serial", "Serial connection")
+            {
+                serialBaudRateOption,
+                serialPortNameOption,
+                serialParityOption,
+                serialDataBitsOption,
+                serialStopBitsOption,
+                pinOption,
+            };
+            serialCommand.SetAction(async result =>
+            {
+                string serialPortName = result.GetRequiredValue(serialPortNameOption);
+                int serialBaudRate = result.GetRequiredValue(serialBaudRateOption);
+                string pin = result.GetRequiredValue(pinOption);
+                Parity parity = result.GetValue(serialParityOption);
+                int dataBits = result.GetValue(serialDataBitsOption);
+                StopBits stopBits = result.GetValue(serialStopBitsOption);
+            
+                using SerialPort serialPort = new(serialPortName, serialBaudRate, parity, dataBits, stopBits);
+                serialPort.Handshake = Handshake.RequestToSend;
+                serialPort.Open();
+                Console.WriteLine("Serial port opened");
+                var stream = serialPort.BaseStream;
+            
+                await FunctionalityTest.RunAsync(stream, pin);
+            });
+            
+            Option<string> streamAddressOption = new("--address")
+            {
+                Description = "Stream address.",
+            };
+            Option<int> streamPortOption = new("--port")
+            {
+                Description = "Stream port.",
+            };
+
+            Command streamCommand = new("--stream", "Stream connection")
+            {
+                streamAddressOption,
+                streamPortOption,
+                pinOption,
+            };
+            streamCommand.SetAction(async result =>
+            {
+                string address = result.GetRequiredValue(streamAddressOption);
+                int port = result.GetRequiredValue(streamPortOption);
+                string pin = result.GetRequiredValue(pinOption);
+
+                using TcpClient tcpClient = new TcpClient(address, port);
+                using NetworkStream stream = tcpClient.GetStream();
+                Console.WriteLine("Network socket opened");
+                
+                await FunctionalityTest.RunAsync(stream, pin);
+            });
+            
+            RootCommand rootCommand = new("TestConsole");
+            rootCommand.Subcommands.Add(streamCommand);
+            rootCommand.Subcommands.Add(serialCommand);
+            await rootCommand.Parse(args).InvokeAsync();
         }
     }
 }
