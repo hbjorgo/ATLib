@@ -1,22 +1,23 @@
-﻿using HeboTech.ATLib.Events;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using HeboTech.ATLib.Events;
 using HeboTech.ATLib.Messaging;
 using HeboTech.ATLib.Misc;
 using HeboTech.ATLib.Modems;
-using HeboTech.ATLib.Modems.Adafruit;
-using HeboTech.ATLib.Modems.Cinterion;
+using HeboTech.ATLib.Modems.D_LINK;
 using HeboTech.ATLib.Numbering;
 using HeboTech.ATLib.Parsing;
 using HeboTech.ATLib.Storage;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using ErrorEventArgs = HeboTech.ATLib.Events.ErrorEventArgs;
 
 namespace HeboTech.ATLib.TestConsole
 {
     public static class FunctionalityTest
     {
-        private static readonly string debugPath = System.IO.Path.Combine(
+        private static readonly string debugPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             "Downloads",
             "atlog",
@@ -28,7 +29,8 @@ namespace HeboTech.ATLib.TestConsole
             string formattedLine = $"({DateTime.Now}) {message}";
             try
             {
-                System.IO.File.AppendAllLines(debugPath, [formattedLine]);
+                Console.WriteLine(message);
+                File.AppendAllLines(debugPath, [formattedLine]);
             }
             catch (Exception e)
             {
@@ -36,11 +38,11 @@ namespace HeboTech.ATLib.TestConsole
             }
         }
 
-        public static async Task RunAsync(System.IO.Stream stream, string pin)
+        public static async Task RunAsync(Stream stream, string pin)
         {
             using AtChannel atChannel = AtChannel.Create(stream);
-            atChannel.EnableDebug(Log);
-            using IModem modem = new MC55i(atChannel);
+            
+            using IModem modem = new DWM222(atChannel);
             atChannel.Open();
             await atChannel.ClearAsync();
 
@@ -122,37 +124,37 @@ namespace HeboTech.ATLib.TestConsole
             var dateTime = await modem.GetDateTimeAsync();
             Console.WriteLine($"Date and time: {dateTime}");
 
-            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 2, 0); // 2, 1, 0, 2, 0 (CSMS=0)
+            var newSmsIndicationResult = await modem.SetNewSmsIndicationAsync(2, 1, 0, 0, 0); // 2, 1, 0, 2, 0 (CSMS=0)
             Console.WriteLine($"Setting new SMS indication: {newSmsIndicationResult}");
 
             var supportedStorages = await modem.GetSupportedPreferredMessageStoragesAsync();
             Console.WriteLine($"Supported storages:{Environment.NewLine}{supportedStorages}");
             var currentStorages = await modem.GetPreferredMessageStoragesAsync();
             Console.WriteLine($"Current storages:{Environment.NewLine}{currentStorages}");
-            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.MT, MessageStorage.MT, MessageStorage.MT);
+            var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.SM, MessageStorage.SM, MessageStorage.SM);
             //var setPreferredStorages = await modem.SetPreferredMessageStorageAsync(MessageStorage.ME, MessageStorage.ME, MessageStorage.ME);
             Console.WriteLine($"Storages set:{Environment.NewLine}{setPreferredStorages}");
 
             Log("Initialization done");
             Console.WriteLine("Done. Press 'a' to answer call, 'd' to dial, 'h' to hang up, 's' to send SMS, 'r' to read an SMS, 'l' to list all SMSs, 'p' to delete an SMS, 'u' to send USSD code, 'x' to send raw command, 'z' to send raw command with response, '+' to enable debug, '-' to disable debug and 'q' to exit...");
-            ConsoleKey key;
-            while ((key = Console.ReadKey().Key) != ConsoleKey.Q)
+            string input;
+            while ((input = Console.ReadLine().ToUpperInvariant()) != "Q")
             {
                 Console.WriteLine();
-                switch (key)
+                switch (input)
                 {
-                    case ConsoleKey.A:
+                    case "A":
                         var answerStatus = await modem.AnswerIncomingCallAsync();
                         Console.WriteLine($"Answer Status: {answerStatus}");
                         break;
-                    case ConsoleKey.X:
+                    case "X":
                         {
                             string rawCommand = Console.ReadLine();
                             var rawStatus = await modem.RawCommandAsync(rawCommand);
                             Console.WriteLine($"Raw command status: {rawStatus}");
                         }
                         break;
-                    case ConsoleKey.Z:
+                    case "Z":
                         {
                             Console.WriteLine("Enter command:");
                             string rawCommand = Console.ReadLine();
@@ -165,7 +167,7 @@ namespace HeboTech.ATLib.TestConsole
                                 Console.WriteLine($"Raw command status: {rawStatus}");
                         }
                         break;
-                    case ConsoleKey.D:
+                    case "D":
                         {
                             Console.WriteLine("Please enter phone number:");
                             string number = Console.ReadLine();
@@ -175,11 +177,11 @@ namespace HeboTech.ATLib.TestConsole
                             Console.WriteLine($"Dial Status: {dialStatus}");
                         }
                         break;
-                    case ConsoleKey.H:
+                    case "H":
                         var hangupStatus = await modem.HangupAsync();
                         Console.WriteLine($"Hangup Status: {hangupStatus}");
                         break;
-                    case ConsoleKey.S:
+                    case "S":
                         {
                             Console.WriteLine("Please enter phone number:");
                             string number = Console.ReadLine();
@@ -194,7 +196,7 @@ namespace HeboTech.ATLib.TestConsole
                                 Console.WriteLine($"SMS Reference: {smsReference}");
                             break;
                         }
-                    case ConsoleKey.R:
+                    case "R":
                         {
                             Console.WriteLine("Enter SMS index:");
                             if (int.TryParse(Console.ReadLine(), out int smsIndex))
@@ -209,7 +211,7 @@ namespace HeboTech.ATLib.TestConsole
                                 Console.WriteLine("Invalid SMS index");
                             break;
                         }
-                    case ConsoleKey.P:
+                    case "P":
                         {
                             Console.WriteLine("Enter SMS index:");
                             if (int.TryParse(Console.ReadLine(), out int smsIndex))
@@ -221,13 +223,13 @@ namespace HeboTech.ATLib.TestConsole
                                 Console.WriteLine("Invalid SMS index");
                             break;
                         }
-                    case ConsoleKey.U:
+                    case "U":
                         Console.WriteLine("Enter USSD Code:");
                         var ussd = Console.ReadLine();
                         var ussdResult = await modem.SendUssdAsync(ussd);
                         Console.WriteLine($"USSD Status: {ussdResult}");
                         break;
-                    case ConsoleKey.L:
+                    case "L":
                         Console.WriteLine("List all SMSs:");
                         var smss = await modem.ListSmssAsync(SmsStatus.ALL);
                         Console.WriteLine($"{smss.Result.Count} SMSs:");
@@ -242,11 +244,12 @@ namespace HeboTech.ATLib.TestConsole
                         }
 
                         break;
-                    case ConsoleKey.OemPlus:
-                        atChannel.EnableDebug((string line) => Console.WriteLine(line));
+                    case "+":
+                        Directory.CreateDirectory(Path.GetDirectoryName(debugPath)!);
+                        atChannel.EnableDebug(Log);
                         Console.WriteLine("Debug enabled");
                         break;
-                    case ConsoleKey.OemMinus:
+                    case "-":
                         atChannel.DisableDebug();
                         Console.WriteLine("Debug disabled");
                         break;
